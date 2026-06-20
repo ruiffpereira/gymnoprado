@@ -5,21 +5,30 @@ import { RefreshCw } from "lucide-react";
 // Pull-to-refresh próprio — o overscroll nativo está desligado (index.css),
 // por isso replicamos o gesto: ao puxar para baixo no topo da página,
 // invalidamos as queries do React Query (refaz os dados visíveis).
+//
+// O conteúdo NÃO se desloca (o header é sticky e tem de ficar fixo). A bolinha
+// nasce por baixo do header (medido em tempo real) e desce com o arrasto; o
+// header, opaco e com z-index maior, tapa-a enquanto ela está encostada.
 
 const TRIGGER = 70; // px (com resistência) para disparar o refresh
 const MAX = 100; // limite visual do arrasto
-const SPIN = 48; // altura mantida enquanto atualiza
+const SPIN = 46; // offset mantido (abaixo do header) enquanto atualiza
 
 export function PullToRefresh({ children }: { children: React.ReactNode }) {
   const qc = useQueryClient();
+  const containerRef = useRef<HTMLDivElement>(null);
   const [pull, setPull] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [headerH, setHeaderH] = useState(0);
   const startY = useRef<number | null>(null);
 
   const onTouchStart = (e: React.TouchEvent) => {
     if (refreshing) return;
     if (window.scrollY > 0) return; // só quando já estamos no topo
+    // mede o header sticky para a bolinha começar logo por baixo dele
+    const header = containerRef.current?.querySelector("header");
+    setHeaderH(header ? header.getBoundingClientRect().height : 0);
     startY.current = e.touches[0].clientY;
     setDragging(true);
   };
@@ -56,16 +65,18 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
 
   return (
     <div
+      ref={containerRef}
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
       className="relative"
     >
-      {/* Indicador — segue o arrasto e roda conforme o progresso. */}
+      {/* Bolinha — nasce por baixo do header (z-10 < header z-20) e desce. */}
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-30 flex justify-center"
+        className="pointer-events-none absolute inset-x-0 z-10 flex justify-center"
         style={{
-          transform: `translateY(${pull - 38}px)`,
+          top: headerH,
+          transform: `translateY(${pull - 44}px)`,
           opacity: refreshing ? 1 : progress,
           transition: dragging ? "none" : "transform 0.25s ease, opacity 0.2s ease",
         }}
@@ -79,15 +90,7 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      {/* Conteúdo deslocado para baixo enquanto se puxa. */}
-      <div
-        style={{
-          transform: `translateY(${pull}px)`,
-          transition: dragging ? "none" : "transform 0.25s ease",
-        }}
-      >
-        {children}
-      </div>
+      {children}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { Dumbbell, Flame, Layers, TrendingUp } from "lucide-react";
 import { useSummary, useWeekly, useRecords } from "../api";
 import type { GymWeeklyPoint, GymRecord } from "../api";
 import { Card, Spinner } from "../components/ui";
+import { ScreenHeader } from "../components/ScreenHeader";
 import { groupColor } from "../lib/exercises";
 import { format } from "date-fns";
 
@@ -35,9 +36,10 @@ export function Progress() {
   const focusTotal = [...focus.values()].reduce((a, b) => a + b, 0) || 1;
 
   return (
-    <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto animate-fadeIn">
-      <h1 className="text-[22px] lg:text-[28px] font-black tracking-tight text-t1 mb-4">Progresso</h1>
+    <div className="animate-fadeIn">
+      <ScreenHeader title="Progresso" />
 
+      <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         <StatCard icon={<Dumbbell size={20} />} value={summary?.totalWorkouts ?? 0} label="Treinos totais" />
         <StatCard icon={<Flame size={20} />} value={summary?.streak ?? 0} label="Dias de streak" />
@@ -98,6 +100,7 @@ export function Progress() {
             </div>
           )}
         </Card>
+      </div>
       </div>
     </div>
   );

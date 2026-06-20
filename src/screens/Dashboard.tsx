@@ -5,7 +5,7 @@ import type { GymWorkout, GymLog } from "../api";
 import { useAllWorkouts } from "../hooks/useGym";
 import { useSession } from "../store/useSession";
 import { Card, Button, ProgressRing, Avatar, Spinner } from "../components/ui";
-import { useStatusBarColor } from "../hooks/useStatusBarColor";
+import { ScreenHeader } from "../components/ScreenHeader";
 import { greeting, relativeDays } from "../lib/format";
 import { WEEKDAYS_SHORT } from "../lib/exercises";
 
@@ -23,7 +23,6 @@ export function Dashboard() {
   const { data: summary } = useSummary();
   const { data: logsData } = useLogs({});
   usePrograms(); // garante prefetch partilhado
-  useStatusBarColor("#8DC63F"); // status bar verde no claro → funde com o header
 
   const logs = (logsData ?? []) as GymLog[];
   const workouts = items.map((i) => i.workout);
@@ -46,23 +45,19 @@ export function Dashboard() {
 
   return (
     <div className="animate-fadeIn">
-      {/* Header — verde no claro (funde com a status bar), normal no escuro */}
-      <header
-        className="bg-brand dark:bg-bg px-5 lg:px-9 pb-6"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 24px)" }}
-      >
-        <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <div className="flex-1">
-            <h1 className="text-[22px] lg:text-[28px] font-black tracking-tight text-white dark:text-t1">{greeting(profile?.name)}</h1>
-            <p className="text-white/80 dark:text-t2 text-sm">Pronto para treinar?</p>
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill bg-white/20 dark:bg-orange/10">
-            <Flame size={16} className="text-white dark:text-orange" />
-            <span className="font-bold text-white dark:text-orange text-sm tnum">{summary?.streak ?? 0}</span>
-          </div>
-          <Avatar name={profile?.name} size={40} />
-        </div>
-      </header>
+      <ScreenHeader
+        title={greeting(profile?.name)}
+        subtitle="Pronto para treinar?"
+        right={
+          <>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill bg-white/20 dark:bg-orange/10">
+              <Flame size={16} className="text-white dark:text-orange" />
+              <span className="font-bold text-white dark:text-orange text-sm tnum">{summary?.streak ?? 0}</span>
+            </div>
+            <Avatar name={profile?.name} size={40} />
+          </>
+        }
+      />
 
       <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto">
       {/* Hero — treino de hoje */}

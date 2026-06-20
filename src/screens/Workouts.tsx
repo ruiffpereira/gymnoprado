@@ -8,6 +8,7 @@ import type { GymProgram, GymWorkout } from "../api";
 import { useInvalidateGym } from "../hooks/useGym";
 import { apiErrorMessage } from "../api/client";
 import { Card, Button, Tabs, Modal, Input, GroupChip, Empty, Spinner } from "../components/ui";
+import { ScreenHeader } from "../components/ScreenHeader";
 
 type TabId = "coach" | "meus";
 
@@ -154,9 +155,10 @@ export function Workouts() {
   const list = tab === "coach" ? coachPrograms : clientPrograms;
 
   return (
-    <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto animate-fadeIn">
-      <h1 className="text-[22px] lg:text-[28px] font-black tracking-tight text-t1 mb-4">Treinos</h1>
+    <div className="animate-fadeIn">
+      <ScreenHeader title="Treinos" />
 
+      <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto">
       <div className="mb-4">
         <Tabs<TabId>
           active={tab}
@@ -207,6 +209,7 @@ export function Workouts() {
       >
         <Input label="Nome do grupo" value={groupName} onChange={(e) => setGroupName(e.target.value)} placeholder="Ex: Treino 1" />
       </Modal>
+      </div>
     </div>
   );
 }

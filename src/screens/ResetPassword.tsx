@@ -40,8 +40,9 @@ export function ResetPassword() {
 
   return (
     <div className="relative min-h-[100svh] flex flex-col items-center justify-center px-6 bg-bg overflow-hidden">
-      <div className="pointer-events-none absolute -top-24 -left-24 w-72 h-72 rounded-full bg-brand/20 blur-3xl" />
+      {/* Fades só a partir de baixo, para o topo bater certo com a status bar. */}
       <div className="pointer-events-none absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-brand/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-16 -left-20 w-64 h-64 rounded-full bg-brand/15 blur-3xl" />
       <div className="absolute top-5 right-5"><ThemeToggle compact /></div>
 
       <div className="relative w-full max-w-[400px] flex flex-col gap-6 animate-slideUp">

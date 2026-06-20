@@ -5,6 +5,7 @@ import type { GymProgram } from "../api";
 import { logout } from "../api/session";
 import { useSession } from "../store/useSession";
 import { Card, Avatar, Badge, Button } from "../components/ui";
+import { ScreenHeader } from "../components/ScreenHeader";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { InstallRow } from "../components/InstallPrompt";
 import { format } from "date-fns";
@@ -45,9 +46,10 @@ export function Profile() {
   };
 
   return (
-    <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto animate-fadeIn">
-      <h1 className="text-[22px] lg:text-[28px] font-black tracking-tight text-t1 mb-4">Perfil</h1>
+    <div className="animate-fadeIn">
+      <ScreenHeader title="Perfil" />
 
+      <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto">
       {/* Hero */}
       <div className="relative rounded-card bg-ink text-white p-6 mb-5 overflow-hidden">
         <div className="absolute -top-8 -right-6 w-36 h-36 rounded-full bg-brand/25 blur-3xl" />
@@ -89,6 +91,7 @@ export function Profile() {
       </Card>
 
       <Button variant="danger" fullWidth icon={<LogOut size={18} />} onClick={doLogout}>Terminar Sessão</Button>
+      </div>
     </div>
   );
 }

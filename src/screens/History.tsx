@@ -3,6 +3,7 @@ import { Dumbbell, Repeat, Flame, Layers } from "lucide-react";
 import { useLogs, useSummary } from "../api";
 import type { GymLog } from "../api";
 import { Card, Spinner, Empty } from "../components/ui";
+import { ScreenHeader } from "../components/ScreenHeader";
 import { relativeDays } from "../lib/format";
 import { startOfWeek, format } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -37,9 +38,10 @@ export function History() {
   const thisWeekKey = startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString().slice(0, 10);
 
   return (
-    <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto animate-fadeIn">
-      <h1 className="text-[22px] lg:text-[28px] font-black tracking-tight text-t1 mb-4">Histórico</h1>
+    <div className="animate-fadeIn">
+      <ScreenHeader title="Histórico" />
 
+      <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto">
       <div className="flex gap-3 mb-6">
         <StatPill icon={<Dumbbell size={18} />} value={summary?.totalWorkouts ?? logs.length} label="Treinos" />
         <StatPill icon={<Layers size={18} />} value={summary?.totalSets ?? 0} label="Séries" />
@@ -77,6 +79,7 @@ export function History() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }
