@@ -6,6 +6,7 @@ import { logout } from "../api/session";
 import { useSession } from "../store/useSession";
 import { Card, Avatar, Badge, Button } from "../components/ui";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { InstallRow } from "../components/InstallPrompt";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 
@@ -77,6 +78,7 @@ export function Profile() {
 
       {/* Settings list */}
       <Card className="p-2 mb-5">
+        <InstallRow />
         {SETTINGS.map((s) => (
           <button key={s.label} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-bg transition-colors">
             <s.icon size={18} className="text-t2" />

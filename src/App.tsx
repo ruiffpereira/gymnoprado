@@ -5,6 +5,7 @@ import { useSession } from "./store/useSession";
 import { fetchProfile } from "./api/session";
 import { Layout } from "./components/Layout";
 import { Toaster } from "./components/Toaster";
+import { InstallPrompt } from "./components/InstallPrompt";
 import { Spinner } from "./components/ui";
 import { Login } from "./screens/Login";
 import { Register } from "./screens/Register";
@@ -68,6 +69,7 @@ export default function App() {
   return (
     <>
       <Toaster />
+      <InstallPrompt />
       <Routes>
       {/* Execução em ecrã cheio (sem layout/nav) */}
       <Route path="/treino/:id/executar" element={<WorkoutExec />} />

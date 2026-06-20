@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
     "composite": true,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    // Emite para fora da raiz: o tsc -b precisa de emitir (projeto composite),
+    // mas não queremos um vite.config.js ao lado do .ts (o Vite carregaria o .js).
+    "outDir": "./node_modules/.tmp/node-config",
     "skipLibCheck": true,
     "module": "ESNext",
     "moduleResolution": "bundler",

@@ -11,7 +11,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["icon-180.png", "favicon.svg"],
+      includeAssets: ["icon-180.png", "icon-192.png", "icon-512.png", "icon-maskable.png"],
       manifest: {
         name: "GYMNOPRADO",
         short_name: "Gymnoprado",
@@ -22,8 +22,11 @@ export default defineConfig({
         orientation: "portrait",
         start_url: "/",
         icons: [
-          { src: "icon-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
-          { src: "icon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
+          // uso geral (transparente)
+          { src: "icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: "icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          // full-bleed para o ecrã principal Android (sem anel/cortes)
+          { src: "icon-maskable.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
       },
       workbox: {
