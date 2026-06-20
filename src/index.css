@@ -46,6 +46,14 @@
   #root {
     height: 100%;
   }
+  html {
+    scrollbar-gutter: stable;
+  }
+  /* Sem rubber-band/bounce nativo (o pull-to-refresh é custom, ver PullToRefresh). */
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
   body {
     margin: 0;
     background: var(--bg);

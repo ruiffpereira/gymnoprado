@@ -5,6 +5,7 @@ import type { GymWorkout, GymLog } from "../api";
 import { useAllWorkouts } from "../hooks/useGym";
 import { useSession } from "../store/useSession";
 import { Card, Button, ProgressRing, Avatar, Spinner } from "../components/ui";
+import { useStatusBarColor } from "../hooks/useStatusBarColor";
 import { greeting, relativeDays } from "../lib/format";
 import { WEEKDAYS_SHORT } from "../lib/exercises";
 
@@ -22,6 +23,7 @@ export function Dashboard() {
   const { data: summary } = useSummary();
   const { data: logsData } = useLogs({});
   usePrograms(); // garante prefetch partilhado
+  useStatusBarColor("#8DC63F"); // status bar verde no claro → funde com o header
 
   const logs = (logsData ?? []) as GymLog[];
   const workouts = items.map((i) => i.workout);
@@ -43,20 +45,26 @@ export function Dashboard() {
   }
 
   return (
-    <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto animate-fadeIn">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="flex-1">
-          <h1 className="text-[22px] lg:text-[28px] font-black tracking-tight text-t1">{greeting(profile?.name)}</h1>
-          <p className="text-t2 text-sm">Pronto para treinar?</p>
+    <div className="animate-fadeIn">
+      {/* Header — verde no claro (funde com a status bar), normal no escuro */}
+      <header
+        className="bg-brand dark:bg-bg px-5 lg:px-9 pb-6"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 24px)" }}
+      >
+        <div className="max-w-3xl mx-auto flex items-center gap-3">
+          <div className="flex-1">
+            <h1 className="text-[22px] lg:text-[28px] font-black tracking-tight text-white dark:text-t1">{greeting(profile?.name)}</h1>
+            <p className="text-white/80 dark:text-t2 text-sm">Pronto para treinar?</p>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill bg-white/20 dark:bg-orange/10">
+            <Flame size={16} className="text-white dark:text-orange" />
+            <span className="font-bold text-white dark:text-orange text-sm tnum">{summary?.streak ?? 0}</span>
+          </div>
+          <Avatar name={profile?.name} size={40} />
         </div>
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill bg-orange/10">
-          <Flame size={16} className="text-orange" />
-          <span className="font-bold text-orange text-sm tnum">{summary?.streak ?? 0}</span>
-        </div>
-        <Avatar name={profile?.name} size={40} />
-      </div>
+      </header>
 
+      <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto">
       {/* Hero — treino de hoje */}
       <div className="relative rounded-card bg-ink text-white p-6 overflow-hidden mb-5">
         <div className="absolute -top-10 -right-6 w-40 h-40 rounded-full bg-brand/30 blur-3xl" />
@@ -128,6 +136,7 @@ export function Dashboard() {
           </Card>
         ))}
         {logs.length === 0 && <p className="text-sm text-t3 py-4 text-center">Ainda não há treinos registados.</p>}
+      </div>
       </div>
     </div>
   );

@@ -31,7 +31,7 @@ export function ForgotPassword() {
   };
 
   return (
-    <div className="relative min-h-[100dvh] flex flex-col items-center justify-center px-6 bg-bg overflow-hidden">
+    <div className="relative min-h-[100svh] flex flex-col items-center justify-center px-6 bg-bg overflow-hidden">
       <div className="pointer-events-none absolute -top-24 -left-24 w-72 h-72 rounded-full bg-brand/20 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-brand/20 blur-3xl" />
       <div className="absolute top-5 right-5"><ThemeToggle compact /></div>

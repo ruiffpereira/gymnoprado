@@ -18,7 +18,7 @@ function apply(theme: Theme) {
   if (typeof document === "undefined") return;
   document.documentElement.setAttribute("data-theme", theme);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", theme === "dark" ? "#0D0F12" : "#8DC63F");
+  if (meta) meta.setAttribute("content", theme === "dark" ? "#0D0F12" : "#F5F7F3");
 }
 
 /** Aplica o tema guardado o mais cedo possível (chamado em main.tsx). */

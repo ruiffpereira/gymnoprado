@@ -45,7 +45,7 @@ export default function App() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-bg">
+      <div className="min-h-[100svh] flex items-center justify-center bg-bg">
         <Spinner className="h-8 w-8" />
       </div>
     );
@@ -55,6 +55,7 @@ export default function App() {
     return (
       <>
         <Toaster />
+        <InstallPrompt />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/registo" element={<Register />} />

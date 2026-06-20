@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import { useEffect } from "react";
 import { Logo, Avatar } from "./ui";
 import { ThemeToggle } from "./ThemeToggle";
+import { PullToRefresh } from "./PullToRefresh";
 import { useSession } from "../store/useSession";
 
 const NAV: { to: string; label: string; icon: LucideIcon }[] = [
@@ -80,7 +81,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-[100dvh] bg-bg">
       <SideNav />
-      <main className="flex-1 min-w-0 pb-20 lg:pb-0">{children}</main>
+      <main className="flex-1 min-w-0 pb-20 lg:pb-0">
+        <PullToRefresh>{children}</PullToRefresh>
+      </main>
       <BottomNav />
     </div>
   );
