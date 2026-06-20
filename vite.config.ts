@@ -16,7 +16,7 @@ export default defineConfig({
         name: "GYMNOPRADO",
         short_name: "Gymnoprado",
         description: "A tua jornada de treino começa aqui.",
-        theme_color: "#8DC63F",
+        theme_color: "#0D0F12",
         background_color: "#0D0F12",
         display: "standalone",
         orientation: "portrait",
