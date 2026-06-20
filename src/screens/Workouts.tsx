@@ -1,0 +1,212 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "../lib/toast";
+import { ChevronDown, Lock, Plus, Play, Copy, Pencil, Trash2, Dumbbell } from "lucide-react";
+import { usePrograms, createProgram, deleteProgram, deleteWorkout, cloneWorkout } from "../api";
+import type { GymProgram, GymWorkout } from "../api";
+import { useInvalidateGym } from "../hooks/useGym";
+import { apiErrorMessage } from "../api/client";
+import { Card, Button, Tabs, Modal, Input, GroupChip, Empty, Spinner } from "../components/ui";
+
+type TabId = "coach" | "meus";
+
+function WorkoutCard({ workout, readOnly, clientPrograms, onChanged }: {
+  workout: GymWorkout;
+  readOnly: boolean;
+  clientPrograms: GymProgram[];
+  onChanged: () => void;
+}) {
+  const navigate = useNavigate();
+  const [cloneOpen, setCloneOpen] = useState(false);
+
+  const remove = useMutation({
+    mutationFn: () => deleteWorkout(workout.id),
+    onSuccess: () => { onChanged(); toast.success("Treino eliminado"); },
+    onError: (e) => toast.error(apiErrorMessage(e)),
+  });
+  const clone = useMutation({
+    mutationFn: (targetProgramId: string) => cloneWorkout(workout.id, { targetProgramId }),
+    onSuccess: () => { onChanged(); setCloneOpen(false); toast.success("Treino clonado para Os Meus"); },
+    onError: (e) => toast.error(apiErrorMessage(e)),
+  });
+
+  const doClone = () => {
+    if (clientPrograms.length === 0) { toast.error("Cria primeiro um grupo em 'Os Meus'."); return; }
+    if (clientPrograms.length === 1) clone.mutate(clientPrograms[0].id);
+    else setCloneOpen(true);
+  };
+
+  return (
+    <Card className="p-0">
+      <div className="h-1" style={{ background: readOnly ? "var(--t3)" : "var(--green)" }} />
+      <div className="p-4">
+        <div className="flex items-start gap-2 mb-2">
+          <div className="w-9 h-9 rounded-xl bg-brand-lt flex items-center justify-center shrink-0">
+            <Dumbbell size={16} className="text-brand-dk" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <p className="font-bold text-t1 truncate">{workout.name}</p>
+              {readOnly && <Lock size={13} className="text-t3 shrink-0" />}
+            </div>
+            <p className="text-xs text-t3">{workout.exercises.length} exercícios</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-1 mb-2.5">
+          {(workout.muscleGroups ?? []).map((g) => <GroupChip key={g} group={g} />)}
+        </div>
+
+        <ul className="text-xs text-t2 space-y-0.5 mb-3">
+          {workout.exercises.slice(0, 3).map((e) => (
+            <li key={e.id} className="truncate">{e.name} · {e.sets}×{e.reps}</li>
+          ))}
+          {workout.exercises.length > 3 && <li className="text-t3">+{workout.exercises.length - 3} mais…</li>}
+        </ul>
+
+        <div className="flex items-center gap-1.5">
+          <Button size="sm" icon={<Play size={15} fill="currentColor" />} onClick={() => navigate(`/treino/${workout.id}`)}>Iniciar</Button>
+          <Button size="sm" variant="greenLight" icon={<Copy size={15} />} onClick={doClone}>Clonar</Button>
+          {!readOnly && (
+            <>
+              <button onClick={() => navigate(`/treino/${workout.id}/editar`)} className="ml-auto w-8 h-8 rounded-lg bg-bg flex items-center justify-center text-t2"><Pencil size={15} /></button>
+              <button onClick={() => remove.mutate()} className="w-8 h-8 rounded-lg bg-bg flex items-center justify-center text-red"><Trash2 size={15} /></button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <Modal open={cloneOpen} onClose={() => setCloneOpen(false)} title="Clonar para que grupo?">
+        <div className="flex flex-col gap-2">
+          {clientPrograms.map((p) => (
+            <button key={p.id} onClick={() => clone.mutate(p.id)} className="text-left p-3 rounded-xl border border-line hover:border-brand transition-colors">
+              <span className="font-semibold text-t1">{p.name}</span>
+            </button>
+          ))}
+        </div>
+      </Modal>
+    </Card>
+  );
+}
+
+function ProgramAccordion({ program, readOnly, clientPrograms, onChanged }: {
+  program: GymProgram;
+  readOnly: boolean;
+  clientPrograms: GymProgram[];
+  onChanged: () => void;
+}) {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(true);
+  const remove = useMutation({
+    mutationFn: () => deleteProgram(program.id),
+    onSuccess: () => { onChanged(); toast.success("Grupo eliminado"); },
+    onError: (e) => toast.error(apiErrorMessage(e)),
+  });
+
+  return (
+    <div>
+      <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center gap-2 py-2">
+        <ChevronDown size={18} className={`text-t3 transition-transform ${open ? "" : "-rotate-90"}`} />
+        <span className="font-bold text-t1">{program.name}</span>
+        {readOnly && <Lock size={13} className="text-t3" />}
+        <span className="text-xs text-t3">({program.workouts.length})</span>
+        {!readOnly && (
+          <span onClick={(e) => { e.stopPropagation(); remove.mutate(); }} className="ml-auto text-t3 hover:text-red p-1"><Trash2 size={15} /></span>
+        )}
+      </button>
+
+      {open && (
+        <div className="grid sm:grid-cols-2 gap-3 pb-3">
+          {program.workouts.map((w) => (
+            <WorkoutCard key={w.id} workout={w} readOnly={readOnly} clientPrograms={clientPrograms} onChanged={onChanged} />
+          ))}
+          {!readOnly && (
+            <button onClick={() => navigate(`/programa/${program.id}/novo-treino`)} className="rounded-card border-2 border-dashed border-line text-t2 flex items-center justify-center gap-2 py-6 hover:border-brand hover:text-brand transition-colors">
+              <Plus size={18} /> Adicionar treino
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function Workouts() {
+  const [tab, setTab] = useState<TabId>("coach");
+  const [newGroupOpen, setNewGroupOpen] = useState(false);
+  const [groupName, setGroupName] = useState("");
+  const { data, isLoading } = usePrograms();
+  const invalidate = useInvalidateGym();
+
+  const programs = (data ?? []) as GymProgram[];
+  const coachPrograms = programs.filter((p) => p.owner === "coach");
+  const clientPrograms = programs.filter((p) => p.owner === "client");
+
+  const createGroup = useMutation({
+    mutationFn: () => createProgram({ name: groupName.trim() }),
+    onSuccess: () => { invalidate(); setNewGroupOpen(false); setGroupName(""); toast.success("Grupo criado"); },
+    onError: (e) => toast.error(apiErrorMessage(e)),
+  });
+
+  if (isLoading) return <div className="flex justify-center pt-24"><Spinner className="h-8 w-8" /></div>;
+
+  const list = tab === "coach" ? coachPrograms : clientPrograms;
+
+  return (
+    <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto animate-fadeIn">
+      <h1 className="text-[22px] lg:text-[28px] font-black tracking-tight text-t1 mb-4">Treinos</h1>
+
+      <div className="mb-4">
+        <Tabs<TabId>
+          active={tab}
+          onChange={setTab}
+          tabs={[
+            { id: "coach", label: <span className="flex items-center gap-1.5"><Lock size={14} /> Do Coach</span> },
+            { id: "meus", label: "⭐ Os Meus" },
+          ]}
+        />
+      </div>
+
+      {tab === "coach" && coachPrograms.length > 0 && (
+        <div className="mb-4 p-3 rounded-xl bg-brand-xlt text-brand-dk text-xs flex items-center gap-2">
+          <Lock size={14} /> Os treinos do coach são só de leitura. Usa "Clonar" para os editares em Os Meus.
+        </div>
+      )}
+
+      {tab === "meus" && (
+        <div className="flex justify-end mb-3">
+          <Button size="sm" icon={<Plus size={16} />} onClick={() => setNewGroupOpen(true)}>Novo Grupo</Button>
+        </div>
+      )}
+
+      {list.length === 0 ? (
+        <Empty
+          title={tab === "coach" ? "Sem treinos do coach" : "Sem grupos teus"}
+          subtitle={tab === "coach" ? "O teu coach ainda não te atribuiu treinos." : "Cria um grupo para organizar os teus treinos."}
+          action={tab === "meus" ? <Button icon={<Plus size={16} />} onClick={() => setNewGroupOpen(true)}>Novo Grupo</Button> : undefined}
+        />
+      ) : (
+        <div className="flex flex-col gap-1">
+          {list.map((p) => (
+            <ProgramAccordion key={p.id} program={p} readOnly={tab === "coach"} clientPrograms={clientPrograms} onChanged={invalidate} />
+          ))}
+        </div>
+      )}
+
+      <Modal
+        open={newGroupOpen}
+        onClose={() => setNewGroupOpen(false)}
+        title="Novo Grupo de Treino"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setNewGroupOpen(false)}>Cancelar</Button>
+            <Button disabled={!groupName.trim() || createGroup.isPending} onClick={() => createGroup.mutate()}>Criar</Button>
+          </>
+        }
+      >
+        <Input label="Nome do grupo" value={groupName} onChange={(e) => setGroupName(e.target.value)} placeholder="Ex: Treino 1" />
+      </Modal>
+    </div>
+  );
+}

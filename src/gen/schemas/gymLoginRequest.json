@@ -1,0 +1,1 @@
+{"type":"object","required":["userId","provider","email","password"],"properties":{"userId":{"type":"string","format":"uuid","description":"Tenant (dono/coach do ginásio)"},"provider":{"type":"string","enum":["credentials"]},"email":{"type":"string","format":"email"},"password":{"type":"string","format":"password"}},"x-readme-ref-name":"GymLoginRequest"}

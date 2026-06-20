@@ -1,0 +1,1 @@
+{"type":"object","properties":{"exerciseName":{"type":"string"},"group":{"type":"string","nullable":true},"weight":{"type":"number"}},"required":["exerciseName","weight"],"x-readme-ref-name":"GymRecord"}

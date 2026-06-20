@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>GYMNOPRADO — App de Treino</title>
+<meta name="theme-color" content="#8DC63F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GYMNOPRADO">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F5F7F3; color: #1A1A1E; -webkit-font-smoothing: antialiased; }
+  body { overflow-x: hidden; }
+  button { font-family: 'Plus Jakarta Sans', sans-serif; }
+  input { font-family: 'Plus Jakarta Sans', sans-serif; }
+  ::selection { background: #8DC63F; color: #fff; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 100px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  /* Animations */
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes popIn { 0% { transform: scale(0.85); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes cardEnter { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .fade-in { animation: fadeIn 0.25s ease; }
+  .slide-up { animation: slideUp 0.4s cubic-bezier(.2,.8,.2,1); }
+  .pop-in { animation: popIn 0.3s cubic-bezier(.2,.8,.2,1); }
+  .card-enter { animation: cardEnter 0.3s cubic-bezier(.2,.8,.2,1); }
+
+  .screen-enter { animation: fadeIn 0.3s ease; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="image-slot.js"></script>
+<script type="text/babel" src="gp-components.jsx"></script>
+<script type="text/babel" src="gp-screens.jsx"></script>
+<script type="text/babel" src="gp-detail.jsx"></script>
+<script type="text/babel" src="gp-workout.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+// ═══════════════════════════════════════════════════════════════
+//  SEED DATA
+// ═══════════════════════════════════════════════════════════════
+const today = new Date();
+const dayOffset = (n) => { const d = new Date(today); d.setDate(today.getDate()-n); return d.toISOString().split('T')[0]; };
+
+const W = {
+  peitoTri: { id:1, name:'Peito & Tríceps', muscleGroups:['Peito','Tríceps'], createdAt:dayOffset(40), lastDone:dayOffset(2),
+    exercises:[
+      { id:101, name:'Supino Plano com Barra', sets:4, reps:10, weight:60, rest:90, group:'Peito' },
+      { id:102, name:'Supino Inclinado Halteres', sets:3, reps:12, weight:24, rest:75, group:'Peito' },
+      { id:103, name:'Crucifixo com Cabos', sets:3, reps:15, weight:15, rest:60, group:'Peito' },
+      { id:104, name:'Tríceps na Corda', sets:4, reps:12, weight:25, rest:60, group:'Tríceps' },
+      { id:105, name:'Tríceps Francês', sets:3, reps:12, weight:20, rest:60, group:'Tríceps' },
+    ]},
+  costasBi: { id:2, name:'Costas & Bíceps', muscleGroups:['Costas','Bíceps'], createdAt:dayOffset(38), lastDone:dayOffset(4),
+    exercises:[
+      { id:201, name:'Puxada Alta Pegada Larga', sets:4, reps:10, weight:55, rest:90, group:'Costas' },
+      { id:202, name:'Remada com Barra', sets:4, reps:10, weight:50, rest:90, group:'Costas' },
+      { id:203, name:'Remada Unilateral', sets:3, reps:12, weight:28, rest:75, group:'Costas' },
+      { id:204, name:'Curl com Barra', sets:3, reps:12, weight:30, rest:60, group:'Bíceps' },
+      { id:205, name:'Martelo', sets:3, reps:12, weight:14, rest:60, group:'Bíceps' },
+    ]},
+  pernas: { id:3, name:'Pernas Completo', muscleGroups:['Pernas','Glúteos'], createdAt:dayOffset(30), lastDone:dayOffset(6),
+    exercises:[
+      { id:301, name:'Agachamento Livre', sets:4, reps:8, weight:80, rest:120, group:'Pernas' },
+      { id:302, name:'Leg Press 45°', sets:4, reps:12, weight:160, rest:90, group:'Pernas' },
+      { id:303, name:'Leg Extension', sets:3, reps:15, weight:50, rest:60, group:'Pernas' },
+      { id:304, name:'Leg Curl Deitado', sets:3, reps:12, weight:40, rest:60, group:'Pernas' },
+      { id:305, name:'Hip Thrust', sets:3, reps:12, weight:70, rest:75, group:'Glúteos' },
+      { id:306, name:'Pantorrilha em Pé', sets:4, reps:18, weight:60, rest:45, group:'Pernas' },
+    ]},
+  ombrosAbs: { id:4, name:'Ombros & Abs', muscleGroups:['Ombros','Abdómen'], createdAt:dayOffset(20), lastDone:null,
+    exercises:[
+      { id:401, name:'Press Militar com Barra', sets:4, reps:10, weight:40, rest:90, group:'Ombros' },
+      { id:402, name:'Elevação Lateral', sets:4, reps:15, weight:10, rest:60, group:'Ombros' },
+      { id:403, name:'Pássaro', sets:3, reps:15, weight:8, rest:60, group:'Ombros' },
+      { id:404, name:'Prancha', sets:3, reps:60, weight:0, rest:45, group:'Abdómen' },
+      { id:405, name:'Abdominal na Polia', sets:3, reps:15, weight:30, rest:45, group:'Abdómen' },
+    ]},
+  meuPeito: { id:5, name:'O Meu Peito', muscleGroups:['Peito'], createdAt:dayOffset(8), lastDone:null,
+    exercises:[
+      { id:501, name:'Supino Plano com Barra', sets:4, reps:8, weight:65, rest:90, group:'Peito' },
+      { id:502, name:'Crucifixo com Halteres', sets:3, reps:12, weight:18, rest:60, group:'Peito' },
+      { id:503, name:'Flexão de Braços', sets:3, reps:15, weight:0, rest:45, group:'Peito' },
+    ]},
+};
+
+// Programs = grouping layer ("Treino 1") containing workouts. owner: 'coach' (locked) | 'me' (editable)
+const SEED_PROGRAMS = [
+  { id:'c1', name:'Treino 1', owner:'coach', note:'Atribuído pelo coach', workouts:[ W.peitoTri, W.costasBi ] },
+  { id:'c2', name:'Treino 2', owner:'coach', note:'Atribuído pelo coach', workouts:[ W.pernas, W.ombrosAbs ] },
+  { id:'m1', name:'Os Meus Treinos', owner:'me', note:'Criados por ti', workouts:[ W.meuPeito ] },
+];
+
+const SEED_LOGS = [
+  { id:1, workoutName:'Peito & Tríceps', date:dayOffset(2), duration:52, totalSets:17, totalWeight:8400, exercises:5 },
+  { id:2, workoutName:'Costas & Bíceps', date:dayOffset(4), duration:48, totalSets:17, totalWeight:9100, exercises:5 },
+  { id:3, workoutName:'Pernas Completo', date:dayOffset(6), duration:64, totalSets:21, totalWeight:14200, exercises:6 },
+  { id:4, workoutName:'Peito & Tríceps', date:dayOffset(9), duration:50, totalSets:16, totalWeight:8100, exercises:5 },
+  { id:5, workoutName:'Costas & Bíceps', date:dayOffset(11), duration:46, totalSets:17, totalWeight:8800, exercises:5 },
+  { id:6, workoutName:'Ombros & Abs', date:dayOffset(13), duration:42, totalSets:17, totalWeight:5200, exercises:5 },
+  { id:7, workoutName:'Pernas Completo', date:dayOffset(15), duration:60, totalSets:21, totalWeight:13800, exercises:6 },
+];
+
+// ═══════════════════════════════════════════════════════════════
+//  APP ROOT
+// ═══════════════════════════════════════════════════════════════
+const STORAGE_KEY = 'gymnoprado_v2';
+
+function App() {
+  const [user, setUser] = React.useState(null);
+  const [screen, setScreen] = React.useState('dashboard');
+  const [screenParams, setScreenParams] = React.useState({});
+  const [activeWorkout, setActiveWorkout] = React.useState(null);
+  const [theme, setTheme] = React.useState(() => {
+    try { return localStorage.getItem('gymnoprado_theme') || 'light'; } catch { return 'light'; }
+  });
+
+  React.useLayoutEffect(() => { applyGpTheme(theme); try { localStorage.setItem('gymnoprado_theme', theme); } catch {} }, [theme]);
+  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
+
+  // Demo mode: open straight into the app (used by the phone showcase)
+  React.useEffect(() => {
+    if (/[?&]demo=1/.test(window.location.search)) {
+      setUser({ id:1, name:'João Silva', email:'joao@email.com', memberSince:'2024-01-15', streak:7, totalWorkouts:47 });
+    }
+  }, []);
+
+  // Persistent state
+  const loadState = () => {
+    try { const s = JSON.parse(localStorage.getItem(STORAGE_KEY)); return s || {}; } catch { return {}; }
+  };
+  const initial = loadState();
+  const [programs, setPrograms] = React.useState(initial.programs || SEED_PROGRAMS);
+  const [logs, setLogs] = React.useState(initial.logs || SEED_LOGS);
+
+  // Flat, read-only list of every workout (tagged with owner + program)
+  const allWorkouts = React.useMemo(() => programs.flatMap(p => p.workouts.map(w => ({ ...w, owner:p.owner, programId:p.id, programName:p.name }))), [programs]);
+
+  React.useEffect(()=>{
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ programs, logs })); } catch {}
+  }, [programs, logs]);
+
+  // ── Program / workout mutations (only 'me' programs are mutable) ──
+  const addProgram = (name) => {
+    const id = 'm' + Date.now();
+    setPrograms(prev => [...prev, { id, name: name || 'Novo Grupo', owner:'me', note:'Criados por ti', workouts:[] }]);
+    return id;
+  };
+  const renameProgram = (programId, name) => setPrograms(prev => prev.map(p => p.id===programId ? { ...p, name } : p));
+  const deleteProgram = (programId) => setPrograms(prev => prev.filter(p => p.id!==programId));
+  const saveWorkout = (programId, workout) => setPrograms(prev => prev.map(p => {
+    if (p.id!==programId) return p;
+    const exists = p.workouts.some(w => w.id===workout.id);
+    return { ...p, workouts: exists ? p.workouts.map(w => w.id===workout.id ? workout : w) : [workout, ...p.workouts] };
+  }));
+  const deleteWorkout = (programId, workoutId) => setPrograms(prev => prev.map(p => p.id===programId ? { ...p, workouts:p.workouts.filter(w => w.id!==workoutId) } : p));
+  const cloneToMine = (workout, targetProgramId) => {
+    const fresh = { id: Date.now()+Math.floor(Math.random()*1000), name: workout.name, muscleGroups:[...(workout.muscleGroups||[])], createdAt:new Date().toISOString().split('T')[0], lastDone:null, exercises: workout.exercises.map(e => ({ ...e, id: Date.now()+Math.random() })) };
+    setPrograms(prev => {
+      let next = [...prev];
+      let target = targetProgramId ? next.find(p=>p.id===targetProgramId) : next.find(p => p.owner==='me');
+      if (!target) { target = { id:'m'+Date.now(), name:'Os Meus Treinos', owner:'me', note:'Criados por ti', workouts:[] }; next = [...next, target]; }
+      return next.map(p => p.id===target.id ? { ...p, workouts:[fresh, ...p.workouts] } : p);
+    });
+  };
+
+  const navigate = (s, params={}) => { setScreen(s); setScreenParams(params); window.scrollTo(0,0); };
+  const openWorkout = (w) => { setScreen('workoutDetail'); setScreenParams({ workout:w }); window.scrollTo(0,0); };
+  const startWorkout = (w) => { setActiveWorkout(w); setScreen('workoutExec'); window.scrollTo(0,0); };
+  const addLog = (log) => { setLogs(prev=>[log, ...prev]); };
+
+  const ctx = { user, setUser, screen, navigate, theme, toggleTheme, programs, setPrograms, workouts: allWorkouts, allWorkouts, addProgram, renameProgram, deleteProgram, saveWorkout, deleteWorkout, cloneToMine, logs, setLogs, addLog, openWorkout, startWorkout, activeWorkout };
+
+  if (!user) {
+    return <AppCtx.Provider value={ctx}><LoginScreen /></AppCtx.Provider>;
+  }
+
+  let content;
+  switch(screen) {
+    case 'dashboard': content = <DashboardScreen />; break;
+    case 'workouts': content = <WorkoutsScreen />; break;
+    case 'history': content = <HistoryScreen />; break;
+    case 'progress': content = <ProgressScreen />; break;
+    case 'profile': content = <ProfileScreen />; break;
+    case 'create': content = <CreateWorkoutScreen targetProgramId={screenParams.programId} />; break;
+    case 'edit': content = <CreateWorkoutScreen editWorkout={screenParams.workout} targetProgramId={screenParams.programId} />; break;
+    case 'workoutDetail': content = <WorkoutDetailScreen workout={screenParams.workout} />; break;
+    case 'workoutExec': content = <WorkoutExecScreen workout={activeWorkout} />; break;
+    default: content = <DashboardScreen />;
+  }
+
+  const hideNav = screen === 'workoutExec';
+
+  return (
+    <AppCtx.Provider value={ctx}>
+      <GpLayout screen={screen} navigate={navigate} user={user} hideNav={hideNav}>
+        <div className="screen-enter" key={screen}>{content}</div>
+      </GpLayout>
+    </AppCtx.Provider>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+// PWA service worker (best-effort — silently no-ops where unsupported)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

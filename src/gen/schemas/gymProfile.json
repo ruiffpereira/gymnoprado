@@ -1,0 +1,1 @@
+{"type":"object","properties":{"id":{"type":"string","format":"uuid"},"name":{"type":"string"},"email":{"type":"string","nullable":true},"photo":{"type":"string","nullable":true},"memberSince":{"type":"string","format":"date-time"},"streak":{"type":"integer"}},"required":["id","name","streak"],"x-readme-ref-name":"GymProfile"}

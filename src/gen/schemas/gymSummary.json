@@ -1,0 +1,1 @@
+{"type":"object","properties":{"totalWorkouts":{"type":"integer"},"streak":{"type":"integer"},"totalSets":{"type":"integer"},"avgPerWeek":{"type":"number"}},"required":["totalWorkouts","streak","totalSets","avgPerWeek"],"x-readme-ref-name":"GymSummary"}

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GYMNOPRADO — App (Mobile)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+  body {
+    background:
+      radial-gradient(900px 600px at 18% 12%, rgba(141,198,63,0.18), transparent 60%),
+      radial-gradient(800px 600px at 88% 88%, rgba(141,198,63,0.10), transparent 55%),
+      #0B0D10;
+    color: #fff; overflow: hidden;
+  }
+  .wrap { height: 100vh; display: flex; align-items: center; justify-content: center; gap: 64px; padding: 32px; }
+  .panel { max-width: 380px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #8DC63F; background: rgba(141,198,63,0.12); border: 1px solid rgba(141,198,63,0.3); padding: 7px 14px; border-radius: 100px; }
+  h1 { font-size: 46px; line-height: 1.02; font-weight: 900; letter-spacing: -0.04em; margin: 22px 0 16px; }
+  h1 .g { color: #8DC63F; }
+  .sub { font-size: 16px; line-height: 1.55; color: rgba(255,255,255,0.62); margin-bottom: 28px; }
+  .feats { display: flex; flex-direction: column; gap: 14px; margin-bottom: 30px; }
+  .feat { display: flex; align-items: center; gap: 12px; font-size: 14.5px; color: rgba(255,255,255,0.82); }
+  .feat .dot { width: 30px; height: 30px; border-radius: 9px; background: rgba(141,198,63,0.14); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .chips { display: flex; gap: 10px; flex-wrap: wrap; }
+  .chip { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.75); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); padding: 8px 14px; border-radius: 100px; }
+  .hint { margin-top: 26px; font-size: 13px; color: rgba(255,255,255,0.45); display: flex; align-items: center; gap: 8px; }
+  .open { display: inline-flex; align-items: center; gap: 8px; margin-top: 22px; text-decoration: none; color: #0B0D10; background: #8DC63F; font-weight: 700; font-size: 14px; padding: 12px 22px; border-radius: 13px; transition: transform 0.15s; }
+  .open:hover { transform: translateY(-1px); }
+  .stage { flex-shrink: 0; transform-origin: center; }
+  @media (max-width: 920px) {
+    .wrap { gap: 0; }
+    .panel { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="panel">
+    <span class="eyebrow">●&nbsp;&nbsp;App do Cliente · PWA</span>
+    <h1>A tua app de<br><span class="g">musculação.</span></h1>
+    <p class="sub">Treinos atribuídos pelo coach, os teus próprios planos, registo de cada série e timer de descanso — tudo no bolso, instalável no telemóvel.</p>
+    <div class="feats">
+      <div class="feat"><span class="dot">🏋️</span> Treinos do coach, bloqueados e prontos a usar</div>
+      <div class="feat"><span class="dot">⭐</span> Cria e clona os teus, organizados por grupos</div>
+      <div class="feat"><span class="dot">⏱️</span> Execução com cards, timer e registo de pesos</div>
+    </div>
+    <div class="chips">
+      <span class="chip">Instalável (PWA)</span>
+      <span class="chip">Modo escuro</span>
+      <span class="chip">Funciona offline</span>
+    </div>
+    <a class="open" href="Gymnoprado.html?demo=1" target="_blank">Abrir em ecrã inteiro →</a>
+    <div class="hint">👆 Interage com o telemóvel — é a app a sério.</div>
+  </div>
+
+  <div class="stage" id="stage">
+    <div id="device"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+const DEVICE_W = 390, DEVICE_H = 844;
+
+function Showcase() {
+  return (
+    <IOSDevice width={DEVICE_W} height={DEVICE_H}>
+      <div style={{ position:'relative', height:'100%', background:'#F5F7F3', paddingTop:48, paddingBottom:20 }}>
+        <iframe
+          src="Gymnoprado.html?demo=1"
+          title="GYMNOPRADO"
+          style={{ width:'100%', height:'100%', border:'none', display:'block', background:'#F5F7F3' }}
+        ></iframe>
+      </div>
+    </IOSDevice>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('device')).render(<Showcase />);
+
+// Scale the device to fit the viewport height
+function fit() {
+  const stage = document.getElementById('stage');
+  const margin = 56;
+  const scale = Math.min(1, (window.innerHeight - margin) / DEVICE_H);
+  stage.style.transform = `scale(${scale})`;
+}
+window.addEventListener('resize', fit);
+setTimeout(fit, 60);
+</script>
+</body>
+</html>

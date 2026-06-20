@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --green: #8dc63f;
+  --green-dk: #6ba82e;
+  --green-lt: #ebf6d3;
+  --green-xlt: #f4fae8;
+  --bg: #f5f7f3;
+  --surface: #ffffff;
+  --dark: #15171b;
+  --t1: #1a1a1e;
+  --t2: #6b7280;
+  --t3: #9ca3af;
+  --border: #e5e7eb;
+  --shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+  --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.16);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --green-dk: #a6d65c;
+  --green-lt: #26331a;
+  --green-xlt: #1a2412;
+  --bg: #0d0f12;
+  --surface: #1a1d21;
+  --dark: #070809;
+  --t1: #f2f4f1;
+  --t2: #9ca3ab;
+  --t3: #646b72;
+  --border: #2a2e34;
+  --shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 6px 30px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 18px 60px rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--t1);
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  input,
+  button,
+  select {
+    font-family: inherit;
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Hide scrollbars on horizontal scrollers */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
