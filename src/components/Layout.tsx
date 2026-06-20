@@ -81,9 +81,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-[100dvh] bg-bg">
       <SideNav />
-      <main className="flex-1 min-w-0 pb-20 lg:pb-0">
-        <PullToRefresh>{children}</PullToRefresh>
-      </main>
+      <main className="flex-1 min-w-0 pb-20 lg:pb-0">{children}</main>
+      <PullToRefresh />
       <BottomNav />
     </div>
   );

@@ -41,11 +41,6 @@
   * {
     -webkit-tap-highlight-color: transparent;
   }
-  html,
-  body,
-  #root {
-    height: 100%;
-  }
   html {
     scrollbar-gutter: stable;
   }
