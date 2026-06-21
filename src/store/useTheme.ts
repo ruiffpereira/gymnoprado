@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { setStatusBarTheme } from "../lib/statusBar";
 
 type Theme = "light" | "dark";
 const KEY = "gymnoprado_theme";
@@ -17,8 +18,8 @@ function resolveInitial(): Theme {
 function apply(theme: Theme) {
   if (typeof document === "undefined") return;
   document.documentElement.setAttribute("data-theme", theme);
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute("content", theme === "dark" ? "#0D0F12" : "#F5F7F3");
+  // A cor da status bar respeita as cores do ecrã activo (ver lib/statusBar).
+  setStatusBarTheme(theme);
 }
 
 /** Aplica o tema guardado o mais cedo possível (chamado em main.tsx). */
