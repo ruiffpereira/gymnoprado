@@ -1,19 +1,19 @@
-import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { useStatusBarColor } from "../hooks/useStatusBarColor";
+import { useHeaderStore } from "../store/useHeader";
 
 // Header verde full-bleed que se funde com a status bar (tema claro);
 // no tema escuro fica com o fundo normal. Também pinta a status bar de verde
-// enquanto o ecrã está montado, para não haver linha de divisão no topo.
+// enquanto está montado, para não haver linha de divisão no topo.
+//
+// Vive no Layout e fica montado entre tabs (não remonta → não salta). O conteúdo
+// (título/subtítulo/right) vem do useHeaderStore, alimentado por cada ecrã.
 //
 // Em repouso (topo) está fundido com a status bar; ao fazer scroll ganha uma
 // sombra + fio subtil na base, para separar do conteúdo que passa por baixo
 // (essencial no dark, onde header e fundo têm a mesma cor).
-export function ScreenHeader({ title, subtitle, right }: {
-  title: ReactNode;
-  subtitle?: ReactNode;
-  right?: ReactNode;
-}) {
+export function ScreenHeader() {
+  const { title, subtitle, right } = useHeaderStore((s) => s.config);
   useStatusBarColor("#8DC63F");
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
@@ -35,6 +35,22 @@ export function ScreenHeader({ title, subtitle, right }: {
           {subtitle && <p className="text-white/80 dark:text-t2 text-sm">{subtitle}</p>}
         </div>
         {right}
+      </div>
+      <div className="absolute bottom-1.5 inset-x-5 lg:inset-x-9">
+        <a
+          href="https://rufvision.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group block max-w-3xl mx-auto text-right text-[9px] font-medium tracking-wide"
+        >
+          <span className="font-extrabold">
+            <span className="text-[#022645] dark:text-[#4f9fe0]">R</span><span className="text-[#F03036]">V</span>
+          </span>
+          <span className="ml-1 text-white/45 dark:text-t3">Desenvolvido por </span>
+          <span className="font-bold">
+            <span className="text-[#022645] dark:text-[#4f9fe0]">Ruf</span><span className="text-[#F03036]">Vision</span>
+          </span>
+        </a>
       </div>
     </header>
   );

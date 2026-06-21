@@ -5,7 +5,7 @@ import type { GymProgram } from "../api";
 import { logout } from "../api/session";
 import { useSession } from "../store/useSession";
 import { Card, Avatar, Badge, Button } from "../components/ui";
-import { ScreenHeader } from "../components/ScreenHeader";
+import { useScreenHeader } from "../store/useHeader";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { InstallRow } from "../components/InstallPrompt";
 import { format } from "date-fns";
@@ -45,14 +45,14 @@ export function Profile() {
     navigate("/login", { replace: true });
   };
 
+  useScreenHeader({ title: "Perfil" });
+
   return (
     <div className="animate-fadeIn">
-      <ScreenHeader title="Perfil" />
-
       <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto">
       {/* Hero */}
-      <div className="relative rounded-card bg-ink text-white p-6 mb-5 overflow-hidden">
-        <div className="absolute -top-8 -right-6 w-36 h-36 rounded-full bg-brand/25 blur-3xl" />
+      <div className="relative rounded-card overflow-hidden mb-5 p-6 text-white bg-ink dark:bg-gradient-to-br dark:from-[#26391c] dark:via-[#13200d] dark:to-[#0b1207] shadow-lg">
+        <div className="absolute -top-8 -right-6 w-36 h-36 rounded-full bg-brand/25 dark:bg-brand/45 blur-3xl" />
         <div className="relative flex items-center gap-4">
           <Avatar name={profile?.name} size={64} />
           <div className="min-w-0">

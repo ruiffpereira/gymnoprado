@@ -3,7 +3,7 @@ import { Dumbbell, Repeat, Flame, Layers } from "lucide-react";
 import { useLogs, useSummary } from "../api";
 import type { GymLog } from "../api";
 import { Card, Spinner, Empty } from "../components/ui";
-import { ScreenHeader } from "../components/ScreenHeader";
+import { useScreenHeader } from "../store/useHeader";
 import { relativeDays } from "../lib/format";
 import { startOfWeek, format } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -24,6 +24,8 @@ export function History() {
   const { data: summary } = useSummary();
   const logs = (data ?? []) as GymLog[];
 
+  useScreenHeader({ title: "Histórico" });
+
   if (isLoading) return <div className="flex justify-center pt-24"><Spinner className="h-8 w-8" /></div>;
 
   // Agrupar por semana
@@ -39,8 +41,6 @@ export function History() {
 
   return (
     <div className="animate-fadeIn">
-      <ScreenHeader title="Histórico" />
-
       <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto">
       <div className="flex gap-3 mb-6">
         <StatPill icon={<Dumbbell size={18} />} value={summary?.totalWorkouts ?? logs.length} label="Treinos" />

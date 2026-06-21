@@ -2,7 +2,7 @@ import { Dumbbell, Flame, Layers, TrendingUp } from "lucide-react";
 import { useSummary, useWeekly, useRecords } from "../api";
 import type { GymWeeklyPoint, GymRecord } from "../api";
 import { Card, Spinner } from "../components/ui";
-import { ScreenHeader } from "../components/ScreenHeader";
+import { useScreenHeader } from "../store/useHeader";
 import { groupColor } from "../lib/exercises";
 import { format } from "date-fns";
 
@@ -23,6 +23,8 @@ export function Progress() {
   const weekly = (weeklyData ?? []) as GymWeeklyPoint[];
   const records = (recordsData ?? []) as GymRecord[];
 
+  useScreenHeader({ title: "Progresso" });
+
   if (isLoading) return <div className="flex justify-center pt-24"><Spinner className="h-8 w-8" /></div>;
 
   const maxWeek = Math.max(1, ...weekly.map((w) => w.count));
@@ -37,8 +39,6 @@ export function Progress() {
 
   return (
     <div className="animate-fadeIn">
-      <ScreenHeader title="Progresso" />
-
       <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         <StatCard icon={<Dumbbell size={20} />} value={summary?.totalWorkouts ?? 0} label="Treinos totais" />

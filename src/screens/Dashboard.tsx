@@ -5,7 +5,7 @@ import type { GymWorkout, GymLog } from "../api";
 import { useAllWorkouts } from "../hooks/useGym";
 import { useSession } from "../store/useSession";
 import { Card, Button, ProgressRing, Avatar, Spinner } from "../components/ui";
-import { ScreenHeader } from "../components/ScreenHeader";
+import { useScreenHeader } from "../store/useHeader";
 import { greeting, relativeDays } from "../lib/format";
 import { WEEKDAYS_SHORT } from "../lib/exercises";
 
@@ -39,30 +39,30 @@ export function Dashboard() {
   const loggedDays = new Set(logs.map((l) => l.date));
   const weekCount = weekDates.filter((d) => loggedDays.has(d)).length;
 
+  useScreenHeader({
+    title: greeting(profile?.name),
+    subtitle: "Pronto para treinar?",
+    right: (
+      <>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill bg-white/20 dark:bg-orange/10">
+          <Flame size={16} className="text-white dark:text-orange" />
+          <span className="font-bold text-white dark:text-orange text-sm tnum">{summary?.streak ?? 0}</span>
+        </div>
+        <Avatar name={profile?.name} size={40} />
+      </>
+    ),
+  });
+
   if (isLoading) {
     return <div className="flex justify-center pt-24"><Spinner className="h-8 w-8" /></div>;
   }
 
   return (
     <div className="animate-fadeIn">
-      <ScreenHeader
-        title={greeting(profile?.name)}
-        subtitle="Pronto para treinar?"
-        right={
-          <>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill bg-white/20 dark:bg-orange/10">
-              <Flame size={16} className="text-white dark:text-orange" />
-              <span className="font-bold text-white dark:text-orange text-sm tnum">{summary?.streak ?? 0}</span>
-            </div>
-            <Avatar name={profile?.name} size={40} />
-          </>
-        }
-      />
-
       <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto">
       {/* Hero — treino de hoje */}
-      <div className="relative rounded-card bg-ink text-white p-6 overflow-hidden mb-5">
-        <div className="absolute -top-10 -right-6 w-40 h-40 rounded-full bg-brand/30 blur-3xl" />
+      <div className="relative rounded-card overflow-hidden mb-5 p-6 text-white bg-ink dark:bg-gradient-to-br dark:from-[#26391c] dark:via-[#13200d] dark:to-[#0b1207] shadow-lg">
+        <div className="absolute -top-10 -right-6 w-40 h-40 rounded-full bg-brand/30 dark:bg-brand/45 blur-3xl" />
         <div className="relative">
           <p className="text-[11px] font-bold tracking-widest text-brand mb-1">TREINO DE HOJE</p>
           {today ? (

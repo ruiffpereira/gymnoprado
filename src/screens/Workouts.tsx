@@ -8,7 +8,7 @@ import type { GymProgram, GymWorkout } from "../api";
 import { useInvalidateGym } from "../hooks/useGym";
 import { apiErrorMessage } from "../api/client";
 import { Card, Button, Tabs, Modal, Input, GroupChip, Empty, Spinner } from "../components/ui";
-import { ScreenHeader } from "../components/ScreenHeader";
+import { useScreenHeader } from "../store/useHeader";
 
 type TabId = "coach" | "meus";
 
@@ -150,14 +150,14 @@ export function Workouts() {
     onError: (e) => toast.error(apiErrorMessage(e)),
   });
 
+  useScreenHeader({ title: "Treinos" });
+
   if (isLoading) return <div className="flex justify-center pt-24"><Spinner className="h-8 w-8" /></div>;
 
   const list = tab === "coach" ? coachPrograms : clientPrograms;
 
   return (
     <div className="animate-fadeIn">
-      <ScreenHeader title="Treinos" />
-
       <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto">
       <div className="mb-4">
         <Tabs<TabId>

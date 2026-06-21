@@ -1,27 +1,50 @@
-import { Sun, Moon } from "lucide-react";
+import { Sun, Moon, Monitor } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useTheme } from "../store/useTheme";
+import type { ThemeMode } from "../store/useTheme";
+
+const MODES: { id: ThemeMode; label: string; icon: LucideIcon }[] = [
+  { id: "light", label: "Claro", icon: Sun },
+  { id: "dark", label: "Escuro", icon: Moon },
+  { id: "system", label: "Sistema", icon: Monitor },
+];
 
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {
-  const { theme, toggle } = useTheme();
-  const dark = theme === "dark";
+  const { mode, setMode } = useTheme();
 
   if (compact) {
+    // Botão único que cicla Claro → Escuro → Sistema; o ícone reflecte o modo actual.
+    const order: ThemeMode[] = ["light", "dark", "system"];
+    const next = order[(order.indexOf(mode) + 1) % order.length];
+    const Icon = mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
     return (
-      <button onClick={toggle} aria-label="Alternar tema" className="w-10 h-10 rounded-xl bg-surface shadow-card flex items-center justify-center">
-        {dark ? <Sun size={19} className="text-brand" /> : <Moon size={19} className="text-t2" />}
+      <button
+        onClick={() => setMode(next)}
+        aria-label="Alternar tema"
+        className="w-10 h-10 rounded-xl bg-surface shadow-card flex items-center justify-center"
+      >
+        <Icon size={19} className={mode === "light" ? "text-orange" : mode === "dark" ? "text-brand" : "text-t2"} />
       </button>
     );
   }
 
   return (
-    <button onClick={toggle} className="flex items-center justify-between w-full p-1 rounded-pill border border-line bg-bg">
-      <span className="flex items-center gap-2 pl-2.5 text-[13px] font-semibold text-t2">
-        {dark ? <Moon size={16} className="text-brand" /> : <Sun size={16} className="text-orange" />}
-        {dark ? "Modo Escuro" : "Modo Claro"}
-      </span>
-      <span className={`w-11 h-6 rounded-pill relative transition-colors ${dark ? "bg-brand" : "bg-line"}`}>
-        <span className={`absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white shadow transition-[left] ${dark ? "left-[23px]" : "left-[3px]"}`} />
-      </span>
-    </button>
+    <div className="flex gap-1 p-1 rounded-pill border border-line bg-bg">
+      {MODES.map((m) => {
+        const active = mode === m.id;
+        return (
+          <button
+            key={m.id}
+            onClick={() => setMode(m.id)}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-pill text-[12px] font-semibold transition-colors ${
+              active ? "bg-surface text-t1 shadow-card" : "text-t3 hover:text-t2"
+            }`}
+          >
+            <m.icon size={15} className={active ? "text-brand" : ""} />
+            {m.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
