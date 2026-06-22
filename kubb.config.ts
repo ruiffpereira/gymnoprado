@@ -21,6 +21,10 @@ function readDotEnv(): Record<string, string> {
 const dotEnv = readDotEnv();
 const API_BASE =
   process.env.VITE_API_BASE_URL ?? dotEnv.VITE_API_BASE_URL ?? "http://localhost:3001/api";
+// Em produção os specs estão protegidos por `swaggerAccessMiddleware`; passa-se a
+// chave via `?key=` (igual ao tifas-barber). Em dev (não-PROD) o middleware deixa passar.
+const SWAGGER_KEY = process.env.SWAGGER_ACCESS_TOKEN ?? dotEnv.SWAGGER_ACCESS_TOKEN ?? "";
+const keyQS = SWAGGER_KEY ? `?key=${SWAGGER_KEY}` : "";
 
 const sharedPlugins = [
   pluginOas(),
@@ -34,7 +38,7 @@ export default defineConfig([
   {
     root: ".",
     input: {
-      path: `${API_BASE}-docs/websites/gym.json`,
+      path: `${API_BASE}-docs/websites/gym.json${keyQS}`,
     },
     output: {
       path: "./src/gen",
@@ -47,7 +51,7 @@ export default defineConfig([
   {
     root: ".",
     input: {
-      path: `${API_BASE}-docs/websites/content.json`,
+      path: `${API_BASE}-docs/websites/content.json${keyQS}`,
     },
     output: {
       path: "./src/gen-cms",
