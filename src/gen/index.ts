@@ -7,6 +7,8 @@ export type { GetWebsitesGymLogsSuspenseQueryKey } from "./hooks/useGetWebsitesG
 export type { GetWebsitesGymMeQueryKey } from "./hooks/useGetWebsitesGymMe.js";
 export type { GetWebsitesGymMeSuspenseQueryKey } from "./hooks/useGetWebsitesGymMeSuspense.js";
 export type { GetWebsitesGymProgramsQueryKey } from "./hooks/useGetWebsitesGymPrograms.js";
+export type { GetWebsitesGymProgramsActiveQueryKey } from "./hooks/useGetWebsitesGymProgramsActive.js";
+export type { GetWebsitesGymProgramsActiveSuspenseQueryKey } from "./hooks/useGetWebsitesGymProgramsActiveSuspense.js";
 export type { GetWebsitesGymProgramsSuspenseQueryKey } from "./hooks/useGetWebsitesGymProgramsSuspense.js";
 export type { GetWebsitesGymStatsRecordsQueryKey } from "./hooks/useGetWebsitesGymStatsRecords.js";
 export type { GetWebsitesGymStatsRecordsSuspenseQueryKey } from "./hooks/useGetWebsitesGymStatsRecordsSuspense.js";
@@ -31,6 +33,7 @@ export type { GetWebsitesGymExercisesQueryParams, GetWebsitesGymExercises200, Ge
 export type { GetWebsitesGymLogsQueryParams, GetWebsitesGymLogs200, GetWebsitesGymLogsQueryResponse, GetWebsitesGymLogsQuery } from "./types/GetWebsitesGymLogs.js";
 export type { GetWebsitesGymMe200, GetWebsitesGymMeQueryResponse, GetWebsitesGymMeQuery } from "./types/GetWebsitesGymMe.js";
 export type { GetWebsitesGymPrograms200, GetWebsitesGymProgramsQueryResponse, GetWebsitesGymProgramsQuery } from "./types/GetWebsitesGymPrograms.js";
+export type { GetWebsitesGymProgramsActive200, GetWebsitesGymProgramsActiveQueryResponse, GetWebsitesGymProgramsActiveQuery } from "./types/GetWebsitesGymProgramsActive.js";
 export type { GetWebsitesGymStatsRecords200, GetWebsitesGymStatsRecordsQueryResponse, GetWebsitesGymStatsRecordsQuery } from "./types/GetWebsitesGymStatsRecords.js";
 export type { GetWebsitesGymStatsSummary200, GetWebsitesGymStatsSummaryQueryResponse, GetWebsitesGymStatsSummaryQuery } from "./types/GetWebsitesGymStatsSummary.js";
 export type { GetWebsitesGymStatsWeekly200, GetWebsitesGymStatsWeeklyQueryResponse, GetWebsitesGymStatsWeeklyQuery } from "./types/GetWebsitesGymStatsWeekly.js";
@@ -68,6 +71,8 @@ export { getWebsitesGymLogsSuspenseQueryKey, getWebsitesGymLogsSuspense, getWebs
 export { getWebsitesGymMeQueryKey, getWebsitesGymMe, getWebsitesGymMeQueryOptions, useGetWebsitesGymMe } from "./hooks/useGetWebsitesGymMe.js";
 export { getWebsitesGymMeSuspenseQueryKey, getWebsitesGymMeSuspense, getWebsitesGymMeSuspenseQueryOptions, useGetWebsitesGymMeSuspense } from "./hooks/useGetWebsitesGymMeSuspense.js";
 export { getWebsitesGymProgramsQueryKey, getWebsitesGymPrograms, getWebsitesGymProgramsQueryOptions, useGetWebsitesGymPrograms } from "./hooks/useGetWebsitesGymPrograms.js";
+export { getWebsitesGymProgramsActiveQueryKey, getWebsitesGymProgramsActive, getWebsitesGymProgramsActiveQueryOptions, useGetWebsitesGymProgramsActive } from "./hooks/useGetWebsitesGymProgramsActive.js";
+export { getWebsitesGymProgramsActiveSuspenseQueryKey, getWebsitesGymProgramsActiveSuspense, getWebsitesGymProgramsActiveSuspenseQueryOptions, useGetWebsitesGymProgramsActiveSuspense } from "./hooks/useGetWebsitesGymProgramsActiveSuspense.js";
 export { getWebsitesGymProgramsSuspenseQueryKey, getWebsitesGymProgramsSuspense, getWebsitesGymProgramsSuspenseQueryOptions, useGetWebsitesGymProgramsSuspense } from "./hooks/useGetWebsitesGymProgramsSuspense.js";
 export { getWebsitesGymStatsRecordsQueryKey, getWebsitesGymStatsRecords, getWebsitesGymStatsRecordsQueryOptions, useGetWebsitesGymStatsRecords } from "./hooks/useGetWebsitesGymStatsRecords.js";
 export { getWebsitesGymStatsRecordsSuspenseQueryKey, getWebsitesGymStatsRecordsSuspense, getWebsitesGymStatsRecordsSuspenseQueryOptions, useGetWebsitesGymStatsRecordsSuspense } from "./hooks/useGetWebsitesGymStatsRecordsSuspense.js";

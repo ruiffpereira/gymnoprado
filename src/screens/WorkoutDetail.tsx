@@ -3,6 +3,7 @@ import { ChevronLeft, Lock, Pencil, Play, Dumbbell, Clock, Target, Layers } from
 import { useFindWorkout } from "../hooks/useGym";
 import { useActiveWorkout } from "../store/useActiveWorkout";
 import { Button, GroupChip, Spinner } from "../components/ui";
+import { useCms } from "../context/CmsContext";
 
 function Metric({ icon, value, label }: { icon: React.ReactNode; value: string | number; label: string }) {
   return (
@@ -17,6 +18,7 @@ function Metric({ icon, value, label }: { icon: React.ReactNode; value: string |
 export function WorkoutDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useCms();
   const { workout, program, isLoading } = useFindWorkout(id);
   const start = useActiveWorkout((s) => s.start);
 
@@ -24,7 +26,7 @@ export function WorkoutDetail() {
   if (!workout) {
     return (
       <div className="px-5 py-10 text-center text-t2">
-        Treino não encontrado. <button className="text-brand font-semibold" onClick={() => navigate("/treinos")}>Voltar</button>
+        {t("gym.app.detail.not_found")} <button className="text-brand font-semibold" onClick={() => navigate("/treinos")}>{t("gym.app.common.back")}</button>
       </div>
     );
   }
@@ -45,7 +47,7 @@ export function WorkoutDetail() {
         <div className="absolute -top-10 -right-6 w-44 h-44 rounded-full bg-brand/25 blur-3xl" />
         <div className="relative max-w-3xl mx-auto">
           <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-white/70 text-sm mb-4">
-            <ChevronLeft size={18} /> Voltar
+            <ChevronLeft size={18} /> {t("gym.app.common.back")}
           </button>
           <div className="flex items-center gap-2 mb-2">
             <h1 className="text-2xl font-black">{workout.name}</h1>
@@ -55,10 +57,10 @@ export function WorkoutDetail() {
             {(workout.muscleGroups ?? []).map((g) => <GroupChip key={g} group={g} />)}
           </div>
           <div className="flex">
-            <Metric icon={<Dumbbell size={18} />} value={workout.exercises.length} label="exercícios" />
-            <Metric icon={<Layers size={18} />} value={totalSets} label="séries" />
-            <Metric icon={<Clock size={18} />} value={`~${estMin}`} label="min" />
-            <Metric icon={<Target size={18} />} value={(workout.muscleGroups ?? []).length} label="grupos" />
+            <Metric icon={<Dumbbell size={18} />} value={workout.exercises.length} label={t("gym.app.common.exercises")} />
+            <Metric icon={<Layers size={18} />} value={totalSets} label={t("gym.app.common.sets")} />
+            <Metric icon={<Clock size={18} />} value={`~${estMin}`} label={t("gym.app.common.min")} />
+            <Metric icon={<Target size={18} />} value={(workout.muscleGroups ?? []).length} label={t("gym.app.common.groups")} />
           </div>
         </div>
       </div>
@@ -66,11 +68,11 @@ export function WorkoutDetail() {
       {/* Exercises */}
       <div className="px-5 lg:px-9 py-5 max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-t1">Exercícios</h2>
+          <h2 className="font-bold text-t1">{t("gym.app.detail.exercises_heading")}</h2>
           {!readOnly ? (
-            <Button size="sm" variant="greenLight" icon={<Pencil size={15} />} onClick={() => navigate(`/treino/${workout.id}/editar`)}>Editar</Button>
+            <Button size="sm" variant="greenLight" icon={<Pencil size={15} />} onClick={() => navigate(`/treino/${workout.id}/editar`)}>{t("gym.app.common.edit")}</Button>
           ) : (
-            <span className="flex items-center gap-1 text-xs text-t3"><Lock size={13} /> Plano do coach</span>
+            <span className="flex items-center gap-1 text-xs text-t3"><Lock size={13} /> {t("gym.app.detail.coach_plan")}</span>
           )}
         </div>
 
@@ -86,10 +88,10 @@ export function WorkoutDetail() {
                   <span className="font-semibold text-t1 truncate">{e.name}</span>
                   <GroupChip group={e.group} />
                 </div>
-                <p className="text-xs text-t2 mb-1.5">{e.sets} séries · {e.reps} reps · {e.weight}kg · {e.rest}s descanso</p>
+                <p className="text-xs text-t2 mb-1.5">{e.sets} {t("gym.app.common.sets")} · {e.reps} {t("gym.app.common.reps")} · {e.weight}kg · {e.rest}s {t("gym.app.common.rest")}</p>
                 <div className="flex flex-wrap gap-1">
                   {Array.from({ length: e.sets }).map((_, s) => (
-                    <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-bg text-t2">{e.reps} reps · {e.weight}kg</span>
+                    <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-bg text-t2">{e.reps} {t("gym.app.common.reps")} · {e.weight}kg</span>
                   ))}
                 </div>
               </div>
@@ -101,7 +103,7 @@ export function WorkoutDetail() {
       {/* Fixed bottom CTA */}
       <div className="fixed bottom-0 inset-x-0 lg:left-[248px] z-30 bg-surface/90 backdrop-blur-xl border-t border-line p-4" style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 72px)" }}>
         <div className="max-w-3xl mx-auto">
-          <Button size="lg" fullWidth icon={<Play size={18} fill="currentColor" />} onClick={begin}>Começar Treino</Button>
+          <Button size="lg" fullWidth icon={<Play size={18} fill="currentColor" />} onClick={begin}>{t("gym.app.dashboard.start")}</Button>
         </div>
       </div>
     </div>

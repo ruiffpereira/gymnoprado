@@ -6,7 +6,9 @@ App **mobile-first (PWA)** de musculação para os clientes de um ginásio. Cons
 - **Stack recomendada:** ver [ARCHITECTURE.md](ARCHITECTURE.md) (React + Vite + TanStack Query + Zustand + vite-plugin-pwa + Dexie offline).
 - **Contrato proposto (histórico):** [API_CONTRACT.md](API_CONTRACT.md) — proposta original. **As rotas reais já implementadas estão abaixo e têm precedência.**
 
-> Estado: **backend Gym completo e testado**. Falta construir o frontend PWA neste diretório.
+> Estado: **backend Gym completo e testado**. Frontend PWA implementado (ver `src/screens/`).
+>
+> **Treino do dia / programa ativo:** o coach marca um **programa ativo** por cliente no backoffice. O Dashboard mostra o programa ativo e o **treino a fazer agora** (`nextWorkoutId`), calculado no servidor pela regra *"treino menos vezes concluído → empate por ordem"* — faltar/saltar treinos é tratado automaticamente. A `weeklyGoal` (nº de dias do programa) alimenta o anel de meta semanal. O cliente pode na mesma escolher outro treino na lista. As datas do programa são só informativas. Manual hook: `useActiveProgram` em [src/hooks/useGym.ts](src/hooks/useGym.ts) (usa o `axiosInstance` partilhado; quando regenerares o Kubb com a API a correr, podes trocar por um hook gerado).
 
 ---
 
@@ -30,6 +32,7 @@ Todos exigem `Authorization: Bearer <customer token>`.
 | Método | Path | Uso na app |
 | ------ | ---- | ---------- |
 | `GET` | `/me` | Perfil + `streak` (Dashboard, Perfil) |
+| `GET` | `/programs/active` | **Programa ativo** (escolhido pelo coach) + `nextWorkoutId` (treino a fazer agora) + `weeklyGoal`. Usado no Dashboard (hero "treino de hoje" + meta semanal) via `useActiveProgram` |
 | `GET` | `/programs` | Lista grupos: `owner:"coach"` (só leitura) + `owner:"client"`, com `workouts[].exercises[]` aninhados (Treinos) |
 | `POST` | `/programs` `{ name, note? }` | Criar grupo do cliente |
 | `PATCH` | `/programs/:id` `{ name?, note? }` | Renomear grupo próprio (coach → 403) |
@@ -92,6 +95,29 @@ Upload via o módulo `uploads/` da API (`POST /api/uploads`, autenticado). Guard
 - Auth orquestrada em [src/api/session.ts](src/api/session.ts) (login/logout/forgot por cima dos hooks gerados).
 
 Estrutura: `src/gen/` (gerado) · `src/api/` (cliente + facade + sessão) · `src/store/` (Zustand: tema, sessão, treino activo) · `src/components/` (UI Tailwind + nav) · `src/screens/` (9 ecrãs) · `src/hooks/` (invalidação + helpers) · `src/lib/` (tema, formatação, toast, exercícios).
+
+## Conteúdo / Traduções (CMS)
+
+**Todo o texto da app vem do CMS** (multi-língua), à semelhança dos sites públicos (ex.: tifas-barber). Padrão:
+
+- **`LanguageProvider`** ([src/context/LanguageContext.tsx](src/context/LanguageContext.tsx)) — lê `GET /websites/languages` (línguas ativas + padrão), guarda `currentLang` (localStorage + `PUT /websites/languages/me` se autenticado).
+- **`CmsProvider`** ([src/context/CmsContext.tsx](src/context/CmsContext.tsx)) — lê `GET /websites/content?locale=` (mapa `key→valor`) e expõe **`t(key)`**. **Sem fallback**: se a chave não existir no CMS, devolve vazio (`""`). Usa `keepPreviousData` (troca de língua sem flash).
+- **`LanguageSwitcher`** ([src/components/LanguageSwitcher.tsx](src/components/LanguageSwitcher.tsx)) — pills das línguas ativas (no Perfil).
+- Hooks do CMS **gerados pelo Kubb** em [src/gen-cms](src/gen-cms) (a partir de `/api-docs/websites/content.json`); a `kubb.config.ts` tem agora **dois specs** (gym → `src/gen`, content → `src/gen-cms`). A facade [src/api/cms.ts](src/api/cms.ts) só envolve esses hooks gerados (sem chamadas manuais).
+
+**Regra:** nenhum texto literal nos ecrãs — usar `t('gym.app.<área>.<chave>')`, **sem fallback**. O texto vem **exclusivamente do CMS**; por isso **é obrigatório importar o `content-import.csv`** (senão a app fica sem texto). As chaves usam o prefixo **`gym.`** → contexto **Ginásio** no CMS. Os pares chave/valor (pt/en) vivem no `content-import.csv`.
+
+> Os **nomes** de programas/treinos/exercícios já vêm traduzidos da API (resolvidos pela locale do cliente). Isto é para os **textos da interface**.
+
+### Importar os textos para o CMS (CSV)
+
+O ficheiro [content-import.csv](content-import.csv) tem as chaves + valores (pt/en). Para importar:
+
+1. Backoffice → **Conteúdos** → tab **Ginásio** → botão **Importar** → escolher o `content-import.csv`.
+2. Importar **na tab Ginásio** é essencial: o importador cria as secções com `context: gym`, por isso o conteúdo fica no separador certo.
+3. Formato do CSV (6 colunas `key,locale,value,type,section,parent`) — ver [Backoffice/CLAUDE.md](../Backoffice/CLAUDE.md) → secção *CMS → Importar conteúdo via CSV*.
+
+> **Todos os ecrãs** estão convertidos (Dashboard, Workouts, History, Progress, WorkoutDetail, WorkoutExec, WorkoutEditor, Profile, nav, e auth Login/Register/Forgot/Reset). Ao adicionar texto novo, usar `t('gym.app.<área>.<chave>', 'fallback')` e acrescentar a chave (pt/en) ao `content-import.csv`.
 
 ## Backend (referência)
 

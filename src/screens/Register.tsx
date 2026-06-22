@@ -6,9 +6,11 @@ import { apiErrorMessage } from "../api/client";
 import { useSession } from "../store/useSession";
 import { Logo, Input, Button } from "../components/ui";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { useCms } from "../context/CmsContext";
 
 export function Register() {
   const navigate = useNavigate();
+  const { t } = useCms();
   const setAuthed = useSession((s) => s.setAuthed);
   const [form, setForm] = useState({ name: "", email: "", contact: "", password: "" });
   const [error, setError] = useState<string | null>(null);
@@ -18,10 +20,10 @@ export function Register() {
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const validate = (): string | null => {
-    if (form.name.trim().length < 2) return "Indica o teu nome.";
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) return "Email inválido.";
-    if (form.contact.replace(/\D/g, "").length < 9) return "Telemóvel inválido (mín. 9 dígitos).";
-    if (form.password.length < 8) return "A palavra-passe precisa de pelo menos 8 caracteres.";
+    if (form.name.trim().length < 2) return t("gym.app.register.err_name");
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) return t("gym.app.register.err_email");
+    if (form.contact.replace(/\D/g, "").length < 9) return t("gym.app.register.err_phone");
+    if (form.password.length < 8) return t("gym.app.register.err_password");
     return null;
   };
 
@@ -41,7 +43,7 @@ export function Register() {
       setAuthed(profile);
       navigate("/", { replace: true });
     } catch (e) {
-      setError(apiErrorMessage(e, "Não foi possível criar a conta."));
+      setError(apiErrorMessage(e, t("gym.app.register.error")));
     } finally {
       setLoading(false);
     }
@@ -57,23 +59,23 @@ export function Register() {
       <div className="relative w-full max-w-[400px] flex flex-col gap-6 animate-slideUp">
         <div className="flex flex-col items-center gap-3">
           <Logo size="lg" />
-          <p className="text-t2 text-[15px]">Cria a tua conta e começa a treinar</p>
+          <p className="text-t2 text-[15px]">{t("gym.app.register.tagline")}</p>
         </div>
 
         <div className="flex flex-col gap-4">
-          <Input label="Nome" placeholder="O teu nome" value={form.name} onChange={set("name")} icon={<User size={18} />} />
-          <Input label="Email" type="email" placeholder="o-teu@email.pt" value={form.email} onChange={set("email")} icon={<Mail size={18} />} />
-          <Input label="Telemóvel" type="tel" placeholder="912 345 678" value={form.contact} onChange={set("contact")} icon={<Phone size={18} />} />
-          <Input label="Palavra-passe" type="password" placeholder="Mín. 8 caracteres" value={form.password} onChange={set("password")} icon={<Lock size={18} />} onKeyDown={(e) => e.key === "Enter" && submit()} />
+          <Input label={t("gym.app.register.name")} placeholder={t("gym.app.register.name_ph")} value={form.name} onChange={set("name")} icon={<User size={18} />} />
+          <Input label={t("gym.app.login.email")} type="email" placeholder={t("gym.app.login.email_ph")} value={form.email} onChange={set("email")} icon={<Mail size={18} />} />
+          <Input label={t("gym.app.register.phone")} type="tel" placeholder={t("gym.app.register.phone_ph")} value={form.contact} onChange={set("contact")} icon={<Phone size={18} />} />
+          <Input label={t("gym.app.login.password")} type="password" placeholder={t("gym.app.register.password_ph")} value={form.password} onChange={set("password")} icon={<Lock size={18} />} onKeyDown={(e) => e.key === "Enter" && submit()} />
           {error && <p className="text-sm text-red font-medium">{error}</p>}
           <Button size="lg" fullWidth disabled={loading} onClick={submit}>
-            {loading ? "A criar conta…" : "Criar Conta"}
+            {loading ? t("gym.app.register.creating") : t("gym.app.register.create")}
           </Button>
         </div>
 
         <p className="text-center text-[13px] text-t3">
-          Já tens conta?{" "}
-          <button onClick={() => navigate("/login")} className="text-brand font-semibold">Entrar</button>
+          {t("gym.app.register.have_account")}{" "}
+          <button onClick={() => navigate("/login")} className="text-brand font-semibold">{t("gym.app.login.sign_in")}</button>
         </p>
       </div>
     </div>

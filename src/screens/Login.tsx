@@ -6,9 +6,11 @@ import { apiErrorMessage } from "../api/client";
 import { useSession } from "../store/useSession";
 import { Logo, Input, Button } from "../components/ui";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { useCms } from "../context/CmsContext";
 
 export function Login() {
   const navigate = useNavigate();
+  const { t } = useCms();
   const setAuthed = useSession((s) => s.setAuthed);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,7 +19,7 @@ export function Login() {
 
   const submit = async () => {
     if (!email || !password) {
-      setError("Preenche o email e a palavra-passe.");
+      setError(t("gym.app.login.fill_fields"));
       return;
     }
     setLoading(true);
@@ -28,7 +30,7 @@ export function Login() {
       setAuthed(profile);
       navigate("/", { replace: true });
     } catch (e) {
-      setError(apiErrorMessage(e, "Não foi possível entrar."));
+      setError(apiErrorMessage(e, t("gym.app.login.error")));
     } finally {
       setLoading(false);
     }
@@ -44,22 +46,22 @@ export function Login() {
       <div className="relative w-full max-w-[400px] flex flex-col gap-6 animate-slideUp">
         <div className="flex flex-col items-center gap-3">
           <Logo size="lg" />
-          <p className="text-t2 text-[15px]">A tua jornada começa aqui</p>
+          <p className="text-t2 text-[15px]">{t("gym.app.login.tagline")}</p>
         </div>
 
         <div className="flex flex-col gap-4">
-          <Input label="Email" type="email" placeholder="o-teu@email.pt" value={email} onChange={(e) => setEmail(e.target.value)} icon={<Mail size={18} />} />
-          <Input label="Palavra-passe" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} icon={<Lock size={18} />} onKeyDown={(e) => e.key === "Enter" && submit()} />
+          <Input label={t("gym.app.login.email")} type="email" placeholder={t("gym.app.login.email_ph")} value={email} onChange={(e) => setEmail(e.target.value)} icon={<Mail size={18} />} />
+          <Input label={t("gym.app.login.password")} type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} icon={<Lock size={18} />} onKeyDown={(e) => e.key === "Enter" && submit()} />
           {error && <p className="text-sm text-red font-medium">{error}</p>}
           <Button size="lg" fullWidth disabled={loading} onClick={submit}>
-            {loading ? "A entrar…" : "Entrar"}
+            {loading ? t("gym.app.login.signing_in") : t("gym.app.login.sign_in")}
           </Button>
-          <button onClick={() => navigate("/recuperar")} className="text-sm text-t2 hover:text-brand transition-colors text-center">Esqueci a palavra-passe</button>
+          <button onClick={() => navigate("/recuperar")} className="text-sm text-t2 hover:text-brand transition-colors text-center">{t("gym.app.login.forgot")}</button>
         </div>
 
         <p className="text-center text-[13px] text-t3">
-          Não tens conta?{" "}
-          <button onClick={() => navigate("/registo")} className="text-brand font-semibold">Criar conta</button>
+          {t("gym.app.login.no_account")}{" "}
+          <button onClick={() => navigate("/registo")} className="text-brand font-semibold">{t("gym.app.login.create_account")}</button>
         </p>
       </div>
     </div>

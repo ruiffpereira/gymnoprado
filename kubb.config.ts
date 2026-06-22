@@ -22,21 +22,38 @@ const dotEnv = readDotEnv();
 const API_BASE =
   process.env.VITE_API_BASE_URL ?? dotEnv.VITE_API_BASE_URL ?? "http://localhost:3001/api";
 
-export default defineConfig({
-  root: ".",
-  input: {
-    path: `${API_BASE}-docs/websites/gym.json`,
+const sharedPlugins = [
+  pluginOas(),
+  pluginTs(),
+  pluginReactQuery({
+    client: { baseURL: API_BASE },
+  }),
+];
+
+export default defineConfig([
+  {
+    root: ".",
+    input: {
+      path: `${API_BASE}-docs/websites/gym.json`,
+    },
+    output: {
+      path: "./src/gen",
+      extension: { ".ts": ".js" },
+      clean: true,
+    },
+    plugins: sharedPlugins,
   },
-  output: {
-    path: "./src/gen",
-    extension: { ".ts": ".js" },
-    clean: true,
+  // CMS público (conteúdos + línguas) — endpoints partilhados dos websites.
+  {
+    root: ".",
+    input: {
+      path: `${API_BASE}-docs/websites/content.json`,
+    },
+    output: {
+      path: "./src/gen-cms",
+      extension: { ".ts": ".js" },
+      clean: true,
+    },
+    plugins: sharedPlugins,
   },
-  plugins: [
-    pluginOas(),
-    pluginTs(),
-    pluginReactQuery({
-      client: { baseURL: API_BASE },
-    }),
-  ],
-});
+]);

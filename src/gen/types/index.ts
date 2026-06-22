@@ -4,6 +4,7 @@ export type { GetWebsitesGymExercisesQueryParams, GetWebsitesGymExercises200, Ge
 export type { GetWebsitesGymLogsQueryParams, GetWebsitesGymLogs200, GetWebsitesGymLogsQueryResponse, GetWebsitesGymLogsQuery } from "./GetWebsitesGymLogs.js";
 export type { GetWebsitesGymMe200, GetWebsitesGymMeQueryResponse, GetWebsitesGymMeQuery } from "./GetWebsitesGymMe.js";
 export type { GetWebsitesGymPrograms200, GetWebsitesGymProgramsQueryResponse, GetWebsitesGymProgramsQuery } from "./GetWebsitesGymPrograms.js";
+export type { GetWebsitesGymProgramsActive200, GetWebsitesGymProgramsActiveQueryResponse, GetWebsitesGymProgramsActiveQuery } from "./GetWebsitesGymProgramsActive.js";
 export type { GetWebsitesGymStatsRecords200, GetWebsitesGymStatsRecordsQueryResponse, GetWebsitesGymStatsRecordsQuery } from "./GetWebsitesGymStatsRecords.js";
 export type { GetWebsitesGymStatsSummary200, GetWebsitesGymStatsSummaryQueryResponse, GetWebsitesGymStatsSummaryQuery } from "./GetWebsitesGymStatsSummary.js";
 export type { GetWebsitesGymStatsWeekly200, GetWebsitesGymStatsWeeklyQueryResponse, GetWebsitesGymStatsWeeklyQuery } from "./GetWebsitesGymStatsWeekly.js";

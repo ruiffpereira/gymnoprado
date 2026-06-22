@@ -33,6 +33,11 @@ export type GymProgram = {
     */
     note?: string | null;
     /**
+     * @description Programa ativo (o que o cliente deve fazer agora)
+     * @type boolean | undefined
+    */
+    active?: boolean;
+    /**
      * @type string, uuid
     */
     customerId: string;

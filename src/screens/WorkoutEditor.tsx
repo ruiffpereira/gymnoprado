@@ -9,6 +9,7 @@ import { Button, Input, Modal, Stepper, GroupChip, Spinner, Tabs } from "../comp
 import { WEEKDAYS_SHORT, MUSCLE_GROUPS, groupColor } from "../lib/exercises";
 import { apiErrorMessage } from "../api/client";
 import { toast } from "../lib/toast";
+import { useCms } from "../context/CmsContext";
 
 interface Draft {
   exerciseId: string | null;
@@ -23,6 +24,7 @@ interface Draft {
 export function WorkoutEditor() {
   const { id, programId } = useParams();
   const navigate = useNavigate();
+  const { t } = useCms();
   const invalidate = useInvalidateGym();
   const editing = !!id;
   const { workout, isLoading } = useFindWorkout(id);
@@ -54,7 +56,7 @@ export function WorkoutEditor() {
     },
     onSuccess: () => {
       invalidate();
-      toast.success(editing ? "Treino atualizado" : "Treino criado");
+      toast.success(editing ? t("gym.app.editor.updated") : t("gym.app.editor.created"));
       navigate("/treinos");
     },
     onError: (e) => toast.error(apiErrorMessage(e)),
@@ -84,17 +86,17 @@ export function WorkoutEditor() {
     <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto animate-fadeIn pb-10">
       <div className="flex items-center gap-3 mb-5">
         <button onClick={() => navigate(-1)} className="w-9 h-9 rounded-lg bg-surface flex items-center justify-center"><ChevronLeft size={18} className="text-t2" /></button>
-        <h1 className="text-xl font-black text-t1 flex-1">{editing ? "Editar treino" : "Novo treino"}</h1>
+        <h1 className="text-xl font-black text-t1 flex-1">{editing ? t("gym.app.editor.edit_title") : t("gym.app.editor.new_title")}</h1>
         <Button disabled={!canSave || save.isPending} icon={<Check size={16} />} onClick={() => save.mutate()}>
-          {save.isPending ? "A guardar…" : "Guardar"}
+          {save.isPending ? t("gym.app.common.saving") : t("gym.app.common.save")}
         </Button>
       </div>
 
       <div className="flex flex-col gap-5">
-        <Input label="Nome do treino" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Push A" />
+        <Input label={t("gym.app.editor.name_label")} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("gym.app.editor.name_ph")} />
 
         <div>
-          <p className="text-[13px] font-semibold text-t2 mb-2">Dias de treino</p>
+          <p className="text-[13px] font-semibold text-t2 mb-2">{t("gym.app.editor.days")}</p>
           <div className="flex gap-1.5">
             {WEEKDAYS_SHORT.map((d, i) => (
               <button key={i} onClick={() => toggleDay(i)} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${days.includes(i) ? "bg-brand text-white" : "bg-surface text-t3"}`}>
@@ -106,7 +108,7 @@ export function WorkoutEditor() {
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <p className="text-[13px] font-semibold text-t2">Exercícios ({rows.length})</p>
+            <p className="text-[13px] font-semibold text-t2">{t("gym.app.editor.exercises")} ({rows.length})</p>
           </div>
           <div className="flex flex-col gap-2.5">
             {rows.map((row, i) => (
@@ -122,27 +124,27 @@ export function WorkoutEditor() {
                   <button onClick={() => removeRow(i)} className="text-red p-1"><Trash2 size={15} /></button>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  <Field label="Séries"><Stepper value={row.sets} onChange={(v) => update(i, { sets: v })} min={1} /></Field>
-                  <Field label="Reps"><Stepper value={row.reps} onChange={(v) => update(i, { reps: v })} /></Field>
-                  <Field label="Peso"><Stepper value={row.weight} step={2.5} onChange={(v) => update(i, { weight: v })} suffix="kg" /></Field>
-                  <Field label="Descanso"><Stepper value={row.rest} step={15} onChange={(v) => update(i, { rest: v })} suffix="s" /></Field>
+                  <Field label={t("gym.app.editor.field_sets")}><Stepper value={row.sets} onChange={(v) => update(i, { sets: v })} min={1} /></Field>
+                  <Field label={t("gym.app.editor.field_reps")}><Stepper value={row.reps} onChange={(v) => update(i, { reps: v })} /></Field>
+                  <Field label={t("gym.app.editor.field_weight")}><Stepper value={row.weight} step={2.5} onChange={(v) => update(i, { weight: v })} suffix="kg" /></Field>
+                  <Field label={t("gym.app.editor.field_rest")}><Stepper value={row.rest} step={15} onChange={(v) => update(i, { rest: v })} suffix="s" /></Field>
                 </div>
               </div>
             ))}
           </div>
 
           <button onClick={() => setPickerOpen(true)} className="mt-3 w-full rounded-card border-2 border-dashed border-line text-t2 flex items-center justify-center gap-2 py-4 hover:border-brand hover:text-brand transition-colors">
-            <Plus size={18} /> Adicionar Exercício
+            <Plus size={18} /> {t("gym.app.editor.add_exercise")}
           </button>
         </div>
       </div>
 
-      <Modal open={pickerOpen} onClose={() => setPickerOpen(false)} title="Adicionar Exercício">
+      <Modal open={pickerOpen} onClose={() => setPickerOpen(false)} title={t("gym.app.editor.add_exercise")}>
         <div className="mb-3">
           <Tabs<string>
             active={filter}
             onChange={setFilter}
-            tabs={[{ id: "all", label: "Todos" }, ...MUSCLE_GROUPS.slice(0, 3).map((g) => ({ id: g, label: g }))]}
+            tabs={[{ id: "all", label: t("gym.app.editor.all") }, ...MUSCLE_GROUPS.slice(0, 3).map((g) => ({ id: g, label: g }))]}
           />
         </div>
         <div className="flex flex-wrap gap-1.5 mb-3">
@@ -151,7 +153,7 @@ export function WorkoutEditor() {
           ))}
         </div>
         <div className="flex flex-col gap-1.5 max-h-[50vh] overflow-y-auto">
-          {filtered.length === 0 && <p className="text-sm text-t3 py-4 text-center">Sem exercícios no catálogo.</p>}
+          {filtered.length === 0 && <p className="text-sm text-t3 py-4 text-center">{t("gym.app.editor.empty_catalog")}</p>}
           {filtered.map((ex) => (
             <button key={ex.exerciseId} onClick={() => addExercise(ex)} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-bg text-left transition-colors">
               <span className="w-9 h-9 rounded-lg bg-bg flex items-center justify-center shrink-0 overflow-hidden">

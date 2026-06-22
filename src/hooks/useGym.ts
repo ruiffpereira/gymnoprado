@@ -1,7 +1,35 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { axiosInstance } from "@kubb/plugin-client/clients/axios";
 import { createLog, usePrograms } from "../api";
 import type { GymProgram, GymWorkout } from "../api";
 import type { PostWebsitesGymLogsMutationRequest } from "../gen/types/PostWebsitesGymLogs";
+
+/** Resposta de GET /websites/gym/programs/active. */
+export interface ActiveProgramResponse {
+  /** Programa marcado como ativo pelo coach (null se nenhum). */
+  program: GymProgram | null;
+  /** Treino a fazer agora (menos feito → ordem). */
+  nextWorkoutId: string | null;
+  /** Meta semanal = nº de dias da semana do programa. */
+  weeklyGoal: number;
+}
+
+/**
+ * Programa ativo do cliente + o treino a fazer agora + meta semanal.
+ * O "treino a fazer agora" segue a regra do servidor (menos concluído, depois
+ * ordem) — faltar ou saltar treinos é tratado automaticamente.
+ */
+export function useActiveProgram() {
+  return useQuery<ActiveProgramResponse>({
+    queryKey: [{ url: "/websites/gym/programs/active" }],
+    queryFn: async () => {
+      const res = await axiosInstance.get<ActiveProgramResponse>(
+        "/websites/gym/programs/active",
+      );
+      return res.data;
+    },
+  });
+}
 
 /** Todos os treinos achatados, com o programa a que pertencem. */
 export function useAllWorkouts() {
@@ -24,6 +52,7 @@ export function useInvalidateGym() {
   const qc = useQueryClient();
   return () => {
     qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/programs" }] });
+    qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/programs/active" }] });
     qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/logs" }] });
     qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/stats/summary" }] });
     qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/stats/weekly" }] });

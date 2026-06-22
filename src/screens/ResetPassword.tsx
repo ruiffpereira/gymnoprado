@@ -6,9 +6,11 @@ import { apiErrorMessage } from "../api/client";
 import { toast } from "../lib/toast";
 import { Logo, Input, Button } from "../components/ui";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { useCms } from "../context/CmsContext";
 
 export function ResetPassword() {
   const navigate = useNavigate();
+  const { t } = useCms();
   const [params] = useSearchParams();
   const token = params.get("token") ?? "";
   const [password, setPassword] = useState("");
@@ -18,21 +20,21 @@ export function ResetPassword() {
 
   const submit = async () => {
     if (password.length < 8) {
-      setError("A palavra-passe precisa de pelo menos 8 caracteres.");
+      setError(t("gym.app.register.err_password"));
       return;
     }
     if (password !== confirm) {
-      setError("As palavras-passe não coincidem.");
+      setError(t("gym.app.reset.err_mismatch"));
       return;
     }
     setLoading(true);
     setError(null);
     try {
       await resetPassword(token, password);
-      toast.success("Palavra-passe alterada. Já podes entrar.");
+      toast.success(t("gym.app.reset.success"));
       navigate("/login", { replace: true });
     } catch (e) {
-      setError(apiErrorMessage(e, "Não foi possível alterar a palavra-passe."));
+      setError(apiErrorMessage(e, t("gym.app.reset.error")));
     } finally {
       setLoading(false);
     }
@@ -48,24 +50,24 @@ export function ResetPassword() {
       <div className="relative w-full max-w-[400px] flex flex-col gap-6 animate-slideUp">
         <div className="flex flex-col items-center gap-3">
           <Logo size="lg" />
-          <p className="text-t2 text-[15px] text-center">Define a tua nova palavra-passe</p>
+          <p className="text-t2 text-[15px] text-center">{t("gym.app.reset.tagline")}</p>
         </div>
 
         {!token ? (
           <div className="flex flex-col gap-4 text-center">
-            <p className="text-sm text-red font-medium">Link inválido ou incompleto.</p>
-            <p className="text-t2 text-sm leading-relaxed">Pede um novo link de recuperação a partir do ecrã de entrada.</p>
-            <Button size="lg" fullWidth onClick={() => navigate("/recuperar")}>Pedir novo link</Button>
+            <p className="text-sm text-red font-medium">{t("gym.app.reset.invalid_link")}</p>
+            <p className="text-t2 text-sm leading-relaxed">{t("gym.app.reset.invalid_desc")}</p>
+            <Button size="lg" fullWidth onClick={() => navigate("/recuperar")}>{t("gym.app.reset.request_new")}</Button>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            <Input label="Nova palavra-passe" type="password" placeholder="Mín. 8 caracteres" value={password} onChange={(e) => setPassword(e.target.value)} icon={<Lock size={18} />} />
-            <Input label="Confirmar palavra-passe" type="password" placeholder="Repete a palavra-passe" value={confirm} onChange={(e) => setConfirm(e.target.value)} icon={<Lock size={18} />} onKeyDown={(e) => e.key === "Enter" && submit()} />
+            <Input label={t("gym.app.reset.new_password")} type="password" placeholder={t("gym.app.register.password_ph")} value={password} onChange={(e) => setPassword(e.target.value)} icon={<Lock size={18} />} />
+            <Input label={t("gym.app.reset.confirm_password")} type="password" placeholder={t("gym.app.reset.confirm_ph")} value={confirm} onChange={(e) => setConfirm(e.target.value)} icon={<Lock size={18} />} onKeyDown={(e) => e.key === "Enter" && submit()} />
             {error && <p className="text-sm text-red font-medium">{error}</p>}
             <Button size="lg" fullWidth disabled={loading} onClick={submit}>
-              {loading ? "A guardar…" : "Alterar palavra-passe"}
+              {loading ? t("gym.app.common.saving") : t("gym.app.reset.submit")}
             </Button>
-            <button onClick={() => navigate("/login")} className="text-sm text-t2 hover:text-brand transition-colors text-center">Voltar a entrar</button>
+            <button onClick={() => navigate("/login")} className="text-sm text-t2 hover:text-brand transition-colors text-center">{t("gym.app.auth.back_to_login")}</button>
           </div>
         )}
       </div>

@@ -9,6 +9,7 @@ import { useInvalidateGym } from "../hooks/useGym";
 import { apiErrorMessage } from "../api/client";
 import { Card, Button, Tabs, Modal, Input, GroupChip, Empty, Spinner } from "../components/ui";
 import { useScreenHeader } from "../store/useHeader";
+import { useCms } from "../context/CmsContext";
 
 type TabId = "coach" | "meus";
 
@@ -19,21 +20,22 @@ function WorkoutCard({ workout, readOnly, clientPrograms, onChanged }: {
   onChanged: () => void;
 }) {
   const navigate = useNavigate();
+  const { t } = useCms();
   const [cloneOpen, setCloneOpen] = useState(false);
 
   const remove = useMutation({
     mutationFn: () => deleteWorkout(workout.id),
-    onSuccess: () => { onChanged(); toast.success("Treino eliminado"); },
+    onSuccess: () => { onChanged(); toast.success(t("gym.app.workouts.deleted")); },
     onError: (e) => toast.error(apiErrorMessage(e)),
   });
   const clone = useMutation({
     mutationFn: (targetProgramId: string) => cloneWorkout(workout.id, { targetProgramId }),
-    onSuccess: () => { onChanged(); setCloneOpen(false); toast.success("Treino clonado para Os Meus"); },
+    onSuccess: () => { onChanged(); setCloneOpen(false); toast.success(t("gym.app.workouts.cloned")); },
     onError: (e) => toast.error(apiErrorMessage(e)),
   });
 
   const doClone = () => {
-    if (clientPrograms.length === 0) { toast.error("Cria primeiro um grupo em 'Os Meus'."); return; }
+    if (clientPrograms.length === 0) { toast.error(t("gym.app.workouts.clone_need_group")); return; }
     if (clientPrograms.length === 1) clone.mutate(clientPrograms[0].id);
     else setCloneOpen(true);
   };
@@ -51,7 +53,7 @@ function WorkoutCard({ workout, readOnly, clientPrograms, onChanged }: {
               <p className="font-bold text-t1 truncate">{workout.name}</p>
               {readOnly && <Lock size={13} className="text-t3 shrink-0" />}
             </div>
-            <p className="text-xs text-t3">{workout.exercises.length} exercícios</p>
+            <p className="text-xs text-t3">{workout.exercises.length} {t("gym.app.common.exercises")}</p>
           </div>
         </div>
 
@@ -63,12 +65,12 @@ function WorkoutCard({ workout, readOnly, clientPrograms, onChanged }: {
           {workout.exercises.slice(0, 3).map((e) => (
             <li key={e.id} className="truncate">{e.name} · {e.sets}×{e.reps}</li>
           ))}
-          {workout.exercises.length > 3 && <li className="text-t3">+{workout.exercises.length - 3} mais…</li>}
+          {workout.exercises.length > 3 && <li className="text-t3">+{workout.exercises.length - 3} {t("gym.app.common.more")}</li>}
         </ul>
 
         <div className="flex items-center gap-1.5">
-          <Button size="sm" icon={<Play size={15} fill="currentColor" />} onClick={() => navigate(`/treino/${workout.id}`)}>Iniciar</Button>
-          <Button size="sm" variant="greenLight" icon={<Copy size={15} />} onClick={doClone}>Clonar</Button>
+          <Button size="sm" icon={<Play size={15} fill="currentColor" />} onClick={() => navigate(`/treino/${workout.id}`)}>{t("gym.app.common.start")}</Button>
+          <Button size="sm" variant="greenLight" icon={<Copy size={15} />} onClick={doClone}>{t("gym.app.workouts.clone")}</Button>
           {!readOnly && (
             <>
               <button onClick={() => navigate(`/treino/${workout.id}/editar`)} className="ml-auto w-8 h-8 rounded-lg bg-bg flex items-center justify-center text-t2"><Pencil size={15} /></button>
@@ -78,7 +80,7 @@ function WorkoutCard({ workout, readOnly, clientPrograms, onChanged }: {
         </div>
       </div>
 
-      <Modal open={cloneOpen} onClose={() => setCloneOpen(false)} title="Clonar para que grupo?">
+      <Modal open={cloneOpen} onClose={() => setCloneOpen(false)} title={t("gym.app.workouts.clone_to")}>
         <div className="flex flex-col gap-2">
           {clientPrograms.map((p) => (
             <button key={p.id} onClick={() => clone.mutate(p.id)} className="text-left p-3 rounded-xl border border-line hover:border-brand transition-colors">
@@ -98,10 +100,11 @@ function ProgramAccordion({ program, readOnly, clientPrograms, onChanged }: {
   onChanged: () => void;
 }) {
   const navigate = useNavigate();
+  const { t } = useCms();
   const [open, setOpen] = useState(true);
   const remove = useMutation({
     mutationFn: () => deleteProgram(program.id),
-    onSuccess: () => { onChanged(); toast.success("Grupo eliminado"); },
+    onSuccess: () => { onChanged(); toast.success(t("gym.app.workouts.group_deleted")); },
     onError: (e) => toast.error(apiErrorMessage(e)),
   });
 
@@ -124,7 +127,7 @@ function ProgramAccordion({ program, readOnly, clientPrograms, onChanged }: {
           ))}
           {!readOnly && (
             <button onClick={() => navigate(`/programa/${program.id}/novo-treino`)} className="rounded-card border-2 border-dashed border-line text-t2 flex items-center justify-center gap-2 py-6 hover:border-brand hover:text-brand transition-colors">
-              <Plus size={18} /> Adicionar treino
+              <Plus size={18} /> {t("gym.app.workouts.add_workout")}
             </button>
           )}
         </div>
@@ -134,6 +137,7 @@ function ProgramAccordion({ program, readOnly, clientPrograms, onChanged }: {
 }
 
 export function Workouts() {
+  const { t } = useCms();
   const [tab, setTab] = useState<TabId>("coach");
   const [newGroupOpen, setNewGroupOpen] = useState(false);
   const [groupName, setGroupName] = useState("");
@@ -146,11 +150,11 @@ export function Workouts() {
 
   const createGroup = useMutation({
     mutationFn: () => createProgram({ name: groupName.trim() }),
-    onSuccess: () => { invalidate(); setNewGroupOpen(false); setGroupName(""); toast.success("Grupo criado"); },
+    onSuccess: () => { invalidate(); setNewGroupOpen(false); setGroupName(""); toast.success(t("gym.app.workouts.group_created")); },
     onError: (e) => toast.error(apiErrorMessage(e)),
   });
 
-  useScreenHeader({ title: "Treinos" });
+  useScreenHeader({ title: t("gym.app.nav.workouts") });
 
   if (isLoading) return <div className="flex justify-center pt-24"><Spinner className="h-8 w-8" /></div>;
 
@@ -164,29 +168,29 @@ export function Workouts() {
           active={tab}
           onChange={setTab}
           tabs={[
-            { id: "coach", label: <span className="flex items-center gap-1.5"><Lock size={14} /> Do Coach</span> },
-            { id: "meus", label: "⭐ Os Meus" },
+            { id: "coach", label: <span className="flex items-center gap-1.5"><Lock size={14} /> {t("gym.app.workouts.tab_coach")}</span> },
+            { id: "meus", label: t("gym.app.workouts.tab_mine") },
           ]}
         />
       </div>
 
       {tab === "coach" && coachPrograms.length > 0 && (
         <div className="mb-4 p-3 rounded-xl bg-brand-xlt text-brand-dk text-xs flex items-center gap-2">
-          <Lock size={14} /> Os treinos do coach são só de leitura. Usa "Clonar" para os editares em Os Meus.
+          <Lock size={14} /> {t("gym.app.workouts.coach_readonly_note")}
         </div>
       )}
 
       {tab === "meus" && (
         <div className="flex justify-end mb-3">
-          <Button size="sm" icon={<Plus size={16} />} onClick={() => setNewGroupOpen(true)}>Novo Grupo</Button>
+          <Button size="sm" icon={<Plus size={16} />} onClick={() => setNewGroupOpen(true)}>{t("gym.app.workouts.new_group")}</Button>
         </div>
       )}
 
       {list.length === 0 ? (
         <Empty
-          title={tab === "coach" ? "Sem treinos do coach" : "Sem grupos teus"}
-          subtitle={tab === "coach" ? "O teu coach ainda não te atribuiu treinos." : "Cria um grupo para organizar os teus treinos."}
-          action={tab === "meus" ? <Button icon={<Plus size={16} />} onClick={() => setNewGroupOpen(true)}>Novo Grupo</Button> : undefined}
+          title={tab === "coach" ? t("gym.app.workouts.empty_coach_title") : t("gym.app.workouts.empty_mine_title")}
+          subtitle={tab === "coach" ? t("gym.app.workouts.empty_coach_sub") : t("gym.app.workouts.empty_mine_sub")}
+          action={tab === "meus" ? <Button icon={<Plus size={16} />} onClick={() => setNewGroupOpen(true)}>{t("gym.app.workouts.new_group")}</Button> : undefined}
         />
       ) : (
         <div className="flex flex-col gap-1">
@@ -199,15 +203,15 @@ export function Workouts() {
       <Modal
         open={newGroupOpen}
         onClose={() => setNewGroupOpen(false)}
-        title="Novo Grupo de Treino"
+        title={t("gym.app.workouts.new_group_modal")}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setNewGroupOpen(false)}>Cancelar</Button>
-            <Button disabled={!groupName.trim() || createGroup.isPending} onClick={() => createGroup.mutate()}>Criar</Button>
+            <Button variant="ghost" onClick={() => setNewGroupOpen(false)}>{t("gym.app.common.cancel")}</Button>
+            <Button disabled={!groupName.trim() || createGroup.isPending} onClick={() => createGroup.mutate()}>{t("gym.app.common.create")}</Button>
           </>
         }
       >
-        <Input label="Nome do grupo" value={groupName} onChange={(e) => setGroupName(e.target.value)} placeholder="Ex: Treino 1" />
+        <Input label={t("gym.app.workouts.group_name")} value={groupName} onChange={(e) => setGroupName(e.target.value)} placeholder={t("gym.app.workouts.group_name_ph")} />
       </Modal>
       </div>
     </div>

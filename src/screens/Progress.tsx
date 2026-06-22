@@ -3,6 +3,7 @@ import { useSummary, useWeekly, useRecords } from "../api";
 import type { GymWeeklyPoint, GymRecord } from "../api";
 import { Card, Spinner } from "../components/ui";
 import { useScreenHeader } from "../store/useHeader";
+import { useCms } from "../context/CmsContext";
 import { groupColor } from "../lib/exercises";
 import { format } from "date-fns";
 
@@ -17,13 +18,14 @@ function StatCard({ icon, value, label }: { icon: React.ReactNode; value: string
 }
 
 export function Progress() {
+  const { t } = useCms();
   const { data: summary, isLoading } = useSummary();
   const { data: weeklyData } = useWeekly();
   const { data: recordsData } = useRecords();
   const weekly = (weeklyData ?? []) as GymWeeklyPoint[];
   const records = (recordsData ?? []) as GymRecord[];
 
-  useScreenHeader({ title: "Progresso" });
+  useScreenHeader({ title: t("gym.app.nav.progress") });
 
   if (isLoading) return <div className="flex justify-center pt-24"><Spinner className="h-8 w-8" /></div>;
 
@@ -41,14 +43,14 @@ export function Progress() {
     <div className="animate-fadeIn">
       <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-        <StatCard icon={<Dumbbell size={20} />} value={summary?.totalWorkouts ?? 0} label="Treinos totais" />
-        <StatCard icon={<Flame size={20} />} value={summary?.streak ?? 0} label="Dias de streak" />
-        <StatCard icon={<Layers size={20} />} value={summary?.totalSets ?? 0} label="Séries feitas" />
-        <StatCard icon={<TrendingUp size={20} />} value={summary?.avgPerWeek ?? 0} label="Treinos/semana" />
+        <StatCard icon={<Dumbbell size={20} />} value={summary?.totalWorkouts ?? 0} label={t("gym.app.progress.total_workouts")} />
+        <StatCard icon={<Flame size={20} />} value={summary?.streak ?? 0} label={t("gym.app.progress.streak_days")} />
+        <StatCard icon={<Layers size={20} />} value={summary?.totalSets ?? 0} label={t("gym.app.progress.total_sets")} />
+        <StatCard icon={<TrendingUp size={20} />} value={summary?.avgPerWeek ?? 0} label={t("gym.app.progress.per_week")} />
       </div>
 
       <Card className="p-5 mb-5">
-        <h3 className="font-bold text-t1 mb-4">Treinos por Semana</h3>
+        <h3 className="font-bold text-t1 mb-4">{t("gym.app.progress.weekly_chart")}</h3>
         <div className="flex items-end gap-2 h-32">
           {weekly.map((w) => {
             const active = w.weekStart === currentKey;
@@ -64,9 +66,9 @@ export function Progress() {
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card className="p-5">
-          <h3 className="font-bold text-t1 mb-4">Recordes Pessoais</h3>
+          <h3 className="font-bold text-t1 mb-4">{t("gym.app.progress.records")}</h3>
           {records.length === 0 ? (
-            <p className="text-sm text-t3">Sem recordes ainda.</p>
+            <p className="text-sm text-t3">{t("gym.app.progress.no_records")}</p>
           ) : (
             <ul className="flex flex-col gap-2.5">
               {records.map((r, i) => (
@@ -81,9 +83,9 @@ export function Progress() {
         </Card>
 
         <Card className="p-5">
-          <h3 className="font-bold text-t1 mb-4">Foco Muscular</h3>
+          <h3 className="font-bold text-t1 mb-4">{t("gym.app.progress.muscle_focus")}</h3>
           {focus.size === 0 ? (
-            <p className="text-sm text-t3">Sem dados suficientes.</p>
+            <p className="text-sm text-t3">{t("gym.app.progress.no_data")}</p>
           ) : (
             <div className="flex flex-col gap-3">
               {[...focus.entries()].sort((a, b) => b[1] - a[1]).map(([g, n]) => (

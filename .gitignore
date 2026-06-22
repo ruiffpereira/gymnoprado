@@ -6,6 +6,8 @@ dist-ssr
 .DS_Store
 *.tsbuildinfo
 dev-dist
+src/gen/*
+src/gen-cms/*
 
 # Artefactos compilados do vite.config.ts (o Vite carrega o .ts diretamente)
 vite.config.js

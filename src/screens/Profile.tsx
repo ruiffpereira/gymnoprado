@@ -7,7 +7,9 @@ import { useSession } from "../store/useSession";
 import { Card, Avatar, Badge, Button } from "../components/ui";
 import { useScreenHeader } from "../store/useHeader";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { InstallRow } from "../components/InstallPrompt";
+import { useCms } from "../context/CmsContext";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 
@@ -22,13 +24,14 @@ function Stat({ icon, value, label }: { icon: React.ReactNode; value: string | n
 }
 
 const SETTINGS = [
-  { icon: Bell, label: "Notificações" },
-  { icon: Shield, label: "Privacidade" },
-  { icon: LifeBuoy, label: "Suporte" },
+  { icon: Bell, label: "Notificações", cmsKey: "gym.app.profile.notifications" },
+  { icon: Shield, label: "Privacidade", cmsKey: "gym.app.profile.privacy" },
+  { icon: LifeBuoy, label: "Suporte", cmsKey: "gym.app.profile.support" },
 ];
 
 export function Profile() {
   const navigate = useNavigate();
+  const { t } = useCms();
   const profile = useSession((s) => s.profile);
   const setGuest = useSession((s) => s.setGuest);
   const { data: summary } = useSummary();
@@ -45,7 +48,7 @@ export function Profile() {
     navigate("/login", { replace: true });
   };
 
-  useScreenHeader({ title: "Perfil" });
+  useScreenHeader({ title: t("gym.app.nav.profile") });
 
   return (
     <div className="animate-fadeIn">
@@ -58,20 +61,26 @@ export function Profile() {
           <div className="min-w-0">
             <h2 className="text-xl font-black truncate">{profile?.name}</h2>
             {profile?.memberSince && (
-              <p className="text-white/60 text-sm">Membro desde {format(new Date(profile.memberSince), "MMM yyyy", { locale: pt })}</p>
+              <p className="text-white/60 text-sm">{t("gym.app.profile.member_since")} {format(new Date(profile.memberSince), "MMM yyyy", { locale: pt })}</p>
             )}
-            <Badge className="mt-1.5">Membro Ativo</Badge>
+            <Badge className="mt-1.5">{t("gym.app.member_active")}</Badge>
           </div>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-4 gap-3 mb-5">
-        <Stat icon={<Dumbbell size={18} />} value={summary?.totalWorkouts ?? 0} label="Treinos" />
-        <Stat icon={<Flame size={18} />} value={summary?.streak ?? 0} label="Streak" />
-        <Stat icon={<Folder size={18} />} value={programs.length} label="Planos" />
-        <Stat icon={<CalendarDays size={18} />} value={memberMonths} label="Meses" />
+        <Stat icon={<Dumbbell size={18} />} value={summary?.totalWorkouts ?? 0} label={t("gym.app.profile.stat_workouts")} />
+        <Stat icon={<Flame size={18} />} value={summary?.streak ?? 0} label={t("gym.app.profile.stat_streak")} />
+        <Stat icon={<Folder size={18} />} value={programs.length} label={t("gym.app.profile.stat_plans")} />
+        <Stat icon={<CalendarDays size={18} />} value={memberMonths} label={t("gym.app.profile.stat_months")} />
       </div>
+
+      {/* Língua */}
+      <Card className="p-4 mb-5">
+        <p className="text-sm font-bold text-t1 mb-2.5">{t("gym.app.profile.language")}</p>
+        <LanguageSwitcher />
+      </Card>
 
       {/* Theme */}
       <Card className="p-4 mb-5">
@@ -84,13 +93,13 @@ export function Profile() {
         {SETTINGS.map((s) => (
           <button key={s.label} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-bg transition-colors">
             <s.icon size={18} className="text-t2" />
-            <span className="flex-1 text-left text-sm font-medium text-t1">{s.label}</span>
+            <span className="flex-1 text-left text-sm font-medium text-t1">{t(s.cmsKey)}</span>
             <ChevronRight size={16} className="text-t3" />
           </button>
         ))}
       </Card>
 
-      <Button variant="danger" fullWidth icon={<LogOut size={18} />} onClick={doLogout}>Terminar Sessão</Button>
+      <Button variant="danger" fullWidth icon={<LogOut size={18} />} onClick={doLogout}>{t("gym.app.profile.logout")}</Button>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { axiosInstance } from "@kubb/plugin-client/clients/axios";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3001/api";
+const SITE_TOKEN = import.meta.env.VITE_SITE_TOKEN ?? "";
 const TOKEN_KEY = "gymnoprado_token";
 
 // ── Token store (memória + localStorage) ──────────────────────────────────────
@@ -27,6 +28,8 @@ axiosInstance.defaults.withCredentials = true;
 
 axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   config.baseURL = BASE_URL; // honra o env em produção (os hooks têm baseURL hardcoded)
+  // Site token do tenant — exigido pelos endpoints públicos (ex: /websites/content).
+  if (SITE_TOKEN) config.headers.set("X-Site-Token", SITE_TOKEN);
   if (accessToken) config.headers.set("Authorization", `Bearer ${accessToken}`);
   return config;
 });

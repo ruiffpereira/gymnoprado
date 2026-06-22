@@ -4,6 +4,7 @@ import { useLogs, useSummary } from "../api";
 import type { GymLog } from "../api";
 import { Card, Spinner, Empty } from "../components/ui";
 import { useScreenHeader } from "../store/useHeader";
+import { useCms } from "../context/CmsContext";
 import { relativeDays } from "../lib/format";
 import { startOfWeek, format } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -20,11 +21,12 @@ function StatPill({ icon, value, label }: { icon: React.ReactNode; value: string
 
 export function History() {
   const navigate = useNavigate();
+  const { t } = useCms();
   const { data, isLoading } = useLogs({});
   const { data: summary } = useSummary();
   const logs = (data ?? []) as GymLog[];
 
-  useScreenHeader({ title: "Histórico" });
+  useScreenHeader({ title: t("gym.app.nav.history") });
 
   if (isLoading) return <div className="flex justify-center pt-24"><Spinner className="h-8 w-8" /></div>;
 
@@ -43,19 +45,19 @@ export function History() {
     <div className="animate-fadeIn">
       <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto">
       <div className="flex gap-3 mb-6">
-        <StatPill icon={<Dumbbell size={18} />} value={summary?.totalWorkouts ?? logs.length} label="Treinos" />
-        <StatPill icon={<Layers size={18} />} value={summary?.totalSets ?? 0} label="Séries" />
-        <StatPill icon={<Flame size={18} />} value={summary?.streak ?? 0} label="Streak" />
+        <StatPill icon={<Dumbbell size={18} />} value={summary?.totalWorkouts ?? logs.length} label={t("gym.app.history.stat_workouts")} />
+        <StatPill icon={<Layers size={18} />} value={summary?.totalSets ?? 0} label={t("gym.app.history.stat_sets")} />
+        <StatPill icon={<Flame size={18} />} value={summary?.streak ?? 0} label={t("gym.app.history.stat_streak")} />
       </div>
 
       {logs.length === 0 ? (
-        <Empty icon={<Dumbbell size={28} className="text-brand" />} title="Sem treinos ainda" subtitle="Os treinos que concluíres aparecem aqui." />
+        <Empty icon={<Dumbbell size={28} className="text-brand" />} title={t("gym.app.history.empty_title")} subtitle={t("gym.app.history.empty_sub")} />
       ) : (
         <div className="flex flex-col gap-6">
           {[...groups.entries()].map(([key, items]) => (
             <div key={key}>
               <h2 className="text-sm font-bold text-t2 mb-2">
-                {key === thisWeekKey ? "Esta Semana" : `Semana de ${format(new Date(key), "d 'de' MMM", { locale: pt })}`}
+                {key === thisWeekKey ? t("gym.app.history.this_week") : `${t("gym.app.history.week_of")} ${format(new Date(key), "d 'de' MMM", { locale: pt })}`}
               </h2>
               <div className="flex flex-col gap-2">
                 {items.map((l) => (
@@ -65,11 +67,11 @@ export function History() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm text-t1 truncate">{l.workoutName}</p>
-                      <p className="text-xs text-t3">{relativeDays(l.date)} · {l.durationMin} min · {l.totalSets} séries</p>
+                      <p className="text-xs text-t3">{relativeDays(l.date)} · {l.durationMin} {t("gym.app.common.min")} · {l.totalSets} {t("gym.app.common.sets")}</p>
                     </div>
                     {l.workoutId && (
                       <button onClick={() => navigate(`/treino/${l.workoutId}`)} className="flex items-center gap-1 text-xs font-semibold text-brand px-2.5 py-1.5 rounded-lg bg-brand-lt">
-                        <Repeat size={13} /> Repetir
+                        <Repeat size={13} /> {t("gym.app.history.repeat")}
                       </button>
                     )}
                   </Card>
