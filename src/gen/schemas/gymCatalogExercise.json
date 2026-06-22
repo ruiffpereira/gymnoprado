@@ -1,1 +1,0 @@
-{"type":"object","properties":{"exerciseId":{"type":"string","format":"uuid"},"name":{"type":"string"},"group":{"type":"string"},"mediaUrl":{"type":"string","nullable":true},"position":{"type":"integer"}},"required":["exerciseId","name","group"],"x-readme-ref-name":"GymCatalogExercise"}

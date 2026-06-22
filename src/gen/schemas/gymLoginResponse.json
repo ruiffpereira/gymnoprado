@@ -1,1 +1,0 @@
-{"type":"object","properties":{"customerId":{"type":"string","format":"uuid"},"name":{"type":"string"},"email":{"type":"string","nullable":true},"photo":{"type":"string","nullable":true},"accessToken":{"type":"string"}},"required":["customerId","name","accessToken"],"x-readme-ref-name":"GymLoginResponse"}

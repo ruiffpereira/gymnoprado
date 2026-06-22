@@ -1,1 +1,0 @@
-{"type":"object","properties":{"weekStart":{"type":"string","format":"date"},"count":{"type":"integer"}},"required":["weekStart","count"],"x-readme-ref-name":"GymWeeklyPoint"}
