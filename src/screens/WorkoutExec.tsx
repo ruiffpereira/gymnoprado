@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, Check, ChevronRight, Trophy, Pause, Play, Timer, List, Minus, Plus } from "lucide-react";
+import { X, Check, ChevronRight, ChevronDown, Trophy, Pause, Play, Timer, List, Minus, Plus } from "lucide-react";
 import { useActiveWorkout } from "../store/useActiveWorkout";
 import { useCreateLog } from "../hooks/useGym";
 import { Button, Modal, Badge } from "../components/ui";
@@ -34,6 +34,7 @@ export function WorkoutExec() {
 
   const [showFinish, setShowFinish] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const [showLeave, setShowLeave] = useState(false);
   const [pickSel, setPickSel] = useState(0);
   const createLog = useCreateLog();
 
@@ -108,11 +109,16 @@ export function WorkoutExec() {
     });
   };
 
-  const quit = () => {
-    if (confirm(t("gym.app.exec.quit_confirm"))) {
-      wk.clear();
-      navigate("/", { replace: true });
-    }
+  // Minimizar: sai do ecrã mas mantém o treino ativo (a barra flutuante volta cá).
+  const minimize = () => {
+    setShowLeave(false);
+    navigate("/");
+  };
+
+  // Descartar: termina o treino sem guardar.
+  const discard = () => {
+    wk.clear();
+    navigate("/", { replace: true });
   };
 
   return (
@@ -120,7 +126,7 @@ export function WorkoutExec() {
       {/* ── Header escuro com cronómetro grande ── */}
       <div className="bg-ink px-[18px] pb-[18px] sticky top-0 z-50" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)" }}>
         <div className="flex items-center justify-between mb-1.5">
-          <button onClick={quit} className="w-[38px] h-[38px] rounded-[11px] bg-white/10 flex items-center justify-center"><X size={17} className="text-white" /></button>
+          <button onClick={() => setShowLeave(true)} className="w-[38px] h-[38px] rounded-[11px] bg-white/10 flex items-center justify-center"><X size={17} className="text-white" /></button>
           <div className="text-[13px] font-bold text-white/85 truncate max-w-[55%]">{wk.name}</div>
           <button onClick={() => setShowFinish(true)} className="px-[15px] py-[9px] rounded-[11px] bg-brand text-white text-[13px] font-extrabold">{t("gym.app.exec.finish")}</button>
         </div>
@@ -320,6 +326,18 @@ export function WorkoutExec() {
           <div className="flex flex-col gap-2.5">
             <Button fullWidth size="lg" disabled={createLog.isPending} onClick={finishWorkout}>{createLog.isPending ? t("gym.app.common.saving") : t("gym.app.exec.save_workout")}</Button>
             <Button fullWidth variant="ghost" onClick={() => setShowFinish(false)}>{t("gym.app.exec.keep_training")}</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Leave modal — tema da app (substitui o confirm nativo) */}
+      <Modal open={showLeave} onClose={() => setShowLeave(false)} title={t("gym.app.exec.leave_title")}>
+        <div className="pt-1">
+          <p className="text-[14px] text-t2 mb-5">{t("gym.app.exec.leave_desc")}</p>
+          <div className="flex flex-col gap-2.5">
+            <Button fullWidth size="lg" onClick={minimize} icon={<ChevronDown size={18} className="text-white" />}>{t("gym.app.exec.minimize")}</Button>
+            <Button fullWidth variant="ghost" onClick={() => setShowLeave(false)}>{t("gym.app.common.cancel")}</Button>
+            <button onClick={discard} className="mt-1 text-[13px] font-semibold text-red hover:underline py-1">{t("gym.app.exec.discard")}</button>
           </div>
         </div>
       </Modal>

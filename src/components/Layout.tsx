@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { Logo, Avatar } from "./ui";
 import { PullToRefresh } from "./PullToRefresh";
 import { ScreenHeader } from "./ScreenHeader";
+import { ActiveWorkoutBar } from "./ActiveWorkoutBar";
 import { useSession } from "../store/useSession";
 import { useCms } from "../context/CmsContext";
 
@@ -92,6 +93,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <PullToRefresh />
+      <ActiveWorkoutBar />
       <BottomNav />
     </div>
   );
