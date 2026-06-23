@@ -1,325 +1,377 @@
 key,locale,value,type,section,parent
-gym.app.nav.home,pt,Início,text,Navegação,App
-gym.app.nav.home,en,Home,text,Navegação,App
-gym.app.nav.workouts,pt,Treinos,text,Navegação,App
-gym.app.nav.workouts,en,Workouts,text,Navegação,App
-gym.app.nav.history,pt,Histórico,text,Navegação,App
-gym.app.nav.history,en,History,text,Navegação,App
-gym.app.nav.progress,pt,Progresso,text,Navegação,App
-gym.app.nav.progress,en,Progress,text,Navegação,App
-gym.app.nav.profile,pt,Perfil,text,Navegação,App
-gym.app.nav.profile,en,Profile,text,Navegação,App
-gym.app.member_active,pt,Membro Ativo,text,Comum,App
-gym.app.member_active,en,Active Member,text,Comum,App
-gym.app.common.exercises,pt,exercícios,text,Comum,App
-gym.app.common.exercises,en,exercises,text,Comum,App
-gym.app.common.sets,pt,séries,text,Comum,App
-gym.app.common.sets,en,sets,text,Comum,App
-gym.app.common.workouts,pt,treinos,text,Comum,App
-gym.app.common.workouts,en,workouts,text,Comum,App
-gym.app.common.see_all,pt,Ver tudo,text,Comum,App
-gym.app.common.see_all,en,See all,text,Comum,App
-gym.app.dashboard.subtitle,pt,Pronto para treinar?,text,Dashboard,App
-gym.app.dashboard.subtitle,en,Ready to train?,text,Dashboard,App
-gym.app.dashboard.today_label,pt,TREINO DE HOJE,text,Dashboard,App
-gym.app.dashboard.today_label,en,TODAY'S WORKOUT,text,Dashboard,App
-gym.app.dashboard.start,pt,Começar Treino,text,Dashboard,App
-gym.app.dashboard.start,en,Start Workout,text,Dashboard,App
-gym.app.dashboard.no_workout_title,pt,Sem treino agendado,text,Dashboard,App
-gym.app.dashboard.no_workout_title,en,No workout scheduled,text,Dashboard,App
-gym.app.dashboard.no_workout_desc,pt,Cria o teu primeiro treino para começar.,text,Dashboard,App
-gym.app.dashboard.no_workout_desc,en,Create your first workout to get started.,text,Dashboard,App
-gym.app.dashboard.see_workouts,pt,Ver treinos,text,Dashboard,App
-gym.app.dashboard.see_workouts,en,See workouts,text,Dashboard,App
-gym.app.dashboard.this_week,pt,Esta semana,text,Dashboard,App
-gym.app.dashboard.this_week,en,This week,text,Dashboard,App
-gym.app.dashboard.week_suffix,pt,esta semana,text,Dashboard,App
-gym.app.dashboard.week_suffix,en,this week,text,Dashboard,App
-gym.app.dashboard.goal_label,pt,meta,text,Dashboard,App
-gym.app.dashboard.goal_label,en,goal,text,Dashboard,App
-gym.app.dashboard.weekly_goal,pt,Meta semanal,text,Dashboard,App
-gym.app.dashboard.weekly_goal,en,Weekly goal,text,Dashboard,App
-gym.app.dashboard.total_sets,pt,séries no total,text,Dashboard,App
-gym.app.dashboard.total_sets,en,total sets,text,Dashboard,App
-gym.app.dashboard.recent,pt,Últimos Treinos,text,Dashboard,App
-gym.app.dashboard.recent,en,Recent Workouts,text,Dashboard,App
-gym.app.dashboard.no_logs,pt,Ainda não há treinos registados.,text,Dashboard,App
-gym.app.dashboard.no_logs,en,No workouts logged yet.,text,Dashboard,App
-gym.app.profile.member_since,pt,Membro desde,text,Perfil,App
-gym.app.profile.member_since,en,Member since,text,Perfil,App
-gym.app.profile.stat_workouts,pt,Treinos,text,Perfil,App
-gym.app.profile.stat_workouts,en,Workouts,text,Perfil,App
-gym.app.profile.stat_streak,pt,Streak,text,Perfil,App
-gym.app.profile.stat_streak,en,Streak,text,Perfil,App
-gym.app.profile.stat_plans,pt,Planos,text,Perfil,App
-gym.app.profile.stat_plans,en,Plans,text,Perfil,App
-gym.app.profile.stat_months,pt,Meses,text,Perfil,App
-gym.app.profile.stat_months,en,Months,text,Perfil,App
-gym.app.profile.language,pt,Língua,text,Perfil,App
-gym.app.profile.language,en,Language,text,Perfil,App
-gym.app.profile.notifications,pt,Notificações,text,Perfil,App
-gym.app.profile.notifications,en,Notifications,text,Perfil,App
-gym.app.profile.privacy,pt,Privacidade,text,Perfil,App
-gym.app.profile.privacy,en,Privacy,text,Perfil,App
-gym.app.profile.support,pt,Suporte,text,Perfil,App
-gym.app.profile.support,en,Support,text,Perfil,App
-gym.app.profile.logout,pt,Terminar Sessão,text,Perfil,App
-gym.app.profile.logout,en,Log out,text,Perfil,App
-gym.app.common.more,pt,mais…,text,Comum,App
-gym.app.common.more,en,more…,text,Comum,App
-gym.app.common.start,pt,Iniciar,text,Comum,App
-gym.app.common.start,en,Start,text,Comum,App
-gym.app.common.cancel,pt,Cancelar,text,Comum,App
-gym.app.common.cancel,en,Cancel,text,Comum,App
-gym.app.common.create,pt,Criar,text,Comum,App
-gym.app.common.create,en,Create,text,Comum,App
-gym.app.common.save,pt,Guardar,text,Comum,App
-gym.app.common.save,en,Save,text,Comum,App
-gym.app.common.saving,pt,A guardar…,text,Comum,App
-gym.app.common.saving,en,Saving…,text,Comum,App
-gym.app.common.edit,pt,Editar,text,Comum,App
-gym.app.common.edit,en,Edit,text,Comum,App
-gym.app.common.back,pt,Voltar,text,Comum,App
-gym.app.common.back,en,Back,text,Comum,App
-gym.app.common.min,pt,min,text,Comum,App
-gym.app.common.min,en,min,text,Comum,App
-gym.app.common.reps,pt,reps,text,Comum,App
-gym.app.common.reps,en,reps,text,Comum,App
-gym.app.common.rest,pt,descanso,text,Comum,App
-gym.app.common.rest,en,rest,text,Comum,App
-gym.app.common.groups,pt,grupos,text,Comum,App
-gym.app.common.groups,en,groups,text,Comum,App
-gym.app.workouts.tab_coach,pt,Do Coach,text,Treinos,App
-gym.app.workouts.tab_coach,en,Coach's,text,Treinos,App
-gym.app.workouts.tab_mine,pt,⭐ Os Meus,text,Treinos,App
-gym.app.workouts.tab_mine,en,⭐ Mine,text,Treinos,App
-gym.app.workouts.new_group,pt,Novo Grupo,text,Treinos,App
-gym.app.workouts.new_group,en,New Group,text,Treinos,App
-gym.app.workouts.new_group_modal,pt,Novo Grupo de Treino,text,Treinos,App
-gym.app.workouts.new_group_modal,en,New Workout Group,text,Treinos,App
-gym.app.workouts.group_name,pt,Nome do grupo,text,Treinos,App
-gym.app.workouts.group_name,en,Group name,text,Treinos,App
-gym.app.workouts.group_name_ph,pt,Ex: Treino 1,text,Treinos,App
-gym.app.workouts.group_name_ph,en,E.g. Workout 1,text,Treinos,App
-gym.app.workouts.coach_readonly_note,pt,"Os treinos do coach são só de leitura. Usa ""Clonar"" para os editares em Os Meus.",text,Treinos,App
-gym.app.workouts.coach_readonly_note,en,"Coach workouts are read-only. Use ""Clone"" to edit them in Mine.",text,Treinos,App
-gym.app.workouts.empty_coach_title,pt,Sem treinos do coach,text,Treinos,App
-gym.app.workouts.empty_coach_title,en,No coach workouts,text,Treinos,App
-gym.app.workouts.empty_coach_sub,pt,O teu coach ainda não te atribuiu treinos.,text,Treinos,App
-gym.app.workouts.empty_coach_sub,en,Your coach hasn't assigned you any workouts yet.,text,Treinos,App
-gym.app.workouts.empty_mine_title,pt,Sem grupos teus,text,Treinos,App
-gym.app.workouts.empty_mine_title,en,No groups of yours,text,Treinos,App
-gym.app.workouts.empty_mine_sub,pt,Cria um grupo para organizar os teus treinos.,text,Treinos,App
-gym.app.workouts.empty_mine_sub,en,Create a group to organise your workouts.,text,Treinos,App
-gym.app.workouts.deleted,pt,Treino eliminado,text,Treinos,App
-gym.app.workouts.deleted,en,Workout deleted,text,Treinos,App
-gym.app.workouts.cloned,pt,Treino clonado para Os Meus,text,Treinos,App
-gym.app.workouts.cloned,en,Workout cloned to Mine,text,Treinos,App
-gym.app.workouts.clone_need_group,pt,Cria primeiro um grupo em 'Os Meus'.,text,Treinos,App
-gym.app.workouts.clone_need_group,en,Create a group in 'Mine' first.,text,Treinos,App
-gym.app.workouts.clone,pt,Clonar,text,Treinos,App
-gym.app.workouts.clone,en,Clone,text,Treinos,App
-gym.app.workouts.clone_to,pt,Clonar para que grupo?,text,Treinos,App
-gym.app.workouts.clone_to,en,Clone to which group?,text,Treinos,App
-gym.app.workouts.group_created,pt,Grupo criado,text,Treinos,App
-gym.app.workouts.group_created,en,Group created,text,Treinos,App
-gym.app.workouts.group_deleted,pt,Grupo eliminado,text,Treinos,App
-gym.app.workouts.group_deleted,en,Group deleted,text,Treinos,App
-gym.app.workouts.add_workout,pt,Adicionar treino,text,Treinos,App
-gym.app.workouts.add_workout,en,Add workout,text,Treinos,App
-gym.app.history.stat_workouts,pt,Treinos,text,Histórico,App
-gym.app.history.stat_workouts,en,Workouts,text,Histórico,App
-gym.app.history.stat_sets,pt,Séries,text,Histórico,App
-gym.app.history.stat_sets,en,Sets,text,Histórico,App
-gym.app.history.stat_streak,pt,Streak,text,Histórico,App
-gym.app.history.stat_streak,en,Streak,text,Histórico,App
-gym.app.history.empty_title,pt,Sem treinos ainda,text,Histórico,App
-gym.app.history.empty_title,en,No workouts yet,text,Histórico,App
-gym.app.history.empty_sub,pt,Os treinos que concluíres aparecem aqui.,text,Histórico,App
-gym.app.history.empty_sub,en,Workouts you complete appear here.,text,Histórico,App
-gym.app.history.this_week,pt,Esta Semana,text,Histórico,App
-gym.app.history.this_week,en,This Week,text,Histórico,App
-gym.app.history.week_of,pt,Semana de,text,Histórico,App
-gym.app.history.week_of,en,Week of,text,Histórico,App
-gym.app.history.repeat,pt,Repetir,text,Histórico,App
-gym.app.history.repeat,en,Repeat,text,Histórico,App
-gym.app.progress.total_workouts,pt,Treinos totais,text,Progresso,App
-gym.app.progress.total_workouts,en,Total workouts,text,Progresso,App
-gym.app.progress.streak_days,pt,Dias de streak,text,Progresso,App
-gym.app.progress.streak_days,en,Streak days,text,Progresso,App
-gym.app.progress.total_sets,pt,Séries feitas,text,Progresso,App
-gym.app.progress.total_sets,en,Sets done,text,Progresso,App
-gym.app.progress.per_week,pt,Treinos/semana,text,Progresso,App
-gym.app.progress.per_week,en,Workouts/week,text,Progresso,App
-gym.app.progress.weekly_chart,pt,Treinos por Semana,text,Progresso,App
-gym.app.progress.weekly_chart,en,Workouts per Week,text,Progresso,App
-gym.app.progress.records,pt,Recordes Pessoais,text,Progresso,App
-gym.app.progress.records,en,Personal Records,text,Progresso,App
-gym.app.progress.no_records,pt,Sem recordes ainda.,text,Progresso,App
-gym.app.progress.no_records,en,No records yet.,text,Progresso,App
-gym.app.progress.muscle_focus,pt,Foco Muscular,text,Progresso,App
-gym.app.progress.muscle_focus,en,Muscle Focus,text,Progresso,App
-gym.app.progress.no_data,pt,Sem dados suficientes.,text,Progresso,App
-gym.app.progress.no_data,en,Not enough data.,text,Progresso,App
-gym.app.detail.not_found,pt,Treino não encontrado.,text,Detalhe,App
-gym.app.detail.not_found,en,Workout not found.,text,Detalhe,App
-gym.app.detail.exercises_heading,pt,Exercícios,text,Detalhe,App
-gym.app.detail.exercises_heading,en,Exercises,text,Detalhe,App
-gym.app.detail.coach_plan,pt,Plano do coach,text,Detalhe,App
-gym.app.detail.coach_plan,en,Coach plan,text,Detalhe,App
-gym.app.exec.rest_label,pt,DESCANSO,text,Execução,App
-gym.app.exec.rest_label,en,REST,text,Execução,App
-gym.app.exec.skip,pt,Saltar,text,Execução,App
-gym.app.exec.skip,en,Skip,text,Execução,App
-gym.app.exec.saved,pt,Treino guardado! 💪,text,Execução,App
-gym.app.exec.saved,en,Workout saved! 💪,text,Execução,App
-gym.app.exec.save_error,pt,Não foi possível guardar.,text,Execução,App
-gym.app.exec.save_error,en,Couldn't save.,text,Execução,App
-gym.app.exec.quit_confirm,pt,Sair sem guardar o treino?,text,Execução,App
-gym.app.exec.quit_confirm,en,Quit without saving the workout?,text,Execução,App
-gym.app.exec.finish,pt,Terminar,text,Execução,App
-gym.app.exec.finish,en,Finish,text,Execução,App
-gym.app.exec.exercise_label,pt,Exercício,text,Execução,App
-gym.app.exec.exercise_label,en,Exercise,text,Execução,App
-gym.app.exec.target_sets,pt,Séries,text,Execução,App
-gym.app.exec.target_sets,en,Sets,text,Execução,App
-gym.app.exec.target_reps,pt,Reps alvo,text,Execução,App
-gym.app.exec.target_reps,en,Target reps,text,Execução,App
-gym.app.exec.rest_target,pt,Descanso,text,Execução,App
-gym.app.exec.rest_target,en,Rest,text,Execução,App
-gym.app.exec.start_rest,pt,Iniciar descanso,text,Execução,App
-gym.app.exec.start_rest,en,Start rest,text,Execução,App
-gym.app.exec.previous,pt,Anterior,text,Execução,App
-gym.app.exec.previous,en,Previous,text,Execução,App
-gym.app.exec.finish_workout,pt,Terminar Treino,text,Execução,App
-gym.app.exec.finish_workout,en,Finish Workout,text,Execução,App
-gym.app.exec.next_exercise,pt,Próximo Exercício,text,Execução,App
-gym.app.exec.next_exercise,en,Next Exercise,text,Execução,App
-gym.app.exec.well_done,pt,Bom trabalho!,text,Execução,App
-gym.app.exec.well_done,en,Well done!,text,Execução,App
-gym.app.exec.sets_done,pt,séries concluídas,text,Execução,App
-gym.app.exec.sets_done,en,sets completed,text,Execução,App
-gym.app.exec.save_workout,pt,Guardar Treino,text,Execução,App
-gym.app.exec.save_workout,en,Save Workout,text,Execução,App
-gym.app.exec.keep_training,pt,Continuar a treinar,text,Execução,App
-gym.app.exec.keep_training,en,Keep training,text,Execução,App
-gym.app.editor.edit_title,pt,Editar treino,text,Editor,App
-gym.app.editor.edit_title,en,Edit workout,text,Editor,App
-gym.app.editor.new_title,pt,Novo treino,text,Editor,App
-gym.app.editor.new_title,en,New workout,text,Editor,App
-gym.app.editor.updated,pt,Treino atualizado,text,Editor,App
-gym.app.editor.updated,en,Workout updated,text,Editor,App
-gym.app.editor.created,pt,Treino criado,text,Editor,App
-gym.app.editor.created,en,Workout created,text,Editor,App
-gym.app.editor.name_label,pt,Nome do treino,text,Editor,App
-gym.app.editor.name_label,en,Workout name,text,Editor,App
-gym.app.editor.name_ph,pt,Ex: Push A,text,Editor,App
-gym.app.editor.name_ph,en,E.g. Push A,text,Editor,App
-gym.app.editor.days,pt,Dias de treino,text,Editor,App
-gym.app.editor.days,en,Training days,text,Editor,App
-gym.app.editor.exercises,pt,Exercícios,text,Editor,App
-gym.app.editor.exercises,en,Exercises,text,Editor,App
-gym.app.editor.field_sets,pt,Séries,text,Editor,App
-gym.app.editor.field_sets,en,Sets,text,Editor,App
-gym.app.editor.field_reps,pt,Reps,text,Editor,App
-gym.app.editor.field_reps,en,Reps,text,Editor,App
-gym.app.editor.field_weight,pt,Peso,text,Editor,App
-gym.app.editor.field_weight,en,Weight,text,Editor,App
-gym.app.editor.field_rest,pt,Descanso,text,Editor,App
-gym.app.editor.field_rest,en,Rest,text,Editor,App
-gym.app.editor.add_exercise,pt,Adicionar Exercício,text,Editor,App
-gym.app.editor.add_exercise,en,Add Exercise,text,Editor,App
-gym.app.editor.all,pt,Todos,text,Editor,App
-gym.app.editor.all,en,All,text,Editor,App
-gym.app.editor.empty_catalog,pt,Sem exercícios no catálogo.,text,Editor,App
-gym.app.editor.empty_catalog,en,No exercises in the catalog.,text,Editor,App
-gym.app.login.fill_fields,pt,Preenche o email e a palavra-passe.,text,Login,App
-gym.app.login.fill_fields,en,Fill in the email and password.,text,Login,App
-gym.app.login.error,pt,Não foi possível entrar.,text,Login,App
-gym.app.login.error,en,Couldn't sign in.,text,Login,App
-gym.app.login.tagline,pt,A tua jornada começa aqui,text,Login,App
-gym.app.login.tagline,en,Your journey starts here,text,Login,App
-gym.app.login.email,pt,Email,text,Login,App
-gym.app.login.email,en,Email,text,Login,App
-gym.app.login.email_ph,pt,o-teu@email.pt,text,Login,App
-gym.app.login.email_ph,en,your@email.com,text,Login,App
-gym.app.login.password,pt,Palavra-passe,text,Login,App
-gym.app.login.password,en,Password,text,Login,App
-gym.app.login.signing_in,pt,A entrar…,text,Login,App
-gym.app.login.signing_in,en,Signing in…,text,Login,App
-gym.app.login.sign_in,pt,Entrar,text,Login,App
-gym.app.login.sign_in,en,Sign in,text,Login,App
-gym.app.login.forgot,pt,Esqueci a palavra-passe,text,Login,App
-gym.app.login.forgot,en,Forgot password,text,Login,App
-gym.app.login.no_account,pt,Não tens conta?,text,Login,App
-gym.app.login.no_account,en,No account?,text,Login,App
-gym.app.login.create_account,pt,Criar conta,text,Login,App
-gym.app.login.create_account,en,Create account,text,Login,App
-gym.app.register.err_name,pt,Indica o teu nome.,text,Registo,App
-gym.app.register.err_name,en,Enter your name.,text,Registo,App
-gym.app.register.err_email,pt,Email inválido.,text,Registo,App
-gym.app.register.err_email,en,Invalid email.,text,Registo,App
-gym.app.register.err_phone,pt,Telemóvel inválido (mín. 9 dígitos).,text,Registo,App
-gym.app.register.err_phone,en,Invalid phone (min. 9 digits).,text,Registo,App
-gym.app.register.err_password,pt,A palavra-passe precisa de pelo menos 8 caracteres.,text,Registo,App
-gym.app.register.err_password,en,Password needs at least 8 characters.,text,Registo,App
-gym.app.register.error,pt,Não foi possível criar a conta.,text,Registo,App
-gym.app.register.error,en,Couldn't create the account.,text,Registo,App
-gym.app.register.tagline,pt,Cria a tua conta e começa a treinar,text,Registo,App
-gym.app.register.tagline,en,Create your account and start training,text,Registo,App
-gym.app.register.name,pt,Nome,text,Registo,App
-gym.app.register.name,en,Name,text,Registo,App
-gym.app.register.name_ph,pt,O teu nome,text,Registo,App
-gym.app.register.name_ph,en,Your name,text,Registo,App
-gym.app.register.phone,pt,Telemóvel,text,Registo,App
-gym.app.register.phone,en,Phone,text,Registo,App
-gym.app.register.phone_ph,pt,912 345 678,text,Registo,App
-gym.app.register.phone_ph,en,912 345 678,text,Registo,App
-gym.app.register.password_ph,pt,Mín. 8 caracteres,text,Registo,App
-gym.app.register.password_ph,en,Min. 8 characters,text,Registo,App
-gym.app.register.creating,pt,A criar conta…,text,Registo,App
-gym.app.register.creating,en,Creating account…,text,Registo,App
-gym.app.register.create,pt,Criar Conta,text,Registo,App
-gym.app.register.create,en,Create Account,text,Registo,App
-gym.app.register.have_account,pt,Já tens conta?,text,Registo,App
-gym.app.register.have_account,en,Already have an account?,text,Registo,App
-gym.app.auth.back_to_login,pt,Voltar a entrar,text,Auth,App
-gym.app.auth.back_to_login,en,Back to sign in,text,Auth,App
-gym.app.forgot.err_email,pt,Indica um email válido.,text,Auth,App
-gym.app.forgot.err_email,en,Enter a valid email.,text,Auth,App
-gym.app.forgot.error,pt,Não foi possível enviar o email.,text,Auth,App
-gym.app.forgot.error,en,Couldn't send the email.,text,Auth,App
-gym.app.forgot.tagline,pt,Recupera o acesso à tua conta,text,Auth,App
-gym.app.forgot.tagline,en,Recover access to your account,text,Auth,App
-gym.app.forgot.sent_title,pt,Email enviado,text,Auth,App
-gym.app.forgot.sent_title,en,Email sent,text,Auth,App
-gym.app.forgot.sent_desc_prefix,pt,Se existir uma conta associada a,text,Auth,App
-gym.app.forgot.sent_desc_prefix,en,If there's an account linked to,text,Auth,App
-gym.app.forgot.sent_desc_suffix,pt,", enviámos um link para definires uma nova palavra-passe. Verifica também o spam.",text,Auth,App
-gym.app.forgot.sent_desc_suffix,en,", we've sent a link to set a new password. Check your spam too.",text,Auth,App
-gym.app.forgot.sending,pt,A enviar…,text,Auth,App
-gym.app.forgot.sending,en,Sending…,text,Auth,App
-gym.app.forgot.send_link,pt,Enviar link de recuperação,text,Auth,App
-gym.app.forgot.send_link,en,Send recovery link,text,Auth,App
-gym.app.reset.err_mismatch,pt,As palavras-passe não coincidem.,text,Auth,App
-gym.app.reset.err_mismatch,en,Passwords don't match.,text,Auth,App
-gym.app.reset.success,pt,Palavra-passe alterada. Já podes entrar.,text,Auth,App
-gym.app.reset.success,en,Password changed. You can sign in now.,text,Auth,App
-gym.app.reset.error,pt,Não foi possível alterar a palavra-passe.,text,Auth,App
-gym.app.reset.error,en,Couldn't change the password.,text,Auth,App
-gym.app.reset.tagline,pt,Define a tua nova palavra-passe,text,Auth,App
-gym.app.reset.tagline,en,Set your new password,text,Auth,App
-gym.app.reset.invalid_link,pt,Link inválido ou incompleto.,text,Auth,App
-gym.app.reset.invalid_link,en,Invalid or incomplete link.,text,Auth,App
-gym.app.reset.invalid_desc,pt,Pede um novo link de recuperação a partir do ecrã de entrada.,text,Auth,App
-gym.app.reset.invalid_desc,en,Request a new recovery link from the sign-in screen.,text,Auth,App
-gym.app.reset.request_new,pt,Pedir novo link,text,Auth,App
-gym.app.reset.request_new,en,Request new link,text,Auth,App
-gym.app.reset.new_password,pt,Nova palavra-passe,text,Auth,App
-gym.app.reset.new_password,en,New password,text,Auth,App
-gym.app.reset.confirm_password,pt,Confirmar palavra-passe,text,Auth,App
-gym.app.reset.confirm_password,en,Confirm password,text,Auth,App
-gym.app.reset.confirm_ph,pt,Repete a palavra-passe,text,Auth,App
-gym.app.reset.confirm_ph,en,Repeat the password,text,Auth,App
-gym.app.reset.submit,pt,Alterar palavra-passe,text,Auth,App
-gym.app.reset.submit,en,Change password,text,Auth,App
+gym.app.nav.home,pt,Início,text,Navegação,
+gym.app.nav.home,en,Home,text,Navegação,
+gym.app.nav.workouts,pt,Treinos,text,Navegação,
+gym.app.nav.workouts,en,Workouts,text,Navegação,
+gym.app.nav.history,pt,Histórico,text,Navegação,
+gym.app.nav.history,en,History,text,Navegação,
+gym.app.nav.progress,pt,Progresso,text,Navegação,
+gym.app.nav.progress,en,Progress,text,Navegação,
+gym.app.nav.profile,pt,Perfil,text,Navegação,
+gym.app.nav.profile,en,Profile,text,Navegação,
+gym.app.member_active,pt,Membro Ativo,text,Comum,
+gym.app.member_active,en,Active Member,text,Comum,
+gym.app.common.exercises,pt,exercícios,text,Comum,
+gym.app.common.exercises,en,exercises,text,Comum,
+gym.app.common.sets,pt,séries,text,Comum,
+gym.app.common.sets,en,sets,text,Comum,
+gym.app.common.workouts,pt,treinos,text,Comum,
+gym.app.common.workouts,en,workouts,text,Comum,
+gym.app.common.see_all,pt,Ver tudo,text,Comum,
+gym.app.common.see_all,en,See all,text,Comum,
+gym.app.dashboard.subtitle,pt,Pronto para treinar?,text,Dashboard,
+gym.app.dashboard.subtitle,en,Ready to train?,text,Dashboard,
+gym.app.dashboard.today_label,pt,TREINO DE HOJE,text,Dashboard,
+gym.app.dashboard.today_label,en,TODAY'S WORKOUT,text,Dashboard,
+gym.app.dashboard.start,pt,Começar Treino,text,Dashboard,
+gym.app.dashboard.start,en,Start Workout,text,Dashboard,
+gym.app.dashboard.no_workout_title,pt,Sem treino agendado,text,Dashboard,
+gym.app.dashboard.no_workout_title,en,No workout scheduled,text,Dashboard,
+gym.app.dashboard.no_workout_desc,pt,Cria o teu primeiro treino para começar.,text,Dashboard,
+gym.app.dashboard.no_workout_desc,en,Create your first workout to get started.,text,Dashboard,
+gym.app.dashboard.see_workouts,pt,Ver treinos,text,Dashboard,
+gym.app.dashboard.see_workouts,en,See workouts,text,Dashboard,
+gym.app.dashboard.this_week,pt,Esta semana,text,Dashboard,
+gym.app.dashboard.this_week,en,This week,text,Dashboard,
+gym.app.dashboard.week_suffix,pt,esta semana,text,Dashboard,
+gym.app.dashboard.week_suffix,en,this week,text,Dashboard,
+gym.app.dashboard.goal_label,pt,meta,text,Dashboard,
+gym.app.dashboard.goal_label,en,goal,text,Dashboard,
+gym.app.dashboard.weekly_goal,pt,Meta semanal,text,Dashboard,
+gym.app.dashboard.weekly_goal,en,Weekly goal,text,Dashboard,
+gym.app.dashboard.total_sets,pt,séries no total,text,Dashboard,
+gym.app.dashboard.total_sets,en,total sets,text,Dashboard,
+gym.app.dashboard.recent,pt,Últimos Treinos,text,Dashboard,
+gym.app.dashboard.recent,en,Recent Workouts,text,Dashboard,
+gym.app.dashboard.no_logs,pt,Ainda não há treinos registados.,text,Dashboard,
+gym.app.dashboard.no_logs,en,No workouts logged yet.,text,Dashboard,
+gym.app.profile.member_since,pt,Membro desde,text,Perfil,
+gym.app.profile.member_since,en,Member since,text,Perfil,
+gym.app.profile.stat_workouts,pt,Treinos,text,Perfil,
+gym.app.profile.stat_workouts,en,Workouts,text,Perfil,
+gym.app.profile.stat_streak,pt,Streak,text,Perfil,
+gym.app.profile.stat_streak,en,Streak,text,Perfil,
+gym.app.profile.stat_plans,pt,Planos,text,Perfil,
+gym.app.profile.stat_plans,en,Plans,text,Perfil,
+gym.app.profile.stat_months,pt,Meses,text,Perfil,
+gym.app.profile.stat_months,en,Months,text,Perfil,
+gym.app.profile.language,pt,Língua,text,Perfil,
+gym.app.profile.language,en,Language,text,Perfil,
+gym.app.profile.notifications,pt,Notificações,text,Perfil,
+gym.app.profile.notifications,en,Notifications,text,Perfil,
+gym.app.profile.privacy,pt,Privacidade,text,Perfil,
+gym.app.profile.privacy,en,Privacy,text,Perfil,
+gym.app.profile.support,pt,Suporte,text,Perfil,
+gym.app.profile.support,en,Support,text,Perfil,
+gym.app.profile.logout,pt,Terminar Sessão,text,Perfil,
+gym.app.profile.logout,en,Log out,text,Perfil,
+gym.app.common.more,pt,mais…,text,Comum,
+gym.app.common.more,en,more…,text,Comum,
+gym.app.common.start,pt,Iniciar,text,Comum,
+gym.app.common.start,en,Start,text,Comum,
+gym.app.common.cancel,pt,Cancelar,text,Comum,
+gym.app.common.cancel,en,Cancel,text,Comum,
+gym.app.common.create,pt,Criar,text,Comum,
+gym.app.common.create,en,Create,text,Comum,
+gym.app.common.save,pt,Guardar,text,Comum,
+gym.app.common.save,en,Save,text,Comum,
+gym.app.common.saving,pt,A guardar…,text,Comum,
+gym.app.common.saving,en,Saving…,text,Comum,
+gym.app.common.loading,pt,A carregar…,text,Comum,
+gym.app.common.loading,en,Loading…,text,Comum,
+gym.app.common.of,pt,de,text,Comum,
+gym.app.common.of,en,of,text,Comum,
+gym.app.common.edit,pt,Editar,text,Comum,
+gym.app.common.edit,en,Edit,text,Comum,
+gym.app.common.back,pt,Voltar,text,Comum,
+gym.app.common.back,en,Back,text,Comum,
+gym.app.common.min,pt,min,text,Comum,
+gym.app.common.min,en,min,text,Comum,
+gym.app.common.reps,pt,reps,text,Comum,
+gym.app.common.reps,en,reps,text,Comum,
+gym.app.common.rest,pt,descanso,text,Comum,
+gym.app.common.rest,en,rest,text,Comum,
+gym.app.common.groups,pt,grupos,text,Comum,
+gym.app.common.groups,en,groups,text,Comum,
+gym.app.workouts.tab_coach,pt,Do Coach,text,Treinos,
+gym.app.workouts.tab_coach,en,Coach's,text,Treinos,
+gym.app.workouts.tab_mine,pt,⭐ Os Meus,text,Treinos,
+gym.app.workouts.tab_mine,en,⭐ Mine,text,Treinos,
+gym.app.workouts.new_group,pt,Novo Grupo,text,Treinos,
+gym.app.workouts.new_group,en,New Group,text,Treinos,
+gym.app.workouts.new_group_modal,pt,Novo Grupo de Treino,text,Treinos,
+gym.app.workouts.new_group_modal,en,New Workout Group,text,Treinos,
+gym.app.workouts.group_name,pt,Nome do grupo,text,Treinos,
+gym.app.workouts.group_name,en,Group name,text,Treinos,
+gym.app.workouts.group_name_ph,pt,Ex: Treino 1,text,Treinos,
+gym.app.workouts.group_name_ph,en,E.g. Workout 1,text,Treinos,
+gym.app.workouts.coach_readonly_note,pt,"Os treinos do coach são só de leitura. Usa ""Clonar"" para os editares em Os Meus.",text,Treinos,
+gym.app.workouts.coach_readonly_note,en,"Coach workouts are read-only. Use ""Clone"" to edit them in Mine.",text,Treinos,
+gym.app.workouts.empty_coach_title,pt,Sem treinos do coach,text,Treinos,
+gym.app.workouts.empty_coach_title,en,No coach workouts,text,Treinos,
+gym.app.workouts.empty_coach_sub,pt,O teu coach ainda não te atribuiu treinos.,text,Treinos,
+gym.app.workouts.empty_coach_sub,en,Your coach hasn't assigned you any workouts yet.,text,Treinos,
+gym.app.workouts.empty_mine_title,pt,Sem grupos teus,text,Treinos,
+gym.app.workouts.empty_mine_title,en,No groups of yours,text,Treinos,
+gym.app.workouts.empty_mine_sub,pt,Cria um grupo para organizar os teus treinos.,text,Treinos,
+gym.app.workouts.empty_mine_sub,en,Create a group to organise your workouts.,text,Treinos,
+gym.app.workouts.deleted,pt,Treino eliminado,text,Treinos,
+gym.app.workouts.deleted,en,Workout deleted,text,Treinos,
+gym.app.workouts.cloned,pt,Treino clonado para Os Meus,text,Treinos,
+gym.app.workouts.cloned,en,Workout cloned to Mine,text,Treinos,
+gym.app.workouts.clone_need_group,pt,Cria primeiro um grupo em 'Os Meus'.,text,Treinos,
+gym.app.workouts.clone_need_group,en,Create a group in 'Mine' first.,text,Treinos,
+gym.app.workouts.clone,pt,Clonar,text,Treinos,
+gym.app.workouts.clone,en,Clone,text,Treinos,
+gym.app.workouts.clone_to,pt,Clonar para que grupo?,text,Treinos,
+gym.app.workouts.clone_to,en,Clone to which group?,text,Treinos,
+gym.app.workouts.group_created,pt,Grupo criado,text,Treinos,
+gym.app.workouts.group_created,en,Group created,text,Treinos,
+gym.app.workouts.group_deleted,pt,Grupo eliminado,text,Treinos,
+gym.app.workouts.group_deleted,en,Group deleted,text,Treinos,
+gym.app.workouts.add_workout,pt,Adicionar treino,text,Treinos,
+gym.app.workouts.add_workout,en,Add workout,text,Treinos,
+gym.app.history.stat_workouts,pt,Treinos,text,Histórico,
+gym.app.history.stat_workouts,en,Workouts,text,Histórico,
+gym.app.history.stat_sets,pt,Séries,text,Histórico,
+gym.app.history.stat_sets,en,Sets,text,Histórico,
+gym.app.history.stat_streak,pt,Streak,text,Histórico,
+gym.app.history.stat_streak,en,Streak,text,Histórico,
+gym.app.history.empty_title,pt,Sem treinos ainda,text,Histórico,
+gym.app.history.empty_title,en,No workouts yet,text,Histórico,
+gym.app.history.empty_sub,pt,Os treinos que concluíres aparecem aqui.,text,Histórico,
+gym.app.history.empty_sub,en,Workouts you complete appear here.,text,Histórico,
+gym.app.history.this_week,pt,Esta Semana,text,Histórico,
+gym.app.history.this_week,en,This Week,text,Histórico,
+gym.app.history.week_of,pt,Semana de,text,Histórico,
+gym.app.history.week_of,en,Week of,text,Histórico,
+gym.app.history.repeat,pt,Repetir,text,Histórico,
+gym.app.history.repeat,en,Repeat,text,Histórico,
+gym.app.progress.total_workouts,pt,Treinos totais,text,Progresso,
+gym.app.progress.total_workouts,en,Total workouts,text,Progresso,
+gym.app.progress.streak_days,pt,Dias de streak,text,Progresso,
+gym.app.progress.streak_days,en,Streak days,text,Progresso,
+gym.app.progress.total_sets,pt,Séries feitas,text,Progresso,
+gym.app.progress.total_sets,en,Sets done,text,Progresso,
+gym.app.progress.per_week,pt,Treinos/semana,text,Progresso,
+gym.app.progress.per_week,en,Workouts/week,text,Progresso,
+gym.app.progress.weekly_chart,pt,Treinos por Semana,text,Progresso,
+gym.app.progress.weekly_chart,en,Workouts per Week,text,Progresso,
+gym.app.progress.records,pt,Recordes Pessoais,text,Progresso,
+gym.app.progress.records,en,Personal Records,text,Progresso,
+gym.app.progress.no_records,pt,Sem recordes ainda.,text,Progresso,
+gym.app.progress.no_records,en,No records yet.,text,Progresso,
+gym.app.progress.muscle_focus,pt,Foco Muscular,text,Progresso,
+gym.app.progress.muscle_focus,en,Muscle Focus,text,Progresso,
+gym.app.progress.no_data,pt,Sem dados suficientes.,text,Progresso,
+gym.app.progress.no_data,en,Not enough data.,text,Progresso,
+gym.app.detail.not_found,pt,Treino não encontrado.,text,Detalhe,
+gym.app.detail.not_found,en,Workout not found.,text,Detalhe,
+gym.app.detail.exercises_heading,pt,Exercícios,text,Detalhe,
+gym.app.detail.exercises_heading,en,Exercises,text,Detalhe,
+gym.app.detail.coach_plan,pt,Plano do coach,text,Detalhe,
+gym.app.detail.coach_plan,en,Coach plan,text,Detalhe,
+gym.app.exec.rest_label,pt,DESCANSO,text,Execução,
+gym.app.exec.rest_label,en,REST,text,Execução,
+gym.app.exec.skip,pt,Saltar,text,Execução,
+gym.app.exec.skip,en,Skip,text,Execução,
+gym.app.exec.saved,pt,Treino guardado! 💪,text,Execução,
+gym.app.exec.saved,en,Workout saved! 💪,text,Execução,
+gym.app.exec.save_error,pt,Não foi possível guardar.,text,Execução,
+gym.app.exec.save_error,en,Couldn't save.,text,Execução,
+gym.app.exec.quit_confirm,pt,Sair sem guardar o treino?,text,Execução,
+gym.app.exec.quit_confirm,en,Quit without saving the workout?,text,Execução,
+gym.app.exec.finish,pt,Terminar,text,Execução,
+gym.app.exec.finish,en,Finish,text,Execução,
+gym.app.exec.exercise_label,pt,Exercício,text,Execução,
+gym.app.exec.exercise_label,en,Exercise,text,Execução,
+gym.app.exec.target_sets,pt,Séries,text,Execução,
+gym.app.exec.target_sets,en,Sets,text,Execução,
+gym.app.exec.target_reps,pt,Reps alvo,text,Execução,
+gym.app.exec.target_reps,en,Target reps,text,Execução,
+gym.app.exec.rest_target,pt,Descanso,text,Execução,
+gym.app.exec.rest_target,en,Rest,text,Execução,
+gym.app.exec.start_rest,pt,Iniciar descanso,text,Execução,
+gym.app.exec.start_rest,en,Start rest,text,Execução,
+gym.app.exec.previous,pt,Anterior,text,Execução,
+gym.app.exec.previous,en,Previous,text,Execução,
+gym.app.exec.finish_workout,pt,Terminar Treino,text,Execução,
+gym.app.exec.finish_workout,en,Finish Workout,text,Execução,
+gym.app.exec.next_exercise,pt,Próximo Exercício,text,Execução,
+gym.app.exec.next_exercise,en,Next Exercise,text,Execução,
+gym.app.exec.well_done,pt,Bom trabalho!,text,Execução,
+gym.app.exec.well_done,en,Well done!,text,Execução,
+gym.app.exec.sets_done,pt,séries concluídas,text,Execução,
+gym.app.exec.sets_done,en,sets completed,text,Execução,
+gym.app.exec.save_workout,pt,Guardar Treino,text,Execução,
+gym.app.exec.save_workout,en,Save Workout,text,Execução,
+gym.app.exec.keep_training,pt,Continuar a treinar,text,Execução,
+gym.app.exec.keep_training,en,Keep training,text,Execução,
+gym.app.exec.in_training,pt,EM TREINO,text,Execução,
+gym.app.exec.in_training,en,IN WORKOUT,text,Execução,
+gym.app.exec.series_label,pt,Série,text,Execução,
+gym.app.exec.series_label,en,Set,text,Execução,
+gym.app.exec.exercise_done,pt,Exercício concluído,text,Execução,
+gym.app.exec.exercise_done,en,Exercise done,text,Execução,
+gym.app.exec.weight_label,pt,PESO · KG,text,Execução,
+gym.app.exec.weight_label,en,WEIGHT · KG,text,Execução,
+gym.app.exec.reps_label,pt,REPS,text,Execução,
+gym.app.exec.reps_label,en,REPS,text,Execução,
+gym.app.exec.target_prefix,pt,Alvo,text,Execução,
+gym.app.exec.target_prefix,en,Target,text,Execução,
+gym.app.exec.rest_skip_hint,pt,toca para saltar,text,Execução,
+gym.app.exec.rest_skip_hint,en,tap to skip,text,Execução,
+gym.app.exec.rest_to_next_set,pt,Iniciar descanso para a próxima série,text,Execução,
+gym.app.exec.rest_to_next_set,en,Start rest for next set,text,Execução,
+gym.app.exec.rest_to_next_ex,pt,Iniciar descanso para o próximo exercício,text,Execução,
+gym.app.exec.rest_to_next_ex,en,Start rest for next exercise,text,Execução,
+gym.app.exec.finish_now,pt,Concluir treino,text,Execução,
+gym.app.exec.finish_now,en,Finish workout,text,Execução,
+gym.app.exec.ex_done_prefix,pt,Concluíste as,text,Execução,
+gym.app.exec.ex_done_prefix,en,You completed the,text,Execução,
+gym.app.exec.ex_done_suffix,pt,séries deste exercício.,text,Execução,
+gym.app.exec.ex_done_suffix,en,sets of this exercise.,text,Execução,
+gym.app.exec.choose_other,pt,Escolher outro exercício,text,Execução,
+gym.app.exec.choose_other,en,Choose another exercise,text,Execução,
+gym.app.exec.picker_title,pt,Escolher exercício,text,Execução,
+gym.app.exec.picker_title,en,Choose exercise,text,Execução,
+gym.app.exec.badge_current,pt,Atual,text,Execução,
+gym.app.exec.badge_current,en,Current,text,Execução,
+gym.app.exec.badge_paused,pt,Em pausa,text,Execução,
+gym.app.exec.badge_paused,en,Paused,text,Execução,
+gym.app.exec.badge_done,pt,Concluído,text,Execução,
+gym.app.exec.badge_done,en,Done,text,Execução,
+gym.app.exec.continue_current,pt,Continuar exercício atual,text,Execução,
+gym.app.exec.continue_current,en,Continue current exercise,text,Execução,
+gym.app.exec.pause_hint_suffix,pt,fica em pausa — retomas quando quiseres.,text,Execução,
+gym.app.exec.pause_hint_suffix,en,is paused — resume whenever you want.,text,Execução,
+gym.app.exec.start_new_exercise,pt,Iniciar novo exercício,text,Execução,
+gym.app.exec.start_new_exercise,en,Start new exercise,text,Execução,
+gym.app.exec.finish_summary_prefix,pt,Concluíste,text,Execução,
+gym.app.exec.finish_summary_prefix,en,You completed,text,Execução,
+gym.app.exec.sets_in,pt,séries em,text,Execução,
+gym.app.exec.sets_in,en,sets in,text,Execução,
+gym.app.exec.minutes,pt,minutos,text,Execução,
+gym.app.exec.minutes,en,minutes,text,Execução,
+gym.app.exec.stat_duration,pt,Duração,text,Execução,
+gym.app.exec.stat_duration,en,Duration,text,Execução,
+gym.app.editor.edit_title,pt,Editar treino,text,Editor,
+gym.app.editor.edit_title,en,Edit workout,text,Editor,
+gym.app.editor.new_title,pt,Novo treino,text,Editor,
+gym.app.editor.new_title,en,New workout,text,Editor,
+gym.app.editor.updated,pt,Treino atualizado,text,Editor,
+gym.app.editor.updated,en,Workout updated,text,Editor,
+gym.app.editor.created,pt,Treino criado,text,Editor,
+gym.app.editor.created,en,Workout created,text,Editor,
+gym.app.editor.name_label,pt,Nome do treino,text,Editor,
+gym.app.editor.name_label,en,Workout name,text,Editor,
+gym.app.editor.name_ph,pt,Ex: Push A,text,Editor,
+gym.app.editor.name_ph,en,E.g. Push A,text,Editor,
+gym.app.editor.days,pt,Dias de treino,text,Editor,
+gym.app.editor.days,en,Training days,text,Editor,
+gym.app.editor.exercises,pt,Exercícios,text,Editor,
+gym.app.editor.exercises,en,Exercises,text,Editor,
+gym.app.editor.field_sets,pt,Séries,text,Editor,
+gym.app.editor.field_sets,en,Sets,text,Editor,
+gym.app.editor.field_reps,pt,Reps,text,Editor,
+gym.app.editor.field_reps,en,Reps,text,Editor,
+gym.app.editor.field_weight,pt,Peso,text,Editor,
+gym.app.editor.field_weight,en,Weight,text,Editor,
+gym.app.editor.field_rest,pt,Descanso,text,Editor,
+gym.app.editor.field_rest,en,Rest,text,Editor,
+gym.app.editor.add_exercise,pt,Adicionar Exercício,text,Editor,
+gym.app.editor.add_exercise,en,Add Exercise,text,Editor,
+gym.app.editor.all,pt,Todos,text,Editor,
+gym.app.editor.all,en,All,text,Editor,
+gym.app.editor.empty_catalog,pt,Sem exercícios no catálogo.,text,Editor,
+gym.app.editor.empty_catalog,en,No exercises in the catalog.,text,Editor,
+gym.app.login.fill_fields,pt,Preenche o email e a palavra-passe.,text,Login,
+gym.app.login.fill_fields,en,Fill in the email and password.,text,Login,
+gym.app.login.error,pt,Não foi possível entrar.,text,Login,
+gym.app.login.error,en,Couldn't sign in.,text,Login,
+gym.app.login.tagline,pt,A tua jornada começa aqui,text,Login,
+gym.app.login.tagline,en,Your journey starts here,text,Login,
+gym.app.login.email,pt,Email,text,Login,
+gym.app.login.email,en,Email,text,Login,
+gym.app.login.email_ph,pt,o-teu@email.pt,text,Login,
+gym.app.login.email_ph,en,your@email.com,text,Login,
+gym.app.login.password,pt,Palavra-passe,text,Login,
+gym.app.login.password,en,Password,text,Login,
+gym.app.login.signing_in,pt,A entrar…,text,Login,
+gym.app.login.signing_in,en,Signing in…,text,Login,
+gym.app.login.sign_in,pt,Entrar,text,Login,
+gym.app.login.sign_in,en,Sign in,text,Login,
+gym.app.login.forgot,pt,Esqueci a palavra-passe,text,Login,
+gym.app.login.forgot,en,Forgot password,text,Login,
+gym.app.login.no_account,pt,Não tens conta?,text,Login,
+gym.app.login.no_account,en,No account?,text,Login,
+gym.app.login.create_account,pt,Criar conta,text,Login,
+gym.app.login.create_account,en,Create account,text,Login,
+gym.app.register.err_name,pt,Indica o teu nome.,text,Registo,
+gym.app.register.err_name,en,Enter your name.,text,Registo,
+gym.app.register.err_email,pt,Email inválido.,text,Registo,
+gym.app.register.err_email,en,Invalid email.,text,Registo,
+gym.app.register.err_phone,pt,Telemóvel inválido (mín. 9 dígitos).,text,Registo,
+gym.app.register.err_phone,en,Invalid phone (min. 9 digits).,text,Registo,
+gym.app.register.err_password,pt,A palavra-passe precisa de pelo menos 8 caracteres.,text,Registo,
+gym.app.register.err_password,en,Password needs at least 8 characters.,text,Registo,
+gym.app.register.error,pt,Não foi possível criar a conta.,text,Registo,
+gym.app.register.error,en,Couldn't create the account.,text,Registo,
+gym.app.register.tagline,pt,Cria a tua conta e começa a treinar,text,Registo,
+gym.app.register.tagline,en,Create your account and start training,text,Registo,
+gym.app.register.name,pt,Nome,text,Registo,
+gym.app.register.name,en,Name,text,Registo,
+gym.app.register.name_ph,pt,O teu nome,text,Registo,
+gym.app.register.name_ph,en,Your name,text,Registo,
+gym.app.register.phone,pt,Telemóvel,text,Registo,
+gym.app.register.phone,en,Phone,text,Registo,
+gym.app.register.phone_ph,pt,912 345 678,text,Registo,
+gym.app.register.phone_ph,en,912 345 678,text,Registo,
+gym.app.register.password_ph,pt,Mín. 8 caracteres,text,Registo,
+gym.app.register.password_ph,en,Min. 8 characters,text,Registo,
+gym.app.register.creating,pt,A criar conta…,text,Registo,
+gym.app.register.creating,en,Creating account…,text,Registo,
+gym.app.register.create,pt,Criar Conta,text,Registo,
+gym.app.register.create,en,Create Account,text,Registo,
+gym.app.register.have_account,pt,Já tens conta?,text,Registo,
+gym.app.register.have_account,en,Already have an account?,text,Registo,
+gym.app.auth.back_to_login,pt,Voltar a entrar,text,Auth,
+gym.app.auth.back_to_login,en,Back to sign in,text,Auth,
+gym.app.forgot.err_email,pt,Indica um email válido.,text,Auth,
+gym.app.forgot.err_email,en,Enter a valid email.,text,Auth,
+gym.app.forgot.error,pt,Não foi possível enviar o email.,text,Auth,
+gym.app.forgot.error,en,Couldn't send the email.,text,Auth,
+gym.app.forgot.tagline,pt,Recupera o acesso à tua conta,text,Auth,
+gym.app.forgot.tagline,en,Recover access to your account,text,Auth,
+gym.app.forgot.sent_title,pt,Email enviado,text,Auth,
+gym.app.forgot.sent_title,en,Email sent,text,Auth,
+gym.app.forgot.sent_desc_prefix,pt,Se existir uma conta associada a,text,Auth,
+gym.app.forgot.sent_desc_prefix,en,If there's an account linked to,text,Auth,
+gym.app.forgot.sent_desc_suffix,pt,", enviámos um link para definires uma nova palavra-passe. Verifica também o spam.",text,Auth,
+gym.app.forgot.sent_desc_suffix,en,", we've sent a link to set a new password. Check your spam too.",text,Auth,
+gym.app.forgot.sending,pt,A enviar…,text,Auth,
+gym.app.forgot.sending,en,Sending…,text,Auth,
+gym.app.forgot.send_link,pt,Enviar link de recuperação,text,Auth,
+gym.app.forgot.send_link,en,Send recovery link,text,Auth,
+gym.app.reset.err_mismatch,pt,As palavras-passe não coincidem.,text,Auth,
+gym.app.reset.err_mismatch,en,Passwords don't match.,text,Auth,
+gym.app.reset.success,pt,Palavra-passe alterada. Já podes entrar.,text,Auth,
+gym.app.reset.success,en,Password changed. You can sign in now.,text,Auth,
+gym.app.reset.error,pt,Não foi possível alterar a palavra-passe.,text,Auth,
+gym.app.reset.error,en,Couldn't change the password.,text,Auth,
+gym.app.reset.tagline,pt,Define a tua nova palavra-passe,text,Auth,
+gym.app.reset.tagline,en,Set your new password,text,Auth,
+gym.app.reset.invalid_link,pt,Link inválido ou incompleto.,text,Auth,
+gym.app.reset.invalid_link,en,Invalid or incomplete link.,text,Auth,
+gym.app.reset.invalid_desc,pt,Pede um novo link de recuperação a partir do ecrã de entrada.,text,Auth,
+gym.app.reset.invalid_desc,en,Request a new recovery link from the sign-in screen.,text,Auth,
+gym.app.reset.request_new,pt,Pedir novo link,text,Auth,
+gym.app.reset.request_new,en,Request new link,text,Auth,
+gym.app.reset.new_password,pt,Nova palavra-passe,text,Auth,
+gym.app.reset.new_password,en,New password,text,Auth,
+gym.app.reset.confirm_password,pt,Confirmar palavra-passe,text,Auth,
+gym.app.reset.confirm_password,en,Confirm password,text,Auth,
+gym.app.reset.confirm_ph,pt,Repete a palavra-passe,text,Auth,
+gym.app.reset.confirm_ph,en,Repeat the password,text,Auth,
+gym.app.reset.submit,pt,Alterar palavra-passe,text,Auth,
+gym.app.reset.submit,en,Change password,text,Auth,

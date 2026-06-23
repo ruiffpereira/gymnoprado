@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, Lock, Pencil, Play, Dumbbell, Clock, Target, Layers } from "lucide-react";
 import { useFindWorkout } from "../hooks/useGym";
 import { useActiveWorkout } from "../store/useActiveWorkout";
+import { getLastPerformance } from "../api";
 import { Button, GroupChip, Spinner } from "../components/ui";
 import { useCms } from "../context/CmsContext";
 
@@ -21,6 +23,7 @@ export function WorkoutDetail() {
   const { t } = useCms();
   const { workout, program, isLoading } = useFindWorkout(id);
   const start = useActiveWorkout((s) => s.start);
+  const [starting, setStarting] = useState(false);
 
   if (isLoading) return <div className="flex justify-center pt-24"><Spinner className="h-8 w-8" /></div>;
   if (!workout) {
@@ -35,8 +38,17 @@ export function WorkoutDetail() {
   const totalSets = workout.exercises.reduce((a, e) => a + e.sets, 0);
   const estMin = Math.round(workout.exercises.reduce((a, e) => a + e.sets * (e.rest + 40), 0) / 60);
 
-  const begin = () => {
-    start(workout);
+  const begin = async () => {
+    if (starting) return;
+    setStarting(true);
+    // Pré-preenche com a última sessão (pesos/reps). Se falhar, arranca na mesma.
+    let last = null;
+    try {
+      last = await getLastPerformance(workout.id);
+    } catch {
+      last = null;
+    }
+    start(workout, last);
     navigate(`/treino/${workout.id}/executar`);
   };
 
@@ -103,7 +115,7 @@ export function WorkoutDetail() {
       {/* Fixed bottom CTA */}
       <div className="fixed bottom-0 inset-x-0 lg:left-[248px] z-30 bg-surface/90 backdrop-blur-xl border-t border-line p-4" style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 8px) + 72px)" }}>
         <div className="max-w-3xl mx-auto">
-          <Button size="lg" fullWidth icon={<Play size={18} fill="currentColor" />} onClick={begin}>{t("gym.app.dashboard.start")}</Button>
+          <Button size="lg" fullWidth disabled={starting} icon={<Play size={18} fill="currentColor" />} onClick={begin}>{starting ? t("gym.app.common.loading") : t("gym.app.dashboard.start")}</Button>
         </div>
       </div>
     </div>

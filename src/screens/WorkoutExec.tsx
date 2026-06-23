@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { X, Check, ChevronLeft, ChevronRight, Trophy, Pause, Play, Dumbbell } from "lucide-react";
+import { X, Check, ChevronRight, Trophy, Pause, Play, Timer, List, Minus, Plus } from "lucide-react";
 import { useActiveWorkout } from "../store/useActiveWorkout";
 import { useCreateLog } from "../hooks/useGym";
-import { Button, Stepper, ProgressRing } from "../components/ui";
+import { Button, Modal, Badge } from "../components/ui";
 import { formatClock } from "../lib/format";
 import { groupColor } from "../lib/exercises";
 import { apiErrorMessage } from "../api/client";
@@ -19,60 +19,85 @@ function useElapsed(startedAt: number | null) {
   return startedAt ? Math.floor((now - startedAt) / 1000) : 0;
 }
 
-function RestTimer({ seconds, onClose }: { seconds: number; onClose: () => void }) {
-  const { t } = useCms();
-  const [remaining, setRemaining] = useState(seconds);
-  const [paused, setPaused] = useState(false);
-  useEffect(() => {
-    if (paused) return;
-    if (remaining <= 0) { onClose(); return; }
-    const t = setTimeout(() => setRemaining((r) => r - 1), 1000);
-    return () => clearTimeout(t);
-  }, [remaining, paused, onClose]);
-
-  return (
-    <div className="fixed inset-0 z-[60] bg-ink/95 backdrop-blur flex flex-col items-center justify-center gap-8 animate-fadeIn">
-      <p className="text-white/60 font-semibold tracking-widest text-sm">{t("gym.app.exec.rest_label")}</p>
-      <ProgressRing value={remaining} max={seconds} size={220} stroke={10} label={formatClock(remaining)} color="var(--green)" />
-      <div className="flex items-center gap-3">
-        <button onClick={() => setRemaining((r) => r + 15)} className="px-4 py-2.5 rounded-btn bg-white/10 text-white font-semibold">+15s</button>
-        <button onClick={() => setPaused((p) => !p)} className="w-12 h-12 rounded-full bg-white/10 text-white flex items-center justify-center">
-          {paused ? <Play size={20} fill="currentColor" /> : <Pause size={20} />}
-        </button>
-        <button onClick={onClose} className="px-4 py-2.5 rounded-btn bg-brand text-white font-semibold">{t("gym.app.exec.skip")}</button>
-      </div>
-    </div>
-  );
-}
+const round2 = (v: number) => Math.round(v * 100) / 100;
 
 export function WorkoutExec() {
   const navigate = useNavigate();
   const { t } = useCms();
   const wk = useActiveWorkout();
   const elapsed = useElapsed(wk.startedAt);
-  const [rest, setRest] = useState<number | null>(null);
-  const [finishOpen, setFinishOpen] = useState(false);
+
+  // Descanso inline (no botão)
+  const [resting, setResting] = useState(false);
+  const [restLeft, setRestLeft] = useState(0);
+  const [restTotal, setRestTotal] = useState(60);
+
+  const [showFinish, setShowFinish] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const [pickSel, setPickSel] = useState(0);
   const createLog = useCreateLog();
 
   useEffect(() => {
     if (!wk.workoutId) navigate("/treinos", { replace: true });
   }, [wk.workoutId, navigate]);
 
+  // Contagem decrescente do descanso
+  useEffect(() => {
+    if (!resting) return;
+    if (restLeft <= 0) { setResting(false); return; }
+    const id = setTimeout(() => setRestLeft((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [resting, restLeft]);
+
   if (!wk.workoutId || wk.exercises.length === 0) return null;
 
-  const idx = wk.currentIndex;
-  const ex = wk.exercises[idx];
-  const total = wk.totalSets();
-  const done = wk.doneSets();
-  const isLast = idx === wk.exercises.length - 1;
+  const current = wk.currentIndex;
+  const totalEx = wk.exercises.length;
+  const ex = wk.exercises[current];
+  const aSet = wk.activeSet[current] ?? 0;
+  const sets = ex.sets;
+  const cur = sets[aSet];
+  const completedSets = wk.doneSets();
+  const totalSets = wk.totalSets();
+  const exDone = sets.every((s) => s.done);
+  const isLastEx = current === totalEx - 1;
 
-  const toggleSet = (setIdx: number) => {
-    const wasDone = ex.sets[setIdx].done;
-    wk.toggleDone(idx, setIdx);
-    if (!wasDone) setRest(ex.rest);
+  const color = groupColor(ex.group);
+
+  // doneAfter = quantas séries ficam feitas ao concluir a série atual
+  const doneAfter = sets.filter((s) => s.done).length + (cur.done ? 0 : 1);
+  const willFinishEx = doneAfter >= sets.length;
+
+  const updateField = (field: "weight" | "reps", delta: number) => {
+    wk.updateSet(current, aSet, { [field]: Math.max(0, round2(cur[field] + delta)) });
   };
 
-  const finish = () => {
+  // Conclui a série atual, avança e arranca o descanso inline
+  const completeAndRest = () => {
+    wk.setDone(current, aSet, true);
+    if (willFinishEx && isLastEx) { setShowFinish(true); return; }
+    if (willFinishEx) {
+      wk.setIndex(Math.min(current + 1, totalEx - 1));
+    } else {
+      const nextPending = sets.findIndex((s, i) => i !== aSet && !s.done);
+      if (nextPending !== -1) wk.setActiveSet(current, nextPending);
+    }
+    setRestTotal(ex.rest); setRestLeft(ex.rest); setResting(true);
+  };
+
+  const goNext = () => {
+    if (current < totalEx - 1) wk.setIndex(current + 1);
+    else setShowFinish(true);
+  };
+
+  const jumpTo = (i: number) => {
+    wk.setIndex(i);
+    const fp = wk.exercises[i].sets.findIndex((s) => !s.done);
+    wk.setActiveSet(i, fp === -1 ? 0 : fp);
+    setShowPicker(false);
+  };
+
+  const finishWorkout = () => {
     createLog.mutate(wk.buildLog(), {
       onSuccess: () => {
         toast.success(t("gym.app.exec.saved"));
@@ -86,103 +111,218 @@ export function WorkoutExec() {
   const quit = () => {
     if (confirm(t("gym.app.exec.quit_confirm"))) {
       wk.clear();
-      navigate(-1);
+      navigate("/", { replace: true });
     }
   };
 
-  const color = groupColor(ex.group);
-
   return (
     <div className="min-h-[100dvh] bg-bg flex flex-col">
-      {/* Top bar */}
-      <div className="px-5 pt-4 pb-3" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 16px)" }}>
-        <div className="flex items-center gap-3 mb-3">
-          <button onClick={quit} className="w-9 h-9 rounded-lg bg-surface flex items-center justify-center"><X size={18} className="text-t2" /></button>
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-t1 truncate">{wk.name}</p>
-            <p className="text-xs text-t3 tnum">{formatClock(elapsed)} · {done}/{total} {t("gym.app.common.sets")}</p>
-          </div>
-          <button onClick={() => setFinishOpen(true)} className="px-3 py-2 rounded-lg bg-brand text-white text-sm font-semibold">{t("gym.app.exec.finish")}</button>
+      {/* ── Header escuro com cronómetro grande ── */}
+      <div className="bg-ink px-[18px] pb-[18px] sticky top-0 z-50" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)" }}>
+        <div className="flex items-center justify-between mb-1.5">
+          <button onClick={quit} className="w-[38px] h-[38px] rounded-[11px] bg-white/10 flex items-center justify-center"><X size={17} className="text-white" /></button>
+          <div className="text-[13px] font-bold text-white/85 truncate max-w-[55%]">{wk.name}</div>
+          <button onClick={() => setShowFinish(true)} className="px-[15px] py-[9px] rounded-[11px] bg-brand text-white text-[13px] font-extrabold">{t("gym.app.exec.finish")}</button>
         </div>
-        <div className="h-1.5 rounded-full bg-surface overflow-hidden">
-          <div className="h-full bg-brand transition-all" style={{ width: `${total ? (done / total) * 100 : 0}%` }} />
+        {/* Tempo a correr */}
+        <div className="flex flex-col items-center gap-0.5 pt-2 pb-1">
+          <div className="flex items-center gap-[7px]">
+            <span className="w-[9px] h-[9px] rounded-full bg-brand animate-pulse" />
+            <span className="text-[11px] font-extrabold tracking-[0.14em] text-white/55">{t("gym.app.exec.in_training")}</span>
+          </div>
+          <div className="text-[52px] font-black text-white leading-none tnum tracking-[-0.02em]">{formatClock(elapsed)}</div>
+          <div className="text-[12.5px] text-white/50 font-medium">{completedSets}/{totalSets} {t("gym.app.exec.sets_done")}</div>
         </div>
       </div>
 
-      {/* Card */}
-      <div className="flex-1 px-5 pb-4">
-        <div className="bg-surface rounded-card shadow-card overflow-hidden">
-          {/* Media banner */}
-          <div className="relative h-44 flex items-center justify-center" style={{ background: `${color}1A` }}>
-            {ex.mediaUrl ? (
-              <img src={ex.mediaUrl} alt={ex.name} className="w-full h-full object-cover" />
-            ) : (
-              <Dumbbell size={48} style={{ color }} />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
-            <div className="absolute bottom-3 left-4 right-4">
-              <p className="text-white/70 text-xs font-semibold">{t("gym.app.exec.exercise_label")} {idx + 1}/{wk.exercises.length}</p>
-              <p className="text-white font-black text-xl">{ex.name}</p>
+      {/* Barra de progresso */}
+      <div className="h-1 bg-line">
+        <div className="h-full bg-gradient-to-r from-brand to-brand-dk transition-[width] duration-500" style={{ width: `${totalSets ? (completedSets / totalSets) * 100 : 0}%` }} />
+      </div>
+
+      {/* Main */}
+      <div className="flex-1 flex flex-col items-center px-4 py-[18px] lg:px-6 lg:py-6 w-full max-w-[520px] mx-auto">
+        {/* Posição do exercício */}
+        <div className="flex items-center justify-between w-full mb-3">
+          <span className="text-[13px] font-bold text-t2">{t("gym.app.exec.exercise_label")} {current + 1} {t("gym.app.common.of")} {totalEx}</span>
+          <div className="flex gap-[5px]">
+            {wk.exercises.map((e, i) => {
+              const eDone = e.sets.every((s) => s.done);
+              return <span key={i} className="h-2 rounded-full transition-all duration-200" style={{ width: i === current ? 22 : 8, background: i === current ? "var(--green)" : eDone ? "var(--green-dk)" : "var(--border)" }} />;
+            })}
+          </div>
+        </div>
+
+        <div key={current} className="w-full animate-fadeIn">
+          <div className="bg-surface rounded-card shadow-card overflow-hidden">
+            <div className="p-5 lg:p-6">
+              {/* Grupo + nome */}
+              <div className="flex items-center gap-[7px] mb-[7px]">
+                <span className="w-[9px] h-[9px] rounded-full" style={{ background: color }} />
+                <span className="text-[12px] font-extrabold uppercase tracking-[0.06em]" style={{ color }}>{ex.group}</span>
+              </div>
+              <div className="text-[26px] font-black text-t1 leading-[1.05] tracking-[-0.03em] mb-[18px]">{ex.name}</div>
+
+              {/* Progresso de séries */}
+              <div className="flex items-center justify-between mb-[18px]">
+                <span className="text-[13.5px] font-bold" style={{ color: exDone ? "var(--green-dk)" : "var(--t2)" }}>
+                  {exDone ? `✓ ${t("gym.app.exec.exercise_done")}` : `${t("gym.app.exec.series_label")} ${aSet + 1} ${t("gym.app.common.of")} ${sets.length}`}
+                </span>
+                <div className="flex gap-1.5">
+                  {sets.map((s, si) => (
+                    <button key={si} onClick={() => wk.setActiveSet(current, si)} title={`${t("gym.app.exec.series_label")} ${si + 1}`}
+                      className="w-8 h-8 rounded-[10px] flex items-center justify-center transition-all"
+                      style={{ background: s.done ? "var(--green)" : si === aSet ? "var(--surface)" : "var(--bg)", boxShadow: si === aSet && !s.done ? "inset 0 0 0 2px var(--green)" : "none" }}>
+                      {s.done ? <Check size={15} className="text-white" /> : <span className="text-[13.5px] font-extrabold" style={{ color: si === aSet ? "var(--green-dk)" : "var(--t3)" }}>{si + 1}</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {!exDone && (
+                <>
+                  {/* Steppers grandes: peso | reps */}
+                  <div className="flex items-stretch bg-bg rounded-[18px] overflow-hidden mb-3">
+                    {([
+                      { label: t("gym.app.exec.weight_label"), field: "weight" as const, step: 2.5, val: cur.weight },
+                      { label: t("gym.app.exec.reps_label"), field: "reps" as const, step: 1, val: cur.reps },
+                    ]).map((f, fi) => (
+                      <div key={f.field} className="flex-1 flex">
+                        {fi === 1 && <div className="w-px bg-line my-3.5" />}
+                        <div className="flex-1 flex flex-col items-center gap-[11px] pt-4 pb-[18px] px-1.5">
+                          <span className="text-[11px] font-extrabold text-t3 tracking-[0.07em]">{f.label}</span>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => updateField(f.field, -f.step)} className="w-[34px] h-[34px] rounded-full bg-surface shadow-card flex items-center justify-center active:scale-95 transition"><Minus size={15} className="text-t2" /></button>
+                            <span className="text-[32px] font-black text-t1 min-w-[50px] text-center tnum tracking-[-0.02em]">{f.val}</span>
+                            <button onClick={() => updateField(f.field, f.step)} className="w-[34px] h-[34px] rounded-full bg-brand flex items-center justify-center active:scale-95 transition"><Plus size={15} className="text-white" /></button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Alvo do coach */}
+                  <div className="text-center text-[12px] text-t3 font-medium mb-4">
+                    {t("gym.app.exec.target_prefix")}: {ex.targetReps} {t("gym.app.common.reps")} · {ex.targetWeight}kg · {t("gym.app.exec.rest_target")} {ex.rest}s
+                  </div>
+
+                  {/* Ação única: altura fixa para não haver layout shift */}
+                  <div className="h-14">
+                    {resting ? (
+                      <button onClick={() => setResting(false)} title={t("gym.app.exec.rest_skip_hint")}
+                        className="relative w-full h-full box-border rounded-[13px] bg-brand-lt overflow-hidden flex items-center justify-between pl-[18px] pr-2 gap-2 animate-fadeIn">
+                        <div className="absolute left-0 top-0 bottom-0 bg-brand opacity-20 transition-[width] duration-1000 ease-linear" style={{ width: `${restTotal ? (restLeft / restTotal) * 100 : 0}%` }} />
+                        <div className="relative flex items-center gap-2.5 z-[1] min-w-0">
+                          <Timer size={19} className="text-brand-dk" />
+                          <span className="font-black text-brand-dk text-[22px] tnum tracking-[-0.02em]">{restLeft >= 60 ? formatClock(restLeft) : `${restLeft}s`}</span>
+                          <span className="text-[12px] font-semibold text-brand-dk/60 truncate">· {t("gym.app.exec.rest_skip_hint")}</span>
+                        </div>
+                      </button>
+                    ) : (
+                      <Button fullWidth size="lg" onClick={completeAndRest} className="h-full box-border text-center leading-[1.15]"
+                        icon={willFinishEx && isLastEx ? <Trophy size={18} className="text-white" /> : <Timer size={18} className="text-white" />}>
+                        {willFinishEx
+                          ? (isLastEx ? t("gym.app.exec.finish_now") : t("gym.app.exec.rest_to_next_ex"))
+                          : t("gym.app.exec.rest_to_next_set")}
+                      </Button>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {exDone && (
+                <div className="text-center py-1">
+                  <div className="w-[60px] h-[60px] rounded-full bg-brand-xlt flex items-center justify-center mx-auto mt-1 mb-3.5">
+                    <Check size={28} className="text-brand" />
+                  </div>
+                  <div className="text-[14px] text-t2 mb-[18px]">{t("gym.app.exec.ex_done_prefix")} {sets.length} {t("gym.app.exec.ex_done_suffix")}</div>
+                  <Button fullWidth size="lg" onClick={goNext} className="rounded-[13px]"
+                    icon={isLastEx ? <Trophy size={18} className="text-white" /> : <ChevronRight size={18} className="text-white" />}>
+                    {isLastEx ? t("gym.app.exec.finish_workout") : t("gym.app.exec.next_exercise")}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
+        </div>
 
-          {/* Targets */}
-          <div className="grid grid-cols-3 gap-2 p-4 border-b border-line text-center">
-            <div><p className="text-lg font-black text-t1 tnum">{ex.sets.length}</p><p className="text-[11px] text-t3">{t("gym.app.exec.target_sets")}</p></div>
-            <div><p className="text-lg font-black text-t1 tnum">{ex.targetReps}</p><p className="text-[11px] text-t3">{t("gym.app.exec.target_reps")}</p></div>
-            <div><p className="text-lg font-black text-t1 tnum">{ex.rest}s</p><p className="text-[11px] text-t3">{t("gym.app.exec.rest_target")}</p></div>
-          </div>
+        {/* Acesso secundário: saltar para outro exercício */}
+        <div className="mt-3.5 w-full">
+          <Button variant="ghost" fullWidth onClick={() => { setPickSel(current); setShowPicker(true); }} icon={<List size={17} className="text-t2" />}>{t("gym.app.exec.choose_other")}</Button>
+        </div>
+      </div>
 
-          {/* Sets */}
-          <div className="p-4 flex flex-col gap-2.5">
-            {ex.sets.map((s, si) => (
-              <div key={si} className={`flex items-center gap-3 p-2.5 rounded-xl transition-colors ${s.done ? "bg-brand-lt" : "bg-bg"}`}>
-                <span className="w-6 text-center font-bold text-t2 text-sm">{si + 1}</span>
-                <div className="flex-1 flex items-center justify-around gap-2">
-                  <div className="text-center">
-                    <Stepper value={s.weight} step={2.5} onChange={(v) => wk.updateSet(idx, si, { weight: v })} suffix="kg" />
-                  </div>
-                  <div className="text-center">
-                    <Stepper value={s.reps} step={1} onChange={(v) => wk.updateSet(idx, si, { reps: v })} />
-                  </div>
+      {/* Picker de exercício — dois passos */}
+      <Modal open={showPicker} onClose={() => setShowPicker(false)} title={t("gym.app.exec.picker_title")}>
+        <div className="flex flex-col gap-2">
+          {wk.exercises.map((e, i) => {
+            const done = e.sets.filter((s) => s.done).length;
+            const all = e.sets.length;
+            const isCur = i === current;
+            const isSel = i === pickSel;
+            const finished = done === all;
+            const paused = done > 0 && !finished && !isCur;
+            const c = groupColor(e.group);
+            return (
+              <button key={i} onClick={() => setPickSel(i)}
+                className="flex items-center gap-3 p-3 rounded-[14px] text-left transition-all"
+                style={{ border: `2px solid ${isSel ? "var(--green)" : "var(--border)"}`, background: isSel ? "var(--green-xlt)" : "var(--surface)" }}>
+                <div className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center shrink-0" style={{ background: finished ? "var(--green)" : `${c}18` }}>
+                  {finished ? <Check size={16} className="text-white" /> : <span className="text-[14px] font-extrabold" style={{ color: c }}>{i + 1}</span>}
                 </div>
-                <button onClick={() => toggleSet(si)} className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${s.done ? "bg-brand text-white" : "bg-surface border border-line text-t3"}`}>
-                  <Check size={18} />
-                </button>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[14px] font-bold text-t1 truncate">{e.name}</div>
+                  <div className="text-[12px] text-t2">{e.group} · {done}/{all} {t("gym.app.common.sets")}</div>
+                </div>
+                {isCur && <Badge color="green">{t("gym.app.exec.badge_current")}</Badge>}
+                {paused && <Badge color="orange">{t("gym.app.exec.badge_paused")}</Badge>}
+                {finished && !isCur && <Badge color="gray">{t("gym.app.exec.badge_done")}</Badge>}
+              </button>
+            );
+          })}
+        </div>
+        {/* Confirmar troca */}
+        <div className="mt-4">
+          {pickSel === current ? (
+            <Button fullWidth size="lg" onClick={() => setShowPicker(false)}>{t("gym.app.exec.continue_current")}</Button>
+          ) : (
+            <>
+              {sets.some((s) => s.done) && !sets.every((s) => s.done) && (
+                <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl mb-3 text-[12.5px] font-medium" style={{ background: "#FEF3C7", color: "#92400E" }}>
+                  <Pause size={15} style={{ color: "#92400E" }} /> “{ex.name}” {t("gym.app.exec.pause_hint_suffix")}
+                </div>
+              )}
+              <Button fullWidth size="lg" onClick={() => jumpTo(pickSel)} icon={<Play size={17} className="text-white" fill="currentColor" />}>{t("gym.app.exec.start_new_exercise")}</Button>
+            </>
+          )}
+        </div>
+      </Modal>
+
+      {/* Finish modal */}
+      <Modal open={showFinish} onClose={() => setShowFinish(false)} title={t("gym.app.exec.finish_workout")}>
+        <div className="text-center">
+          <div className="w-20 h-20 rounded-full bg-brand-xlt flex items-center justify-center mx-auto mb-5">
+            <Trophy size={36} className="text-brand" />
+          </div>
+          <div className="text-xl font-black text-t1 mb-1.5">{t("gym.app.exec.well_done")} 💪</div>
+          <div className="text-[14px] text-t2 mb-5">{t("gym.app.exec.finish_summary_prefix")} {completedSets} {t("gym.app.common.of")} {totalSets} {t("gym.app.exec.sets_in")} {Math.floor(elapsed / 60)} {t("gym.app.exec.minutes")}.</div>
+          <div className="grid grid-cols-2 gap-2.5 mb-6">
+            {[
+              { v: `${Math.floor(elapsed / 60)}min`, l: t("gym.app.exec.stat_duration") },
+              { v: completedSets, l: t("gym.app.exec.target_sets") },
+            ].map((s, i) => (
+              <div key={i} className="bg-bg rounded-xl py-3.5 px-2">
+                <div className="text-[22px] font-black text-t1">{s.v}</div>
+                <div className="text-[11px] text-t2">{s.l}</div>
               </div>
             ))}
-            <Button variant="greenLight" onClick={() => setRest(ex.rest)}>{t("gym.app.exec.start_rest")} ({ex.rest}s)</Button>
+          </div>
+          <div className="flex flex-col gap-2.5">
+            <Button fullWidth size="lg" disabled={createLog.isPending} onClick={finishWorkout}>{createLog.isPending ? t("gym.app.common.saving") : t("gym.app.exec.save_workout")}</Button>
+            <Button fullWidth variant="ghost" onClick={() => setShowFinish(false)}>{t("gym.app.exec.keep_training")}</Button>
           </div>
         </div>
-      </div>
-
-      {/* Nav */}
-      <div className="px-5 pb-6 flex items-center gap-3" style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 20px)" }}>
-        <Button variant="surface" icon={<ChevronLeft size={18} />} disabled={idx === 0} onClick={() => wk.setIndex(idx - 1)}>{t("gym.app.exec.previous")}</Button>
-        {isLast ? (
-          <Button fullWidth onClick={() => setFinishOpen(true)}>{t("gym.app.exec.finish_workout")}</Button>
-        ) : (
-          <Button fullWidth onClick={() => wk.setIndex(idx + 1)}>{t("gym.app.exec.next_exercise")} <ChevronRight size={18} /></Button>
-        )}
-      </div>
-
-      {rest !== null && <RestTimer seconds={rest} onClose={() => setRest(null)} />}
-
-      {finishOpen && (
-        <div className="fixed inset-0 z-[70] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center animate-fadeIn" onClick={(e) => e.target === e.currentTarget && setFinishOpen(false)}>
-          <div className="bg-surface w-full sm:max-w-sm rounded-t-[24px] sm:rounded-card p-6 text-center animate-slideUp">
-            <div className="w-16 h-16 rounded-full bg-brand-lt mx-auto flex items-center justify-center mb-4">
-              <Trophy size={28} className="text-brand-dk" />
-            </div>
-            <h3 className="text-xl font-black text-t1 mb-1">{t("gym.app.exec.well_done")}</h3>
-            <p className="text-t2 text-sm mb-5">{formatClock(elapsed)} · {done} {t("gym.app.exec.sets_done")}</p>
-            <div className="flex flex-col gap-2">
-              <Button fullWidth disabled={createLog.isPending} onClick={finish}>{createLog.isPending ? t("gym.app.common.saving") : t("gym.app.exec.save_workout")}</Button>
-              <Button fullWidth variant="ghost" onClick={() => setFinishOpen(false)}>{t("gym.app.exec.keep_training")}</Button>
-            </div>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

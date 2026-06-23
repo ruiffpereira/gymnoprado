@@ -1,0 +1,132 @@
+muscle_group_pt,muscle_group_en,subgroup_pt,subgroup_en,exercise_pt,exercise_en
+Peito,Chest,Peito superior,Upper chest,Supino inclinado com barra,Incline barbell bench press
+Peito,Chest,Peito superior,Upper chest,Supino inclinado com halteres,Incline dumbbell press
+Peito,Chest,Peito superior,Upper chest,Crucifixo inclinado,Incline dumbbell fly
+Peito,Chest,Peito superior,Upper chest,Crossover de baixo para cima,Low-to-high cable crossover
+Peito,Chest,Peito superior,Upper chest,Supino inclinado na Smith,Incline Smith machine press
+Peito,Chest,Peito médio,Mid chest,Supino reto com barra,Flat barbell bench press
+Peito,Chest,Peito médio,Mid chest,Supino reto com halteres,Flat dumbbell press
+Peito,Chest,Peito médio,Mid chest,Crucifixo com halteres,Dumbbell fly
+Peito,Chest,Peito médio,Mid chest,Peck deck,Pec deck
+Peito,Chest,Peito médio,Mid chest,Flexões,Push-ups
+Peito,Chest,Peito médio,Mid chest,Supino na máquina,Machine chest press
+Peito,Chest,Peito inferior,Lower chest,Supino declinado com barra,Decline barbell press
+Peito,Chest,Peito inferior,Lower chest,Supino declinado com halteres,Decline dumbbell press
+Peito,Chest,Peito inferior,Lower chest,Mergulho para peito,Chest dip
+Peito,Chest,Peito inferior,Lower chest,Crossover de cima para baixo,High-to-low cable crossover
+Peito,Chest,Peito interno,Inner chest,Crossover na polia,Cable crossover
+Peito,Chest,Peito interno,Inner chest,Crucifixo na polia,Cable fly
+Peito,Chest,Peito interno,Inner chest,Supino com aperto,Squeeze press
+Costas,Back,Dorsal,Lats,Puxada frontal,Lat pulldown
+Costas,Back,Dorsal,Lats,Puxada frontal pegada fechada,Close-grip lat pulldown
+Costas,Back,Dorsal,Lats,Puxada atrás da nuca,Behind-the-neck pulldown
+Costas,Back,Dorsal,Lats,Barra fixa,Pull-up
+Costas,Back,Dorsal,Lats,Barra fixa pegada supinada,Chin-up
+Costas,Back,Dorsal,Lats,Pullover com haltere,Dumbbell pullover
+Costas,Back,Dorsal,Lats,Puxada com braços esticados,Straight-arm pulldown
+Costas,Back,Costas média,Mid back,Remada curvada com barra,Bent-over barbell row
+Costas,Back,Costas média,Mid back,Remada baixa na polia,Seated cable row
+Costas,Back,Costas média,Mid back,Remada unilateral com haltere,One-arm dumbbell row
+Costas,Back,Costas média,Mid back,Remada na máquina,Machine row
+Costas,Back,Costas média,Mid back,Remada T,T-bar row
+Costas,Back,Costas média,Mid back,Remada Pendlay,Pendlay row
+Costas,Back,Costas média,Mid back,Remada invertida,Inverted row
+Costas,Back,Lombar,Lower back,Levantamento terra,Deadlift
+Costas,Back,Lombar,Lower back,Hiperextensão lombar,Back extension
+Costas,Back,Lombar,Lower back,Bom dia,Good morning
+Costas,Back,Lombar,Lower back,Superman,Superman
+Costas,Back,Trapézio,Traps,Encolhimento com barra,Barbell shrug
+Costas,Back,Trapézio,Traps,Encolhimento com halteres,Dumbbell shrug
+Costas,Back,Trapézio,Traps,Remada alta,Upright row
+Costas,Back,Trapézio,Traps,Encolhimento na Smith,Smith machine shrug
+Ombros,Shoulders,Deltoide anterior,Front delt,Desenvolvimento militar com barra,Barbell overhead press
+Ombros,Shoulders,Deltoide anterior,Front delt,Desenvolvimento com halteres,Dumbbell shoulder press
+Ombros,Shoulders,Deltoide anterior,Front delt,Arnold press,Arnold press
+Ombros,Shoulders,Deltoide anterior,Front delt,Elevação frontal com halteres,Dumbbell front raise
+Ombros,Shoulders,Deltoide anterior,Front delt,Elevação frontal com barra,Barbell front raise
+Ombros,Shoulders,Deltoide anterior,Front delt,Desenvolvimento na máquina,Machine shoulder press
+Ombros,Shoulders,Deltoide lateral,Side delt,Elevação lateral com halteres,Dumbbell lateral raise
+Ombros,Shoulders,Deltoide lateral,Side delt,Elevação lateral na polia,Cable lateral raise
+Ombros,Shoulders,Deltoide lateral,Side delt,Elevação lateral na máquina,Machine lateral raise
+Ombros,Shoulders,Deltoide posterior,Rear delt,Crucifixo invertido com halteres,Dumbbell reverse fly
+Ombros,Shoulders,Deltoide posterior,Rear delt,Crucifixo invertido na polia,Cable reverse fly
+Ombros,Shoulders,Deltoide posterior,Rear delt,Crucifixo invertido na máquina,Reverse pec deck
+Ombros,Shoulders,Deltoide posterior,Rear delt,Face pull,Face pull
+Ombros,Shoulders,Manguito rotador,Rotator cuff,Rotação externa na polia,Cable external rotation
+Ombros,Shoulders,Manguito rotador,Rotator cuff,Rotação interna na polia,Cable internal rotation
+Bíceps,Biceps,Cabeça longa,Long head,Rosca inclinada com halteres,Incline dumbbell curl
+Bíceps,Biceps,Cabeça longa,Long head,Rosca direta com barra,Standing barbell curl
+Bíceps,Biceps,Cabeça longa,Long head,Rosca na polia em pé,Standing cable curl
+Bíceps,Biceps,Cabeça curta,Short head,Rosca Scott,Preacher curl
+Bíceps,Biceps,Cabeça curta,Short head,Rosca concentrada,Concentration curl
+Bíceps,Biceps,Cabeça curta,Short head,Rosca aranha,Spider curl
+Bíceps,Biceps,Cabeça curta,Short head,Rosca alternada com halteres,Alternating dumbbell curl
+Bíceps,Biceps,Braquial,Brachialis,Rosca martelo,Hammer curl
+Bíceps,Biceps,Braquial,Brachialis,Rosca inversa,Reverse curl
+Bíceps,Biceps,Braquial,Brachialis,Rosca martelo na corda,Rope hammer curl
+Bíceps,Biceps,Antebraço,Forearm,Rosca de punho,Wrist curl
+Bíceps,Biceps,Antebraço,Forearm,Rosca de punho inversa,Reverse wrist curl
+Bíceps,Biceps,Antebraço,Forearm,Caminhada do agricultor,Farmer's walk
+Tríceps,Triceps,Cabeça longa,Long head,Tríceps francês com halteres,Overhead dumbbell extension
+Tríceps,Triceps,Cabeça longa,Long head,Tríceps testa com barra EZ,EZ-bar skull crusher
+Tríceps,Triceps,Cabeça longa,Long head,Tríceps na corda acima da cabeça,Overhead rope extension
+Tríceps,Triceps,Cabeça lateral,Lateral head,Tríceps na polia com barra,Triceps pushdown
+Tríceps,Triceps,Cabeça lateral,Lateral head,Tríceps na corda,Rope pushdown
+Tríceps,Triceps,Cabeça lateral,Lateral head,Tríceps coice,Triceps kickback
+Tríceps,Triceps,Cabeça lateral,Lateral head,Mergulho em paralelas,Parallel bar dip
+Tríceps,Triceps,Cabeça medial,Medial head,Supino fechado,Close-grip bench press
+Tríceps,Triceps,Cabeça medial,Medial head,Tríceps pegada invertida,Reverse-grip pushdown
+Tríceps,Triceps,Cabeça medial,Medial head,Flexão diamante,Diamond push-up
+Pernas,Legs,Quadríceps,Quadriceps,Agachamento com barra,Barbell back squat
+Pernas,Legs,Quadríceps,Quadriceps,Agachamento frontal,Front squat
+Pernas,Legs,Quadríceps,Quadriceps,Leg press,Leg press
+Pernas,Legs,Quadríceps,Quadriceps,Cadeira extensora,Leg extension
+Pernas,Legs,Quadríceps,Quadriceps,Agachamento hack,Hack squat
+Pernas,Legs,Quadríceps,Quadriceps,Afundo,Lunge
+Pernas,Legs,Quadríceps,Quadriceps,Agachamento búlgaro,Bulgarian split squat
+Pernas,Legs,Quadríceps,Quadriceps,Agachamento na Smith,Smith machine squat
+Pernas,Legs,Quadríceps,Quadriceps,Subida ao banco,Step-up
+Pernas,Legs,Isquiotibiais,Hamstrings,Cadeira flexora deitado,Lying leg curl
+Pernas,Legs,Isquiotibiais,Hamstrings,Mesa flexora sentado,Seated leg curl
+Pernas,Legs,Isquiotibiais,Hamstrings,Stiff,Romanian deadlift
+Pernas,Legs,Isquiotibiais,Hamstrings,Levantamento terra pernas rígidas,Stiff-leg deadlift
+Pernas,Legs,Isquiotibiais,Hamstrings,Flexora em pé,Standing leg curl
+Pernas,Legs,Gémeos,Calves,Elevação de gémeos em pé,Standing calf raise
+Pernas,Legs,Gémeos,Calves,Elevação de gémeos sentado,Seated calf raise
+Pernas,Legs,Gémeos,Calves,Elevação de gémeos no leg press,Leg press calf raise
+Pernas,Legs,Gémeos,Calves,Elevação de gémeos a uma perna,Single-leg calf raise
+Pernas,Legs,Adutores,Adductors,Cadeira adutora,Hip adduction machine
+Pernas,Legs,Adutores,Adductors,Agachamento sumô,Sumo squat
+Pernas,Legs,Abdutores,Abductors,Cadeira abdutora,Hip abduction machine
+Pernas,Legs,Abdutores,Abductors,Abdução de quadril na polia,Cable hip abduction
+Glúteos,Glutes,Glúteo máximo,Gluteus maximus,Elevação pélvica,Hip thrust
+Glúteos,Glutes,Glúteo máximo,Gluteus maximus,Ponte de glúteo,Glute bridge
+Glúteos,Glutes,Glúteo máximo,Gluteus maximus,Coice de glúteo na polia,Cable glute kickback
+Glúteos,Glutes,Glúteo máximo,Gluteus maximus,Coice de glúteo na máquina,Machine glute kickback
+Glúteos,Glutes,Glúteo máximo,Gluteus maximus,Levantamento terra romeno,Romanian deadlift
+Glúteos,Glutes,Glúteo máximo,Gluteus maximus,Avanço,Walking lunge
+Glúteos,Glutes,Glúteo médio,Gluteus medius,Abdução de quadril na máquina,Hip abduction machine
+Glúteos,Glutes,Glúteo médio,Gluteus medius,Abdução de quadril deitado,Side-lying hip abduction
+Glúteos,Glutes,Glúteo médio,Gluteus medius,Caminhada lateral com banda,Banded lateral walk
+Glúteos,Glutes,Glúteo médio,Gluteus medius,Concha,Clamshell
+Glúteos,Glutes,Glúteo mínimo,Gluteus minimus,Abdução de quadril na polia em pé,Standing cable hip abduction
+Glúteos,Glutes,Glúteo mínimo,Gluteus minimus,Prancha com abdução de perna,Plank with leg abduction
+Abdómen,Abs,Reto abdominal,Rectus abdominis,Abdominal,Crunch
+Abdómen,Abs,Reto abdominal,Rectus abdominis,Abdominal na máquina,Machine crunch
+Abdómen,Abs,Reto abdominal,Rectus abdominis,Abdominal na polia,Cable crunch
+Abdómen,Abs,Reto abdominal,Rectus abdominis,Sit-up,Sit-up
+Abdómen,Abs,Abdómen inferior,Lower abs,Elevação de pernas,Leg raise
+Abdómen,Abs,Abdómen inferior,Lower abs,Elevação de joelhos suspenso,Hanging knee raise
+Abdómen,Abs,Abdómen inferior,Lower abs,Elevação de pernas suspenso,Hanging leg raise
+Abdómen,Abs,Abdómen inferior,Lower abs,Abdominal invertido,Reverse crunch
+Abdómen,Abs,Oblíquos,Obliques,Rotação russa,Russian twist
+Abdómen,Abs,Oblíquos,Obliques,Prancha lateral,Side plank
+Abdómen,Abs,Oblíquos,Obliques,Flexão lateral com haltere,Dumbbell side bend
+Abdómen,Abs,Oblíquos,Obliques,Abdominal bicicleta,Bicycle crunch
+Abdómen,Abs,Oblíquos,Obliques,Lenhador na polia,Cable woodchopper
+Abdómen,Abs,Core,Core,Prancha,Plank
+Abdómen,Abs,Core,Core,Roda abdominal,Ab wheel rollout
+Abdómen,Abs,Core,Core,Escalador,Mountain climber
+Abdómen,Abs,Core,Core,Inseto morto,Dead bug
+Abdómen,Abs,Transverso,Transverse abdominis,Vacuum abdominal,Stomach vacuum
+Abdómen,Abs,Transverso,Transverse abdominis,Prancha com alcance,Plank with reach
