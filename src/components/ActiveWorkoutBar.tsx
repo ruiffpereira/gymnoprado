@@ -33,7 +33,7 @@ export function ActiveWorkoutBar() {
   return (
     <button
       onClick={() => navigate(`/treino/${workoutId}/executar`)}
-      className="fixed z-40 left-3 right-3 lg:left-[264px] lg:right-6 bottom-[calc(env(safe-area-inset-bottom,0px)+70px)] lg:bottom-5 bg-ink text-white rounded-[16px] shadow-lg overflow-hidden flex items-center gap-3 pl-4 pr-3 py-2.5 animate-slideUp"
+      className="fixed z-50 left-3 right-3 lg:left-[264px] lg:right-6 bottom-[calc(env(safe-area-inset-bottom,0px)+70px)] lg:bottom-5 bg-ink text-white rounded-[16px] shadow-lg overflow-hidden flex items-center gap-3 pl-4 pr-3 py-2.5 animate-slideUp"
       title={t("gym.app.exec.resume_hint")}
     >
       <span className="w-2.5 h-2.5 rounded-full bg-brand animate-pulse shrink-0" />

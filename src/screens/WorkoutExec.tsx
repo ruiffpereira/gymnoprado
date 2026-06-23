@@ -171,9 +171,23 @@ export function WorkoutExec() {
 
               {/* Progresso de séries */}
               <div className="flex items-center justify-between mb-[18px]">
-                <span className="text-[13.5px] font-bold" style={{ color: exDone ? "var(--green-dk)" : "var(--t2)" }}>
-                  {exDone ? `✓ ${t("gym.app.exec.exercise_done")}` : `${t("gym.app.exec.series_label")} ${aSet + 1} ${t("gym.app.common.of")} ${sets.length}`}
-                </span>
+                <div className="min-w-0">
+                  {exDone ? (
+                    <span className="text-[13.5px] font-bold text-brand-dk">✓ {t("gym.app.exec.exercise_done")}</span>
+                  ) : resting ? (
+                    <span className="text-[13.5px] font-bold text-t2">{t("gym.app.exec.series_label")} {aSet + 1} {t("gym.app.common.of")} {sets.length}</span>
+                  ) : (
+                    // A fazer agora: indicador animado (esconde-se em descanso/pausa).
+                    <span className="inline-flex items-center gap-2">
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-brand opacity-60 animate-ping" />
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand" />
+                      </span>
+                      <span className="text-[12px] font-extrabold uppercase tracking-[0.08em] text-brand-dk animate-pulse">{t("gym.app.exec.in_progress")}</span>
+                      <span className="text-[12px] font-semibold text-t3 whitespace-nowrap">· {t("gym.app.exec.series_label")} {aSet + 1}/{sets.length}</span>
+                    </span>
+                  )}
+                </div>
                 <div className="flex gap-1.5">
                   {sets.map((s, si) => (
                     <button key={si} onClick={() => wk.setActiveSet(current, si)} title={`${t("gym.app.exec.series_label")} ${si + 1}`}
