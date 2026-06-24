@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, Lock, Pencil, Play, Dumbbell, Clock, Target, Layers } from "lucide-react";
-import { useFindWorkout } from "../hooks/useGym";
+import { useMutation } from "@tanstack/react-query";
+import { ChevronLeft, Lock, Pencil, Play, Dumbbell, Clock, Target, Layers, Trash2 } from "lucide-react";
+import { useFindWorkout, useInvalidateGym } from "../hooks/useGym";
 import { useActiveWorkout } from "../store/useActiveWorkout";
-import { getLastPerformance } from "../api";
-import { Button, GroupChip, Spinner } from "../components/ui";
+import { getLastPerformance, deleteWorkout } from "../api";
+import { Button, GroupChip, Spinner, Modal } from "../components/ui";
+import { apiErrorMessage } from "../api/client";
+import { toast } from "../lib/toast";
 import { useCms } from "../context/CmsContext";
 
 function Metric({ icon, value, label }: { icon: React.ReactNode; value: string | number; label: string }) {
@@ -23,7 +26,19 @@ export function WorkoutDetail() {
   const { t } = useCms();
   const { workout, program, isLoading } = useFindWorkout(id);
   const start = useActiveWorkout((s) => s.start);
+  const invalidate = useInvalidateGym();
   const [starting, setStarting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const del = useMutation({
+    mutationFn: () => deleteWorkout(workout!.id),
+    onSuccess: () => {
+      invalidate();
+      toast.success(t("gym.app.workouts.deleted"));
+      navigate("/treinos", { replace: true });
+    },
+    onError: (e) => toast.error(apiErrorMessage(e)),
+  });
 
   if (isLoading) return <div className="flex justify-center pt-24"><Spinner className="h-8 w-8" /></div>;
   if (!workout) {
@@ -82,7 +97,10 @@ export function WorkoutDetail() {
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-bold text-t1">{t("gym.app.detail.exercises_heading")}</h2>
           {!readOnly ? (
-            <Button size="sm" variant="greenLight" icon={<Pencil size={15} />} onClick={() => navigate(`/treino/${workout.id}/editar`)}>{t("gym.app.common.edit")}</Button>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="greenLight" icon={<Pencil size={15} />} onClick={() => navigate(`/treino/${workout.id}/editar`)}>{t("gym.app.common.edit")}</Button>
+              <button onClick={() => setConfirmDelete(true)} title={t("gym.app.detail.delete")} className="w-8 h-8 rounded-lg bg-bg flex items-center justify-center text-red active:scale-95 transition"><Trash2 size={15} /></button>
+            </div>
           ) : (
             <span className="flex items-center gap-1 text-xs text-t3"><Lock size={13} /> {t("gym.app.detail.coach_plan")}</span>
           )}
@@ -120,6 +138,17 @@ export function WorkoutDetail() {
           <Button size="lg" fullWidth disabled={starting} icon={<Play size={18} fill="currentColor" />} onClick={begin}>{starting ? t("gym.app.common.loading") : t("gym.app.dashboard.start")}</Button>
         </div>
       </div>
+
+      {/* Confirmação de apagar — pop-up da app */}
+      <Modal open={confirmDelete} onClose={() => setConfirmDelete(false)} title={t("gym.app.detail.delete_title")}>
+        <div className="pt-1">
+          <p className="text-[14px] text-t2 mb-5">{t("gym.app.detail.delete_confirm")}</p>
+          <div className="flex flex-col gap-2.5">
+            <Button fullWidth size="lg" variant="danger" disabled={del.isPending} onClick={() => del.mutate()}>{del.isPending ? t("gym.app.common.saving") : t("gym.app.detail.delete")}</Button>
+            <Button fullWidth variant="ghost" onClick={() => setConfirmDelete(false)}>{t("gym.app.common.cancel")}</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -92,6 +92,13 @@ export function WorkoutExec() {
     sets.forEach((_, si) => wk.setDone(current, si, true));
   };
 
+  // Reabrir uma série (mesmo já concluída) para a editar durante o treino.
+  const reopenSet = (si: number) => {
+    setResting(false);
+    if (sets[si].done) wk.setDone(current, si, false);
+    wk.setActiveSet(current, si);
+  };
+
   const goNext = () => {
     if (current < totalEx - 1) wk.setIndex(current + 1);
     else setShowFinish(true);
@@ -204,21 +211,19 @@ export function WorkoutExec() {
                 </div>
               )}
 
-              {/* ── Pontos de série ── */}
-              {!exDone && (
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-[12.5px] font-bold text-t3">{t("gym.app.exec.target_sets")}</span>
-                  <div className="flex gap-1.5">
-                    {sets.map((s, si) => (
-                      <button key={si} onClick={() => wk.setActiveSet(current, si)} title={`${t("gym.app.exec.series_label")} ${si + 1}`}
-                        className="w-8 h-8 rounded-[10px] flex items-center justify-center transition-all"
-                        style={{ background: s.done ? "var(--green)" : si === aSet ? "var(--surface)" : "var(--bg)", boxShadow: si === aSet && !s.done ? "inset 0 0 0 2px var(--green)" : "none" }}>
-                        {s.done ? <Check size={15} className="text-white" /> : <span className="text-[13.5px] font-extrabold" style={{ color: si === aSet ? "var(--green-dk)" : "var(--t3)" }}>{si + 1}</span>}
-                      </button>
-                    ))}
-                  </div>
+              {/* ── Pontos de série (sempre visíveis: tocar reabre p/ editar) ── */}
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[12.5px] font-bold text-t3">{t("gym.app.exec.target_sets")}</span>
+                <div className="flex gap-1.5">
+                  {sets.map((s, si) => (
+                    <button key={si} onClick={() => reopenSet(si)} title={`${t("gym.app.exec.series_label")} ${si + 1}`}
+                      className="w-8 h-8 rounded-[10px] flex items-center justify-center transition-all"
+                      style={{ background: s.done ? "var(--green)" : si === aSet ? "var(--surface)" : "var(--bg)", boxShadow: si === aSet && !s.done ? "inset 0 0 0 2px var(--green)" : "none" }}>
+                      {s.done ? <Check size={15} className="text-white" /> : <span className="text-[13.5px] font-extrabold" style={{ color: si === aSet ? "var(--green-dk)" : "var(--t3)" }}>{si + 1}</span>}
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
 
               {/* ── Modo descanso: contagem grande ── */}
               {!exDone && resting && (

@@ -89,7 +89,7 @@ export function Progress() {
             </select>
           )}
         </div>
-        {selected && pts.length >= 2 ? (
+        {selected && pts.length >= 1 ? (
           <>
             <div className="flex items-baseline gap-2 mb-1">
               <span className="text-2xl font-black text-t1 tnum">{lastW} kg</span>
