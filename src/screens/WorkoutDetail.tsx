@@ -100,10 +100,12 @@ export function WorkoutDetail() {
                   <span className="font-semibold text-t1 truncate">{e.name}</span>
                   <GroupChip group={e.group} />
                 </div>
-                <p className="text-xs text-t2 mb-1.5">{e.sets} {t("gym.app.common.sets")} · {e.reps} {t("gym.app.common.reps")} · {e.weight}kg · {e.rest}s {t("gym.app.common.rest")}</p>
+                <p className="text-xs text-t2 mb-1.5">{(e as any).type === "time"
+                  ? `${e.sets} ${t("gym.app.common.sets")} · ${(e as any).duration ?? 0}s · ${e.rest}s ${t("gym.app.common.rest")}`
+                  : `${e.sets} ${t("gym.app.common.sets")} · ${e.reps} ${t("gym.app.common.reps")} · ${e.weight}kg · ${e.rest}s ${t("gym.app.common.rest")}`}</p>
                 <div className="flex flex-wrap gap-1">
                   {Array.from({ length: e.sets }).map((_, s) => (
-                    <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-bg text-t2">{e.reps} {t("gym.app.common.reps")} · {e.weight}kg</span>
+                    <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-bg text-t2">{(e as any).type === "time" ? `${(e as any).duration ?? 0}s` : `${e.reps} ${t("gym.app.common.reps")} · ${e.weight}kg`}</span>
                   ))}
                 </div>
               </div>

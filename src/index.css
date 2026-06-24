@@ -2,6 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Animações do ecrã de execução (estado "a fazer" / "descanso") */
+@keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes liftBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes goGlow {
+  0%, 100% { box-shadow: 0 8px 22px -6px rgba(141, 198, 63, 0.55); }
+  50% { box-shadow: 0 12px 30px -4px rgba(141, 198, 63, 0.85); }
+}
+@keyframes goPop { 0% { transform: scale(0.97); opacity: 0.6; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes goRing { 0% { transform: scale(0.6); opacity: 0.7; } 100% { transform: scale(1.8); opacity: 0; } }
+
+/* Contorno animado do card de exercício */
+@property --gp-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+
+/* A fazer: linha verde a percorrer o contorno */
+.go-border { position: relative; }
+.go-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(from var(--gp-angle), transparent 0 62%, var(--green) 80%, #d6f3a6 90%, transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: gpBorderSpin 2.4s linear infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+@keyframes gpBorderSpin { to { --gp-angle: 360deg; } }
+
+/* Descanso: border (laranja, tema de descanso) a pulsar */
+.rest-border { position: relative; }
+.rest-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: #F97316;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: gpRestPulse 1.4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+@keyframes gpRestPulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
 :root {
   --green: #8dc63f;
   --green-dk: #6ba82e;

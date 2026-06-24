@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { LogOut, Dumbbell, Flame, Folder, CalendarDays, Bell, Shield, LifeBuoy, ChevronRight } from "lucide-react";
+import { LogOut, Dumbbell, Flame, Folder, CalendarDays, Shield, LifeBuoy, ChevronRight } from "lucide-react";
 import { useSummary, usePrograms } from "../api";
 import type { GymProgram } from "../api";
 import { logout } from "../api/session";
@@ -8,8 +8,10 @@ import { Card, Avatar, Badge, Button } from "../components/ui";
 import { useScreenHeader } from "../store/useHeader";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { NotificationsRow } from "../components/NotificationsRow";
 import { InstallRow } from "../components/InstallPrompt";
 import { useCms } from "../context/CmsContext";
+import { useLanguage } from "../context/LanguageContext";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 
@@ -24,7 +26,6 @@ function Stat({ icon, value, label }: { icon: React.ReactNode; value: string | n
 }
 
 const SETTINGS = [
-  { icon: Bell, label: "Notificações", cmsKey: "gym.app.profile.notifications" },
   { icon: Shield, label: "Privacidade", cmsKey: "gym.app.profile.privacy" },
   { icon: LifeBuoy, label: "Suporte", cmsKey: "gym.app.profile.support" },
 ];
@@ -37,6 +38,7 @@ export function Profile() {
   const { data: summary } = useSummary();
   const { data: programsData } = usePrograms();
   const programs = (programsData ?? []) as GymProgram[];
+  const { languages } = useLanguage();
 
   const memberMonths = profile?.memberSince
     ? Math.max(1, Math.round((Date.now() - new Date(profile.memberSince).getTime()) / (30 * 24 * 3600 * 1000)))
@@ -76,11 +78,13 @@ export function Profile() {
         <Stat icon={<CalendarDays size={18} />} value={memberMonths} label={t("gym.app.profile.stat_months")} />
       </div>
 
-      {/* Língua */}
-      <Card className="p-4 mb-5">
-        <p className="text-sm font-bold text-t1 mb-2.5">{t("gym.app.profile.language")}</p>
-        <LanguageSwitcher />
-      </Card>
+      {/* Língua — só quando há mais do que uma língua ativa */}
+      {languages.length > 1 && (
+        <Card className="p-4 mb-5">
+          <p className="text-sm font-bold text-t1 mb-2.5">{t("gym.app.profile.language")}</p>
+          <LanguageSwitcher />
+        </Card>
+      )}
 
       {/* Theme */}
       <Card className="p-4 mb-5">
@@ -90,6 +94,7 @@ export function Profile() {
       {/* Settings list */}
       <Card className="p-2 mb-5">
         <InstallRow />
+        <NotificationsRow />
         {SETTINGS.map((s) => (
           <button key={s.label} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-bg transition-colors">
             <s.icon size={18} className="text-t2" />

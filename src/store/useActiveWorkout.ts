@@ -7,6 +7,7 @@ import type { GetWebsitesGymWorkoutsIdLast200 as LastPerformance } from "../gen/
 export interface SetEntry {
   weight: number;
   reps: number;
+  duration: number;
   done: boolean;
 }
 
@@ -14,10 +15,13 @@ export interface ActiveExercise {
   exerciseId: string | null;
   name: string;
   group: string;
+  /** "strength" = peso/reps · "time" = duração (ex: prancha). */
+  type: "strength" | "time";
   rest: number;
   mediaUrl: string | null;
   targetReps: number;
   targetWeight: number;
+  targetDuration: number;
   sets: SetEntry[];
 }
 
@@ -52,11 +56,13 @@ function prefillSets(
   last?: LastPerformance | null,
 ): SetEntry[] {
   const prev = last?.entries.find((e) => e.exerciseName === ex.name)?.sets;
+  const isTime = (ex as any).type === "time";
   return Array.from({ length: count }, (_, j) => {
     const src = prev && prev.length > 0 ? prev[Math.min(j, prev.length - 1)] : null;
     return {
       weight: src ? src.weight : ex.weight,
       reps: src ? src.reps : ex.reps,
+      duration: isTime ? ((ex as any).duration ?? 0) : ((src as any)?.duration ?? 0),
       done: false,
     };
   });
@@ -83,10 +89,12 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
             exerciseId: e.exerciseId ?? null,
             name: e.name,
             group: e.group,
+            type: (e as any).type === "time" ? "time" : "strength",
             rest: e.rest || 60,
             mediaUrl: e.mediaUrl ?? null,
             targetReps: e.reps,
             targetWeight: e.weight,
+            targetDuration: (e as any).duration ?? 0,
             sets: prefillSets(e, Math.max(1, e.sets), last),
           })),
         }),
@@ -147,7 +155,7 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
           entries: s.exercises.map((e) => ({
             exerciseName: e.name,
             group: e.group,
-            sets: e.sets.map((st) => ({ weight: st.weight, reps: st.reps, done: st.done })),
+            sets: e.sets.map((st) => ({ weight: st.weight, reps: st.reps, duration: st.duration, done: st.done } as any)),
           })),
         };
       },
