@@ -23,6 +23,7 @@ export { deleteWebsitesGymWorkoutsId as deleteWorkout } from "../gen/hooks/useDe
 export { postWebsitesGymWorkoutsIdClone as cloneWorkout } from "../gen/hooks/usePostWebsitesGymWorkoutsIdClone";
 export { postWebsitesGymLogs as createLog } from "../gen/hooks/usePostWebsitesGymLogs";
 export { getWebsitesGymWorkoutsIdLast as getLastPerformance } from "../gen/hooks/useGetWebsitesGymWorkoutsIdLast";
+export { deleteWebsitesGymLogsId as deleteLog } from "../gen/hooks/useDeleteWebsitesGymLogsId";
 
 // ── Tipos ──────────────────────────────────────────────────────────────────────
 export type { GymProgram } from "../gen/types/GymProgram";

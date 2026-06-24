@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Dumbbell, Repeat, Flame, Layers, ChevronRight } from "lucide-react";
-import { useLogs, useSummary, useLogDetail } from "../api";
+import { useMutation } from "@tanstack/react-query";
+import { Dumbbell, Repeat, Flame, Layers, ChevronRight, Trash2 } from "lucide-react";
+import { useLogs, useSummary, useLogDetail, deleteLog } from "../api";
 import type { GymLog } from "../api";
-import { Card, Spinner, Empty, Modal } from "../components/ui";
+import { useInvalidateGym } from "../hooks/useGym";
+import { Card, Spinner, Empty, Modal, Button } from "../components/ui";
+import { apiErrorMessage } from "../api/client";
+import { toast } from "../lib/toast";
 import { useScreenHeader } from "../store/useHeader";
 import { useCms } from "../context/CmsContext";
 import { relativeDays } from "../lib/format";
@@ -15,8 +19,21 @@ import { pt } from "date-fns/locale";
 function SessionDetailModal({ logId, onClose }: { logId: string; onClose: () => void }) {
   const { t } = useCms();
   const { data, isLoading } = useLogDetail(logId);
+  const invalidate = useInvalidateGym();
+  const [confirming, setConfirming] = useState(false);
   const log = data as { workoutName?: string; durationMin?: number; date?: string; entries?: { exerciseName: string; group?: string | null; sets: { weight?: number; reps?: number; done?: boolean }[] }[] } | undefined;
   const entries = log?.entries ?? [];
+
+  const del = useMutation({
+    mutationFn: () => deleteLog(logId),
+    onSuccess: () => {
+      invalidate();
+      toast.success(t("gym.app.history.deleted"));
+      onClose();
+    },
+    onError: (e) => toast.error(apiErrorMessage(e)),
+  });
+
   return (
     <Modal open onClose={onClose} title={log?.workoutName ?? t("gym.app.nav.history")}>
       {isLoading ? (
@@ -43,6 +60,24 @@ function SessionDetailModal({ logId, onClose }: { logId: string; onClose: () => 
             </div>
           ))}
         </div>
+      )}
+
+      {/* Apagar sessão */}
+      <button onClick={() => setConfirming(true)} className="flex items-center justify-center gap-1.5 w-full mt-4 py-2.5 rounded-xl text-red text-[13px] font-semibold active:bg-bg transition-colors">
+        <Trash2 size={15} /> {t("gym.app.history.delete")}
+      </button>
+
+      {/* Pop-up temático de confirmação */}
+      {confirming && (
+        <Modal open onClose={() => setConfirming(false)} title={t("gym.app.history.delete_title")}>
+          <div className="pt-1">
+            <p className="text-[14px] text-t2 mb-5">{t("gym.app.history.delete_confirm")}</p>
+            <div className="flex flex-col gap-2.5">
+              <Button fullWidth size="lg" variant="danger" disabled={del.isPending} onClick={() => del.mutate()}>{del.isPending ? t("gym.app.common.saving") : t("gym.app.history.delete")}</Button>
+              <Button fullWidth variant="ghost" onClick={() => setConfirming(false)}>{t("gym.app.common.cancel")}</Button>
+            </div>
+          </div>
+        </Modal>
       )}
     </Modal>
   );
