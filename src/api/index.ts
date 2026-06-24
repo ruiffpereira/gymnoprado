@@ -9,6 +9,8 @@ export { useGetWebsitesGymStatsSummary as useSummary } from "../gen/hooks/useGet
 export { useGetWebsitesGymStatsWeekly as useWeekly } from "../gen/hooks/useGetWebsitesGymStatsWeekly";
 export { useGetWebsitesGymStatsRecords as useRecords } from "../gen/hooks/useGetWebsitesGymStatsRecords";
 export { useGetWebsitesGymWorkoutsIdLast as useLastPerformance } from "../gen/hooks/useGetWebsitesGymWorkoutsIdLast";
+export { useGetWebsitesGymStatsLoadSeries as useLoadSeries } from "../gen/hooks/useGetWebsitesGymStatsLoadSeries";
+export { useGetWebsitesGymLogsId as useLogDetail } from "../gen/hooks/useGetWebsitesGymLogsId";
 
 // ── Funções imperativas (para mutations) ───────────────────────────────────────
 export { getWebsitesGymMe } from "../gen/hooks/useGetWebsitesGymMe";
@@ -35,3 +37,5 @@ export type { GymRecord } from "../gen/types/GymRecord";
 export type { GymWorkoutInput } from "../gen/types/GymWorkoutInput";
 export type { GymExerciseInput } from "../gen/types/GymExerciseInput";
 export type { GetWebsitesGymWorkoutsIdLast200 as GymLastPerformance } from "../gen/types/GetWebsitesGymWorkoutsIdLast";
+export type { GetWebsitesGymStatsLoadSeries200 as GymLoadSeries } from "../gen/types/GetWebsitesGymStatsLoadSeries";
+export type { GetWebsitesGymLogsId200 as GymLogDetail } from "../gen/types/GetWebsitesGymLogsId";

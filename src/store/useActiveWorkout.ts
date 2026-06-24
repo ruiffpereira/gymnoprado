@@ -9,6 +9,10 @@ export interface SetEntry {
   reps: number;
   duration: number;
   done: boolean;
+  /** Valor da última sessão (referência; null se não houver histórico). */
+  lastWeight: number | null;
+  lastReps: number | null;
+  lastDuration: number | null;
 }
 
 export interface ActiveExercise {
@@ -64,6 +68,9 @@ function prefillSets(
       reps: src ? src.reps : ex.reps,
       duration: isTime ? ((ex as any).duration ?? 0) : ((src as any)?.duration ?? 0),
       done: false,
+      lastWeight: src ? src.weight : null,
+      lastReps: src ? src.reps : null,
+      lastDuration: src ? ((src as any).duration ?? null) : null,
     };
   });
 }

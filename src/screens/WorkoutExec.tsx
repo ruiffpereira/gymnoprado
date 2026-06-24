@@ -262,6 +262,13 @@ export function WorkoutExec() {
                     ))}
                   </div>
 
+                  {/* Referência: valor do último treino para esta série */}
+                  {(isTime ? cur.lastDuration != null : cur.lastWeight != null) && (
+                    <div className="text-center text-[12px] text-t3 font-medium mb-3 -mt-1">
+                      {t("gym.app.exec.last_label")}: {isTime ? `${cur.lastDuration}s` : `${cur.lastWeight}kg · ${cur.lastReps} ${t("gym.app.common.reps")}`}
+                    </div>
+                  )}
+
                   {/* Ação principal */}
                   <Button fullWidth size="lg" onClick={completeAndRest} className="text-center leading-[1.15]" style={{ borderRadius: 13, fontSize: 15 }}
                     icon={willFinishEx && isLastEx ? <Trophy size={18} className="text-white" /> : <Check size={18} className="text-white" />}>
@@ -366,8 +373,8 @@ export function WorkoutExec() {
           </div>
           <div className="flex flex-col gap-2.5">
             <Button fullWidth size="lg" disabled={createLog.isPending} onClick={finishWorkout}>{createLog.isPending ? t("gym.app.common.saving") : t("gym.app.exec.finish_now")}</Button>
+            <Button fullWidth variant="danger" onClick={discard}>{t("gym.app.exec.cancel_workout")}</Button>
             <Button fullWidth variant="ghost" onClick={() => setShowFinish(false)}>{t("gym.app.exec.keep_training")}</Button>
-            <button onClick={discard} className="mt-1 text-[13px] font-semibold text-red hover:underline py-1">{t("gym.app.exec.cancel_workout")}</button>
           </div>
         </div>
       </Modal>
