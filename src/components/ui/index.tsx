@@ -112,10 +112,12 @@ export function Avatar({ name, size = 40 }: { name?: string; size?: number }) {
 }
 
 // ── Modal (bottom sheet) ──────────────────────────────────────────────────────
-export function Modal({ open, onClose, title, children, footer }: {
+export function Modal({ open, onClose, title, subtitle, headerAction, children, footer }: {
   open: boolean;
   onClose: () => void;
   title?: string;
+  subtitle?: string;
+  headerAction?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
 }) {
@@ -126,11 +128,17 @@ export function Modal({ open, onClose, title, children, footer }: {
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="w-full sm:max-w-lg bg-surface rounded-t-[24px] max-h-[90vh] flex flex-col animate-slideUp">
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-line">
-          <span className="text-[17px] font-bold text-t1">{title}</span>
-          <button onClick={onClose} className="w-8 h-8 rounded-[10px] bg-bg flex items-center justify-center">
-            <X size={16} className="text-t2" />
-          </button>
+        <div className="flex items-center justify-between gap-2 px-6 pt-5 pb-4 border-b border-line">
+          <div className="min-w-0">
+            <span className="block text-[17px] font-bold text-t1 truncate">{title}</span>
+            {subtitle && <span className="block text-[12px] text-t3 mt-0.5">{subtitle}</span>}
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {headerAction}
+            <button onClick={onClose} className="w-8 h-8 rounded-[10px] bg-bg flex items-center justify-center">
+              <X size={16} className="text-t2" />
+            </button>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto px-6 py-4">{children}</div>
         {footer && <div className="px-6 py-4 border-t border-line flex gap-2">{footer}</div>}

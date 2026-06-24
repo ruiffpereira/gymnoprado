@@ -21,7 +21,7 @@ function SessionDetailModal({ logId, onClose }: { logId: string; onClose: () => 
   const { data, isLoading } = useLogDetail(logId);
   const invalidate = useInvalidateGym();
   const [confirming, setConfirming] = useState(false);
-  const log = data as { workoutName?: string; durationMin?: number; date?: string; entries?: { exerciseName: string; group?: string | null; sets: { weight?: number; reps?: number; done?: boolean }[] }[] } | undefined;
+  const log = data as { workoutName?: string; durationMin?: number; date?: string; createdAt?: string | null; entries?: { exerciseName: string; group?: string | null; sets: { weight?: number; reps?: number; done?: boolean }[] }[] } | undefined;
   const entries = log?.entries ?? [];
 
   const del = useMutation({
@@ -34,15 +34,27 @@ function SessionDetailModal({ logId, onClose }: { logId: string; onClose: () => 
     onError: (e) => toast.error(apiErrorMessage(e)),
   });
 
+  // Dia + hora do treino (da data de registo; fallback para a data do treino).
+  const when = log?.createdAt ?? (log?.date ? `${log.date}T00:00:00` : null);
+  const parts: string[] = [];
+  if (when) parts.push(format(new Date(when), "EEE, d 'de' MMM", { locale: pt }));
+  if (log?.createdAt) parts.push(format(new Date(log.createdAt), "HH:mm"));
+  if (log?.durationMin) parts.push(`${log.durationMin} ${t("gym.app.common.min")}`);
+  const subtitle = parts.length ? parts.join(" · ") : undefined;
+
   return (
-    <Modal open onClose={onClose} title={log?.workoutName ?? t("gym.app.nav.history")}>
+    <Modal open onClose={onClose} title={log?.workoutName ?? t("gym.app.nav.history")} subtitle={subtitle}
+      headerAction={
+        <button onClick={() => setConfirming(true)} title={t("gym.app.history.delete")} className="w-8 h-8 rounded-[10px] bg-bg flex items-center justify-center text-red active:scale-95 transition">
+          <Trash2 size={15} />
+        </button>
+      }>
       {isLoading ? (
         <div className="flex justify-center py-8"><Spinner className="h-7 w-7" /></div>
       ) : entries.length === 0 ? (
         <p className="text-sm text-t3 text-center py-8">{t("gym.app.history.no_detail")}</p>
       ) : (
         <div className="flex flex-col gap-3">
-          {log?.date && <p className="text-[12px] text-t3 -mt-1">{relativeDays(log.date)} · {log.durationMin} {t("gym.app.common.min")}</p>}
           {entries.map((e, i) => (
             <div key={i} className="rounded-xl bg-bg p-3">
               <div className="flex items-center gap-2 mb-2">
@@ -61,11 +73,6 @@ function SessionDetailModal({ logId, onClose }: { logId: string; onClose: () => 
           ))}
         </div>
       )}
-
-      {/* Apagar sessão */}
-      <button onClick={() => setConfirming(true)} className="flex items-center justify-center gap-1.5 w-full mt-4 py-2.5 rounded-xl text-red text-[13px] font-semibold active:bg-bg transition-colors">
-        <Trash2 size={15} /> {t("gym.app.history.delete")}
-      </button>
 
       {/* Pop-up temático de confirmação */}
       {confirming && (
