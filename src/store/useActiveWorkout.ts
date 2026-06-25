@@ -9,6 +9,11 @@ export interface SetEntry {
   reps: number;
   duration: number;
   done: boolean;
+  /** Descanso (s) a fazer DEPOIS desta série (0 entre passos de um dropset). */
+  rest: number;
+  /** Série composta (dropset): nº do passo (1-based) e total de passos do grupo. */
+  dropStep?: number;
+  dropTotal?: number;
   /** Valor da última sessão (referência; null se não houver histórico). */
   lastWeight: number | null;
   lastReps: number | null;
@@ -61,6 +66,7 @@ function prefillSets(
 ): SetEntry[] {
   const prev = last?.entries.find((e) => e.exerciseName === ex.name)?.sets;
   const isTime = (ex as any).type === "time";
+  const rest = ex.rest || 60;
   return Array.from({ length: count }, (_, j) => {
     const src = prev && prev.length > 0 ? prev[Math.min(j, prev.length - 1)] : null;
     return {
@@ -68,11 +74,68 @@ function prefillSets(
       reps: src ? src.reps : ex.reps,
       duration: isTime ? ((ex as any).duration ?? 0) : ((src as any)?.duration ?? 0),
       done: false,
+      rest,
       lastWeight: src ? src.weight : null,
       lastReps: src ? src.reps : null,
       lastDuration: src ? ((src as any).duration ?? null) : null,
     };
   });
+}
+
+/**
+ * Constrói as séries de um exercício. Em modo série-a-série (`mode==="perSet"`),
+ * cada `setRow` traz o seu próprio alvo de reps/peso e uma série composta
+ * (dropset) é **expandida** num registo por passo — para que TUDO (peso/reps de
+ * cada passo) fique registado e alimente as estatísticas. Caso contrário usa o
+ * pré-preenchimento uniforme (sets × reps × peso) com referência à última sessão.
+ */
+function buildSets(
+  ex: Workout["exercises"][number],
+  last?: LastPerformance | null,
+): SetEntry[] {
+  const setRows = (ex as any).setRows as
+    | { reps?: number; weight?: number; rest?: number; drop?: boolean; steps?: { reps?: number; weight?: number; rest?: number }[] }[]
+    | null
+    | undefined;
+  if ((ex as any).mode === "perSet" && Array.isArray(setRows) && setRows.length) {
+    type Tgt = { reps: number; weight: number; rest: number; dropStep?: number; dropTotal?: number };
+    const defRest = ex.rest || 60;
+    const targets: Tgt[] = [];
+    for (const r of setRows) {
+      if (r.drop && Array.isArray(r.steps) && r.steps.length) {
+        const n = r.steps.length;
+        // Passos seguidos (descanso curto entre eles); só o último usa o descanso pós-série.
+        r.steps.forEach((s, i) =>
+          targets.push({
+            reps: s.reps ?? 0,
+            weight: s.weight ?? 0,
+            rest: i === n - 1 ? (r.rest ?? defRest) : (s.rest ?? 0),
+            dropStep: i + 1,
+            dropTotal: n,
+          }),
+        );
+      } else {
+        targets.push({ reps: r.reps ?? 0, weight: r.weight ?? 0, rest: r.rest ?? defRest });
+      }
+    }
+    const prev = last?.entries.find((e) => e.exerciseName === ex.name)?.sets;
+    return targets.map((t, j) => {
+      const src = prev && prev.length > 0 ? prev[Math.min(j, prev.length - 1)] : null;
+      return {
+        weight: src ? src.weight : t.weight,
+        reps: src ? src.reps : t.reps,
+        duration: 0,
+        done: false,
+        rest: t.rest,
+        dropStep: t.dropStep,
+        dropTotal: t.dropTotal,
+        lastWeight: src ? src.weight : null,
+        lastReps: src ? src.reps : null,
+        lastDuration: src ? ((src as any).duration ?? null) : null,
+      };
+    });
+  }
+  return prefillSets(ex, Math.max(1, ex.sets), last);
 }
 
 export const useActiveWorkout = create<ActiveWorkoutState>()(
@@ -102,7 +165,7 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
             targetReps: e.reps,
             targetWeight: e.weight,
             targetDuration: (e as any).duration ?? 0,
-            sets: prefillSets(e, Math.max(1, e.sets), last),
+            sets: buildSets(e, last),
           })),
         }),
 

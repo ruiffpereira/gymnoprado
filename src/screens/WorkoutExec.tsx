@@ -83,7 +83,10 @@ export function WorkoutExec() {
       const nextPending = sets.findIndex((s, i) => i !== aSet && !s.done);
       if (nextPending !== -1) wk.setActiveSet(current, nextPending);
     }
-    setRestTotal(ex.rest); setRestLeft(ex.rest); setResting(true);
+    // Descanso da própria série (0 entre passos de um dropset → segue direto).
+    const restDur = cur.rest ?? ex.rest;
+    if (restDur > 0) { setRestTotal(restDur); setRestLeft(restDur); setResting(true); }
+    else { setResting(false); }
   };
 
   // Marca todas as séries do exercício como concluídas (salta as restantes).
@@ -206,6 +209,11 @@ export function WorkoutExec() {
                     <div className="flex-1 min-w-0">
                       <div className="text-[23px] font-black text-white leading-none tracking-[-0.02em]" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.18)" }}>{t("gym.app.exec.go_now")}</div>
                       <div className="text-[14px] font-bold text-white/90 mt-[5px]">{t("gym.app.exec.series_label")} {aSet + 1} {t("gym.app.common.of")} {sets.length} · {isTime ? `${cur.duration}s` : `${cur.reps} ${t("gym.app.common.reps")}`}</div>
+                      {cur.dropStep && (
+                        <div className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold" style={{ background: "rgba(255,255,255,0.22)", color: "#fff" }}>
+                          ↓ {t("gym.app.exec.dropset_label") || "Dropset"} · {t("gym.app.exec.step_label") || "passo"} {cur.dropStep}/{cur.dropTotal}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -216,10 +224,11 @@ export function WorkoutExec() {
                 <span className="text-[12.5px] font-bold text-t3">{t("gym.app.exec.target_sets")}</span>
                 <div className="flex gap-1.5">
                   {sets.map((s, si) => (
-                    <button key={si} onClick={() => reopenSet(si)} title={`${t("gym.app.exec.series_label")} ${si + 1}`}
-                      className="w-8 h-8 rounded-[10px] flex items-center justify-center transition-all"
-                      style={{ background: s.done ? "var(--green)" : si === aSet ? "var(--surface)" : "var(--bg)", boxShadow: si === aSet && !s.done ? "inset 0 0 0 2px var(--green)" : "none" }}>
-                      {s.done ? <Check size={15} className="text-white" /> : <span className="text-[13.5px] font-extrabold" style={{ color: si === aSet ? "var(--green-dk)" : "var(--t3)" }}>{si + 1}</span>}
+                    <button key={si} onClick={() => reopenSet(si)} title={s.dropStep ? `${t("gym.app.exec.dropset_label") || "Dropset"} · ${t("gym.app.exec.step_label") || "passo"} ${s.dropStep}/${s.dropTotal}` : `${t("gym.app.exec.series_label")} ${si + 1}`}
+                      className="w-8 h-8 rounded-[10px] flex items-center justify-center transition-all relative"
+                      style={{ background: s.done ? "var(--green)" : si === aSet ? "var(--surface)" : "var(--bg)", boxShadow: si === aSet && !s.done ? "inset 0 0 0 2px var(--green)" : s.dropStep ? "inset 0 0 0 1.5px #F9731788" : "none" }}>
+                      {s.done ? <Check size={15} className="text-white" /> : <span className="text-[13.5px] font-extrabold" style={{ color: si === aSet ? "var(--green-dk)" : s.dropStep ? "#C2742B" : "var(--t3)" }}>{si + 1}</span>}
+                      {s.dropStep != null && !s.done && <span className="absolute -top-1 -right-1 text-[9px] font-black" style={{ color: "#F97316" }}>↓</span>}
                     </button>
                   ))}
                 </div>
