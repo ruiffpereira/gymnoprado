@@ -8,6 +8,7 @@ dist-ssr
 dev-dist
 src/gen/*
 src/gen-cms/*
+spec*.json
 
 # Artefactos compilados do vite.config.ts (o Vite carrega o .ts diretamente)
 vite.config.js
