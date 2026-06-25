@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, ChevronRight, ChevronDown, Trophy, Pause, Play, Timer, List, Minus, Plus, Dumbbell } from "lucide-react";
+import { Check, ChevronRight, ChevronDown, Trophy, Pause, Play, Timer, List, Minus, Plus, Dumbbell, ArrowDown } from "lucide-react";
 import { useActiveWorkout } from "../store/useActiveWorkout";
 import { useCreateLog } from "../hooks/useGym";
 import { Button, Modal, Badge } from "../components/ui";
@@ -27,26 +27,39 @@ export function WorkoutExec() {
   const wk = useActiveWorkout();
   const elapsed = useElapsed(wk.startedAt);
 
-  // Descanso inline (no botão)
+  // Descanso inline (na barra fixa ao fundo)
   const [resting, setResting] = useState(false);
   const [restLeft, setRestLeft] = useState(0);
   const [restTotal, setRestTotal] = useState(60);
+  const [restKind, setRestKind] = useState<"normal" | "drop">("normal");
+  const [restMsg, setRestMsg] = useState("");
 
   const [showFinish, setShowFinish] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [pickSel, setPickSel] = useState(0);
   const createLog = useCreateLog();
 
+  // O que fazer quando o descanso terminar: avança série/exercício só no fim do
+  // tempo (ou ao tocar para saltar), mantendo o card igual durante o descanso.
+  const pendingNextRef = useRef<(() => void) | null>(null);
+  const resolveRest = () => {
+    setResting(false);
+    const fn = pendingNextRef.current;
+    pendingNextRef.current = null;
+    if (fn) fn();
+  };
+
   useEffect(() => {
     if (!wk.workoutId) navigate("/treinos", { replace: true });
   }, [wk.workoutId, navigate]);
 
-  // Contagem decrescente do descanso
+  // Contagem decrescente do descanso → ao chegar a 0, resolve (avança).
   useEffect(() => {
     if (!resting) return;
-    if (restLeft <= 0) { setResting(false); return; }
+    if (restLeft <= 0) { resolveRest(); return; }
     const id = setTimeout(() => setRestLeft((s) => s - 1), 1000);
     return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resting, restLeft]);
 
   if (!wk.workoutId || wk.exercises.length === 0) return null;
@@ -61,6 +74,7 @@ export function WorkoutExec() {
   const totalSets = wk.totalSets();
   const exDone = sets.every((s) => s.done);
   const isLastEx = current === totalEx - 1;
+  const isTime = ex.type === "time";
 
   const color = groupColor(ex.group);
 
@@ -68,35 +82,76 @@ export function WorkoutExec() {
   const doneAfter = sets.filter((s) => s.done).length + (cur.done ? 0 : 1);
   const willFinishEx = doneAfter >= sets.length;
 
+  // ── Drop set (modelo achatado): a série atual é um "passo" de um dropset. ──
+  // Agrupamos os passos consecutivos (dropStep 1..dropTotal) para mostrar a
+  // cascata de drops, sem mudar o modelo de dados (apenas visual).
+  const isDropStep = cur.dropStep != null;
+  const dropTotal = cur.dropTotal ?? 0;
+  const isLastDropStep = !isDropStep || (cur.dropStep ?? 1) >= dropTotal;
+
   const updateField = (field: "weight" | "reps" | "duration", delta: number) => {
     wk.updateSet(current, aSet, { [field]: Math.max(0, round2(cur[field] + delta)) });
   };
-  const isTime = ex.type === "time";
 
-  // Conclui a série atual, avança e arranca o descanso inline
+  // Conclui o passo atual e arranca o descanso. O avanço para a próxima
+  // série/passo só acontece quando o descanso termina (resolveRest).
   const completeAndRest = () => {
-    wk.setDone(current, aSet, true);
-    if (willFinishEx && isLastEx) { setShowFinish(true); return; }
-    if (willFinishEx) {
-      wk.setIndex(Math.min(current + 1, totalEx - 1));
-    } else {
-      const nextPending = sets.findIndex((s, i) => i !== aSet && !s.done);
-      if (nextPending !== -1) wk.setActiveSet(current, nextPending);
+    const exIdx = current, sIdx = aSet;
+
+    // Último passo do treino → conclui já, sem descanso.
+    if (willFinishEx && isLastEx) {
+      wk.setDone(exIdx, sIdx, true);
+      setShowFinish(true);
+      return;
     }
-    // Descanso da própria série (0 entre passos de um dropset → segue direto).
+
+    // Guarda o avanço para quando o descanso terminar.
+    pendingNextRef.current = () => {
+      wk.setDone(exIdx, sIdx, true);
+      if (willFinishEx) {
+        wk.setIndex(Math.min(exIdx + 1, totalEx - 1));
+      } else {
+        const np = sets.findIndex((s, i) => i !== sIdx && !s.done);
+        if (np !== -1) wk.setActiveSet(exIdx, np);
+      }
+    };
+
+    // Texto "A seguir: …" e tipo de descanso (drop = mini-descanso).
+    let kind: "normal" | "drop" = "normal";
+    let msg: string;
+    if (isDropStep && !isLastDropStep) {
+      kind = "drop";
+      msg = `${t("gym.app.exec.dropset_label") || "Dropset"} ${(cur.dropStep ?? 1) + 1}/${dropTotal}`;
+    } else if (willFinishEx) {
+      msg = `${t("gym.app.exec.next_up") || "A seguir"}: ${t("gym.app.exec.next_up_exercise") || "próximo exercício"}`;
+    } else {
+      const np = sets.findIndex((s, i) => i !== sIdx && !s.done);
+      const n = (np !== -1 ? np : sIdx + 1) + 1;
+      msg = `${t("gym.app.exec.next_up") || "A seguir"}: ${n}ª ${t("gym.app.exec.series_label") || "Série"}`;
+    }
+
     const restDur = cur.rest ?? ex.rest;
-    if (restDur > 0) { setRestTotal(restDur); setRestLeft(restDur); setResting(true); }
-    else { setResting(false); }
+    if (restDur > 0) {
+      setRestKind(kind);
+      setRestMsg(msg);
+      setRestTotal(restDur);
+      setRestLeft(restDur);
+      setResting(true);
+    } else {
+      resolveRest(); // sem descanso → avança já
+    }
   };
 
   // Marca todas as séries do exercício como concluídas (salta as restantes).
   const completeExercise = () => {
+    pendingNextRef.current = null;
     setResting(false);
     sets.forEach((_, si) => wk.setDone(current, si, true));
   };
 
   // Reabrir uma série (mesmo já concluída) para a editar durante o treino.
   const reopenSet = (si: number) => {
+    pendingNextRef.current = null;
     setResting(false);
     if (sets[si].done) wk.setDone(current, si, false);
     wk.setActiveSet(current, si);
@@ -108,6 +163,8 @@ export function WorkoutExec() {
   };
 
   const jumpTo = (i: number) => {
+    pendingNextRef.current = null;
+    setResting(false);
     wk.setIndex(i);
     const fp = wk.exercises[i].sets.findIndex((s) => !s.done);
     wk.setActiveSet(i, fp === -1 ? 0 : fp);
@@ -136,6 +193,13 @@ export function WorkoutExec() {
     navigate("/", { replace: true });
   };
 
+  // Subtítulo do CTA "FAZER AGORA" (orientado à ação, como no protótipo).
+  const ctaSub = isDropStep && !isLastDropStep
+    ? (t("gym.app.exec.cta_sub_drop") || "Terminei o drop · baixar peso")
+    : willFinishEx && isLastEx
+      ? (t("gym.app.exec.cta_sub_finish") || "Terminei · concluir treino")
+      : (t("gym.app.exec.cta_sub_rest") || "Terminei a série · descansar");
+
   return (
     <div className="min-h-[100dvh] bg-bg flex flex-col">
       {/* ── Header escuro com cronómetro grande ── */}
@@ -161,8 +225,8 @@ export function WorkoutExec() {
         <div className="h-full bg-gradient-to-r from-brand to-brand-dk transition-[width] duration-500" style={{ width: `${totalSets ? (completedSets / totalSets) * 100 : 0}%` }} />
       </div>
 
-      {/* Main */}
-      <div className="flex-1 flex flex-col items-center px-4 py-[18px] lg:px-6 lg:py-6 w-full max-w-[520px] mx-auto">
+      {/* Main (paddingBottom dá espaço à barra fixa do CTA) */}
+      <div className="flex-1 flex flex-col items-center px-4 py-[18px] lg:px-6 lg:py-6 w-full max-w-[520px] mx-auto" style={{ paddingBottom: 150 }}>
         {/* Posição do exercício */}
         <div className="flex items-center justify-between w-full mb-3">
           <span className="text-[13px] font-bold text-t2">{t("gym.app.exec.exercise_label")} {current + 1} {t("gym.app.common.of")} {totalEx}</span>
@@ -184,76 +248,26 @@ export function WorkoutExec() {
               </div>
               <div className="text-[26px] font-black text-t1 leading-[1.05] tracking-[-0.03em] mb-[18px]">{ex.name}</div>
 
-              {/* ── Faixa de estado: DESCANSA (laranja) ── */}
-              {!exDone && resting && (
-                <div className="flex items-center gap-3 p-3 rounded-[15px] mb-[18px]" style={{ background: "#FEF1E3" }}>
-                  <div className="w-[42px] h-[42px] rounded-[13px] shrink-0 flex items-center justify-center" style={{ background: "#F97316", animation: "breathe 1.6s ease-in-out infinite" }}>
-                    <Timer size={22} className="text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[14.5px] font-black tracking-[-0.01em]" style={{ color: "#B45309" }}>{t("gym.app.exec.band_rest")}</div>
-                    <div className="text-[12.5px] font-semibold" style={{ color: "#C2742B" }}>{t("gym.app.exec.next_up")}: {aSet + 1}ª {t("gym.app.exec.series_label")} · {isTime ? `${cur.duration}s` : `${cur.reps} ${t("gym.app.common.reps")}`}</div>
-                  </div>
-                </div>
-              )}
-
-              {/* ── Faixa de estado: FAZER AGORA (verde, animada) ── */}
-              {!exDone && !resting && (
-                <div className="relative rounded-[20px] mb-[18px] px-[18px] py-5 overflow-hidden" style={{ background: "linear-gradient(135deg, var(--green) 0%, var(--green-dk) 100%)", animation: "goGlow 1.8s ease-in-out infinite, goPop 0.35s ease" }}>
-                  <span className="absolute rounded-full pointer-events-none" style={{ top: "50%", left: 42, width: 60, height: 60, marginTop: -30, marginLeft: -30, border: "2px solid rgba(255,255,255,0.5)", animation: "goRing 1.8s ease-out infinite" }} />
-                  <span className="absolute rounded-full pointer-events-none" style={{ top: "50%", left: 42, width: 60, height: 60, marginTop: -30, marginLeft: -30, border: "2px solid rgba(255,255,255,0.4)", animation: "goRing 1.8s ease-out infinite 0.9s" }} />
-                  <div className="relative flex items-center gap-4">
-                    <div className="w-[60px] h-[60px] rounded-[18px] shrink-0 flex items-center justify-center" style={{ background: "rgba(255,255,255,0.2)" }}>
-                      <div style={{ animation: "liftBob 1s ease-in-out infinite" }}><Dumbbell size={32} className="text-white" /></div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[23px] font-black text-white leading-none tracking-[-0.02em]" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.18)" }}>{t("gym.app.exec.go_now")}</div>
-                      <div className="text-[14px] font-bold text-white/90 mt-[5px]">{t("gym.app.exec.series_label")} {aSet + 1} {t("gym.app.common.of")} {sets.length} · {isTime ? `${cur.duration}s` : `${cur.reps} ${t("gym.app.common.reps")}`}</div>
-                      {cur.dropStep && (
-                        <div className="inline-flex items-center gap-1 mt-1.5 px-2 py-0.5 rounded-full text-[11px] font-bold" style={{ background: "rgba(255,255,255,0.22)", color: "#fff" }}>
-                          ↓ {t("gym.app.exec.dropset_label") || "Dropset"} · {t("gym.app.exec.step_label") || "passo"} {cur.dropStep}/{cur.dropTotal}
-                        </div>
-                      )}
-                    </div>
+              {/* ── Pontos de série (tocar reabre p/ editar) ── */}
+              {!exDone && (
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[12.5px] font-bold text-t3">{t("gym.app.exec.target_sets")}</span>
+                  <div className="flex gap-1.5">
+                    {sets.map((s, si) => (
+                      <button key={si} onClick={() => reopenSet(si)} title={s.dropStep ? `${t("gym.app.exec.dropset_label") || "Dropset"} · ${t("gym.app.exec.step_label") || "passo"} ${s.dropStep}/${s.dropTotal}` : `${t("gym.app.exec.series_label")} ${si + 1}`}
+                        className="w-8 h-8 rounded-[10px] flex items-center justify-center transition-all relative"
+                        style={{ background: s.done ? "var(--green)" : si === aSet ? "var(--surface)" : "var(--bg)", boxShadow: si === aSet && !s.done ? "inset 0 0 0 2px var(--green)" : s.dropStep ? "inset 0 0 0 1.5px #F9731788" : "none" }}>
+                        {s.done ? <Check size={15} className="text-white" /> : <span className="text-[13.5px] font-extrabold" style={{ color: si === aSet ? "var(--green-dk)" : s.dropStep ? "#C2742B" : "var(--t3)" }}>{si + 1}</span>}
+                        {s.dropStep != null && !s.done && <span className="absolute -top-1 -right-1 text-[9px] font-black" style={{ color: "#F97316" }}>↓</span>}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
 
-              {/* ── Pontos de série (sempre visíveis: tocar reabre p/ editar) ── */}
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-[12.5px] font-bold text-t3">{t("gym.app.exec.target_sets")}</span>
-                <div className="flex gap-1.5">
-                  {sets.map((s, si) => (
-                    <button key={si} onClick={() => reopenSet(si)} title={s.dropStep ? `${t("gym.app.exec.dropset_label") || "Dropset"} · ${t("gym.app.exec.step_label") || "passo"} ${s.dropStep}/${s.dropTotal}` : `${t("gym.app.exec.series_label")} ${si + 1}`}
-                      className="w-8 h-8 rounded-[10px] flex items-center justify-center transition-all relative"
-                      style={{ background: s.done ? "var(--green)" : si === aSet ? "var(--surface)" : "var(--bg)", boxShadow: si === aSet && !s.done ? "inset 0 0 0 2px var(--green)" : s.dropStep ? "inset 0 0 0 1.5px #F9731788" : "none" }}>
-                      {s.done ? <Check size={15} className="text-white" /> : <span className="text-[13.5px] font-extrabold" style={{ color: si === aSet ? "var(--green-dk)" : s.dropStep ? "#C2742B" : "var(--t3)" }}>{si + 1}</span>}
-                      {s.dropStep != null && !s.done && <span className="absolute -top-1 -right-1 text-[9px] font-black" style={{ color: "#F97316" }}>↓</span>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* ── Modo descanso: contagem grande ── */}
-              {!exDone && resting && (
-                <button onClick={() => setResting(false)} title={t("gym.app.exec.rest_skip_hint")}
-                  className="w-full rounded-[18px] pt-[22px] px-[18px] pb-[18px] relative overflow-hidden animate-fadeIn" style={{ background: "#FFF7ED" }}>
-                  <div className="relative flex flex-col items-center gap-1">
-                    <span className="text-[11px] font-extrabold tracking-[0.12em]" style={{ color: "#F97316" }}>{t("gym.app.exec.rest_label")}</span>
-                    <span className="text-[56px] font-black leading-none tnum tracking-[-0.03em]" style={{ color: "#B45309" }}>{restLeft >= 60 ? formatClock(restLeft) : restLeft}</span>
-                    {restLeft < 60 && <span className="text-[13px] font-bold -mt-1" style={{ color: "#C2742B" }}>{t("gym.app.exec.seconds")}</span>}
-                  </div>
-                  <div className="h-1.5 rounded-full overflow-hidden mx-1 mt-4 mb-2.5" style={{ background: "#FCE3C8" }}>
-                    <div className="h-full rounded-full transition-[width] duration-1000 ease-linear" style={{ width: `${restTotal ? (restLeft / restTotal) * 100 : 0}%`, background: "#F97316" }} />
-                  </div>
-                  <span className="text-[12px] font-semibold opacity-80" style={{ color: "#C2742B" }}>{t("gym.app.exec.rest_skip_hint")} →</span>
-                </button>
-              )}
-
-              {/* ── Modo a fazer: steppers + ação ── */}
-              {!exDone && !resting && (
+              {/* ── Steppers (visíveis também durante o descanso) ── */}
+              {!exDone && (
                 <>
-                  {/* Steppers grandes: duração (tempo) OU peso | reps (força) */}
                   <div className="flex items-stretch bg-bg rounded-[18px] overflow-hidden mb-3">
                     {(isTime
                       ? [{ label: t("gym.app.exec.duration_label") || "Duração (s)", field: "duration" as const, step: 5, val: cur.duration }]
@@ -278,19 +292,13 @@ export function WorkoutExec() {
 
                   {/* Referência: valor do último treino para esta série */}
                   {(isTime ? cur.lastDuration != null : cur.lastWeight != null) && (
-                    <div className="text-center text-[12px] text-t3 font-medium mb-3 -mt-1">
+                    <div className="text-center text-[12px] text-t3 font-medium mb-1 -mt-1">
                       {t("gym.app.exec.last_label")}: {isTime ? `${cur.lastDuration}s` : `${cur.lastWeight}kg · ${cur.lastReps} ${t("gym.app.common.reps")}`}
                     </div>
                   )}
 
-                  {/* Ação principal */}
-                  <Button fullWidth size="lg" onClick={completeAndRest} className="text-center leading-[1.15]" style={{ borderRadius: 13, fontSize: 15 }}
-                    icon={willFinishEx && isLastEx ? <Trophy size={18} className="text-white" /> : <Check size={18} className="text-white" />}>
-                    {willFinishEx && isLastEx ? t("gym.app.exec.finish_now") : t("gym.app.exec.complete_set")}
-                  </Button>
-
                   {/* Dar exercício como concluído (salta séries restantes) */}
-                  {sets.length > 1 && (
+                  {!resting && sets.length > 1 && (
                     <button onClick={completeExercise} className="flex items-center justify-center gap-1.5 w-full mt-2.5 py-2.5 rounded-xl text-t2 text-[13px] font-semibold active:bg-bg transition-colors">
                       <Check size={15} className="text-t3" /> {t("gym.app.exec.mark_exercise_done")}
                     </button>
@@ -303,11 +311,8 @@ export function WorkoutExec() {
                   <div className="w-[60px] h-[60px] rounded-full bg-brand-xlt flex items-center justify-center mx-auto mt-1 mb-3.5">
                     <Check size={28} className="text-brand" />
                   </div>
-                  <div className="text-[14px] text-t2 mb-[18px]">{t("gym.app.exec.ex_done_prefix")} {sets.length} {t("gym.app.exec.ex_done_suffix")}</div>
-                  <Button fullWidth size="lg" onClick={goNext} className="rounded-[13px]"
-                    icon={isLastEx ? <Trophy size={18} className="text-white" /> : <ChevronRight size={18} className="text-white" />}>
-                    {isLastEx ? t("gym.app.exec.finish_workout") : t("gym.app.exec.next_exercise")}
-                  </Button>
+                  <div className="text-[16px] font-extrabold text-t1 mb-1">{t("gym.app.exec.exercise_done")}</div>
+                  <div className="text-[14px] text-t2">{t("gym.app.exec.ex_done_prefix")} {sets.length} {t("gym.app.exec.ex_done_suffix")}</div>
                 </div>
               )}
             </div>
@@ -317,6 +322,60 @@ export function WorkoutExec() {
         {/* Acesso secundário: saltar para outro exercício */}
         <div className="mt-3.5 w-full">
           <Button variant="ghost" fullWidth onClick={() => { setPickSel(current); setShowPicker(true); }} icon={<List size={17} className="text-t2" />}>{t("gym.app.exec.choose_other")}</Button>
+        </div>
+      </div>
+
+      {/* ──── BARRA FIXA AO FUNDO — CTA grande, sempre no mesmo lugar ──── */}
+      <div className="fixed bottom-0 left-0 right-0 z-[90] bg-surface/95 backdrop-blur-xl border-t border-line" style={{ padding: "12px 16px calc(14px + env(safe-area-inset-bottom, 0px))" }}>
+        <div className="max-w-[520px] mx-auto w-full">
+          {/* Próximo / Terminar (exercício concluído) */}
+          {exDone && (
+            <Button fullWidth size="lg" onClick={goNext} className="!h-[96px] !rounded-[20px] text-[17px]"
+              icon={isLastEx ? <Trophy size={20} className="text-white" /> : <ChevronRight size={20} className="text-white" />}>
+              {isLastEx ? t("gym.app.exec.finish_workout") : t("gym.app.exec.next_exercise")}
+            </Button>
+          )}
+
+          {/* FAZER AGORA (verde, toca para concluir + descansar) */}
+          {!exDone && !resting && (
+            <button onClick={completeAndRest} className="w-full h-[96px] box-border text-left border-none cursor-pointer relative rounded-[20px] px-[18px] overflow-hidden"
+              style={{ background: "linear-gradient(135deg, var(--green) 0%, var(--green-dk) 100%)", boxShadow: "0 6px 20px rgba(141,198,63,0.32)", animation: "goGlow 1.8s ease-in-out infinite, goPop 0.35s ease" }}>
+              <span className="absolute rounded-full pointer-events-none" style={{ top: "50%", left: 38, width: 54, height: 54, marginTop: -27, marginLeft: -27, border: "2px solid rgba(255,255,255,0.45)", animation: "goRing 1.8s ease-out infinite" }} />
+              <span className="absolute rounded-full pointer-events-none" style={{ top: "50%", left: 38, width: 54, height: 54, marginTop: -27, marginLeft: -27, border: "2px solid rgba(255,255,255,0.35)", animation: "goRing 1.8s ease-out infinite 0.9s" }} />
+              <div className="relative h-full flex items-center gap-3.5">
+                <div className="w-[58px] h-[58px] rounded-[17px] shrink-0 flex items-center justify-center" style={{ background: "rgba(255,255,255,0.2)" }}>
+                  <div style={{ animation: "liftBob 1s ease-in-out infinite" }}><Dumbbell size={30} className="text-white" /></div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[23px] font-black text-white leading-none tracking-[-0.02em]" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.18)" }}>{t("gym.app.exec.go_now")}</div>
+                  <div className="text-[13.5px] font-bold text-white/90 mt-[5px] truncate">{ctaSub}</div>
+                </div>
+                {isDropStep
+                  ? <div className="shrink-0 text-white text-[10px] font-black tracking-[0.05em] px-2 py-1 rounded-lg" style={{ background: "rgba(255,255,255,0.22)" }}>{t("gym.app.exec.drop_short") || "DROP"} {cur.dropStep}/{dropTotal}</div>
+                  : <ChevronRight size={22} className="text-white" />}
+              </div>
+            </button>
+          )}
+
+          {/* DESCANSO (laranja, toca para saltar) */}
+          {!exDone && resting && (
+            <button onClick={resolveRest} title={t("gym.app.exec.rest_skip_hint")} className="w-full h-[96px] box-border border-none cursor-pointer rounded-[20px] px-[18px] relative overflow-hidden animate-fadeIn"
+              style={{ background: "#FFF7ED", boxShadow: "inset 0 0 0 1.5px #F9731833" }}>
+              <div className="relative h-full flex items-center gap-3.5">
+                <div className="w-[58px] h-[58px] rounded-[17px] shrink-0 flex items-center justify-center" style={{ background: "#F97316", animation: "breathe 1.6s ease-in-out infinite" }}>
+                  {restKind === "drop" ? <ArrowDown size={28} className="text-white" /> : <Timer size={28} className="text-white" />}
+                </div>
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="text-[12px] font-extrabold tracking-[0.1em]" style={{ color: "#F97316" }}>{restKind === "drop" ? (t("gym.app.exec.rest_drop_label") || "BAIXA O PESO") : t("gym.app.exec.rest_label")}</div>
+                  <div className="text-[13px] font-bold mt-[3px] truncate" style={{ color: "#C2742B" }}>{restMsg || t("gym.app.exec.rest_label")} · {t("gym.app.exec.rest_skip_hint")}</div>
+                </div>
+                <span className="text-[40px] font-black leading-none tnum tracking-[-0.02em] shrink-0" style={{ color: "#B45309" }}>{restLeft >= 60 ? formatClock(restLeft) : restLeft}</span>
+              </div>
+              <div className="absolute left-0 right-0 bottom-0 h-1.5" style={{ background: "#FCE3C8" }}>
+                <div className="h-full transition-[width] duration-1000 ease-linear" style={{ width: `${restTotal ? (restLeft / restTotal) * 100 : 0}%`, background: "#F97316" }} />
+              </div>
+            </button>
+          )}
         </div>
       </div>
 
