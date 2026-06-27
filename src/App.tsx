@@ -6,6 +6,7 @@ import { fetchProfile } from "./api/session";
 import { Layout } from "./components/Layout";
 import { Toaster } from "./components/Toaster";
 import { InstallPrompt } from "./components/InstallPrompt";
+import { CookieConsent } from "./components/CookieConsent";
 import { Spinner } from "./components/ui";
 import { Login } from "./screens/Login";
 import { Register } from "./screens/Register";
@@ -56,6 +57,7 @@ export default function App() {
       <>
         <Toaster />
         <InstallPrompt />
+        <CookieConsent />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/registo" element={<Register />} />
@@ -71,6 +73,7 @@ export default function App() {
     <>
       <Toaster />
       <InstallPrompt />
+      <CookieConsent />
       <Routes>
       {/* Execução em ecrã cheio (sem layout/nav) */}
       <Route path="/treino/:id/executar" element={<WorkoutExec />} />
