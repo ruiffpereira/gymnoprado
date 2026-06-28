@@ -1,16 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bell, BellOff, Check } from "lucide-react";
 import { Button, Badge } from "./ui";
 import { useCms } from "../context/CmsContext";
 import { toast } from "../lib/toast";
+import { subscribeToPush } from "../lib/push";
 
 /**
- * Linha de notificações no Perfil — opção para o cliente ativar as notificações
- * do browser. Reflete o estado da permissão (Ativar / Ativadas / Bloqueadas).
- *
- * Nota: a ENTREGA de web-push a clientes ainda precisa de suporte no backend
- * (o módulo /api/push é por utilizador do backoffice). Aqui trata-se só da
- * permissão do dispositivo.
+ * Linha de notificações no Perfil — o cliente ativa as notificações do browser
+ * e o dispositivo fica subscrito a Web Push no backend
+ * (/websites/notifications/push/subscribe). Reflete o estado da permissão
+ * (Ativar / Ativadas / Bloqueadas).
  */
 export function NotificationsRow() {
   const { t } = useCms();
@@ -19,14 +18,27 @@ export function NotificationsRow() {
     supported ? Notification.permission : "default",
   );
 
+  // Se a permissão já está concedida, garante que o dispositivo está subscrito
+  // no backend (best-effort — ex.: novo login, ou subscrição perdida).
+  useEffect(() => {
+    if (supported && perm === "granted") {
+      subscribeToPush().catch(() => undefined);
+    }
+  }, [supported, perm]);
+
   if (!supported) return null;
 
   const enable = async () => {
     try {
       const res = await Notification.requestPermission();
       setPerm(res);
-      if (res === "granted") toast.success(t("gym.app.profile.notif_on"));
-      else if (res === "denied") toast.error(t("gym.app.profile.notif_blocked"));
+      if (res === "granted") {
+        // Subscreve o dispositivo a Web Push no backend.
+        await subscribeToPush().catch(() => undefined);
+        toast.success(t("gym.app.profile.notif_on"));
+      } else if (res === "denied") {
+        toast.error(t("gym.app.profile.notif_blocked"));
+      }
     } catch {
       toast.error(t("gym.app.common.error"));
     }

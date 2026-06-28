@@ -31,6 +31,9 @@ export default defineConfig({
       },
       workbox: {
         navigateFallbackDenylist: [/^\/api/],
+        // Importa os handlers de Web Push (push + notificationclick) para dentro
+        // do SW gerado. O ficheiro vive em public/push-sw.js.
+        importScripts: ["push-sw.js"],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.pathname.startsWith("/api/websites/gym"),
