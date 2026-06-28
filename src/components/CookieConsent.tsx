@@ -1,6 +1,15 @@
 import { useEffect, useState } from "react";
+import { useCms } from "../context/CmsContext";
 
 const KEY = "cookie-consent";
+
+/** Textos PT hardcoded — fallback se o CMS não tiver as chaves cookies.*. */
+const PT = {
+  title: "Cookies",
+  text: "Usamos cookies essenciais para a app funcionar e, com o teu consentimento, cookies para melhorar a experiência. Escolhe para continuar.",
+  accept: "Aceitar",
+  reject: "Rejeitar",
+};
 
 /**
  * Consentimento de cookies (RGPD) — overlay BLOQUEANTE: aparece por cima de tudo
@@ -10,6 +19,13 @@ const KEY = "cookie-consent";
  */
 export function CookieConsent() {
   const [show, setShow] = useState(false);
+  const { t } = useCms();
+
+  // CMS (língua atual) com fallback PT — nunca quebra se faltar a chave.
+  const title = t("cookies.title") || PT.title;
+  const text = t("cookies.text") || PT.text;
+  const accept = t("cookies.accept") || PT.accept;
+  const reject = t("cookies.reject") || PT.reject;
 
   useEffect(() => {
     try {
@@ -48,24 +64,25 @@ export function CookieConsent() {
       aria-label="Consentimento de cookies"
     >
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 p-5 text-white shadow-2xl sm:p-6">
-        <h2 className="text-lg font-semibold">Cookies</h2>
+        <h2 className="text-lg font-semibold">{title}</h2>
         <p className="mt-2 text-sm text-zinc-300">
-          Usamos cookies essenciais para a app funcionar e, com o teu consentimento, cookies para
-          melhorar a experiência. Escolhe para continuar.{" "}
-          <a href="/privacidade" className="underline underline-offset-2">Política de privacidade</a>.
+          {text}{" "}
+          <a href="/privacidade" className="underline underline-offset-2">
+            {t("cookies.privacy") || "Política de privacidade"}
+          </a>.
         </p>
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button
             onClick={() => choose("rejected")}
             className="rounded-lg border border-white/20 px-4 py-2.5 text-sm font-medium transition hover:bg-white/10"
           >
-            Rejeitar
+            {reject}
           </button>
           <button
             onClick={() => choose("accepted")}
             className="rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-zinc-900 transition hover:bg-zinc-200"
           >
-            Aceitar
+            {accept}
           </button>
         </div>
       </div>

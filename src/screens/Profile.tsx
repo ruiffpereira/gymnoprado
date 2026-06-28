@@ -93,6 +93,16 @@ export function Profile() {
 
       {/* Settings list */}
       <Card className="p-2 mb-5">
+        <button
+          onClick={() => navigate("/calendario")}
+          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-bg transition-colors"
+        >
+          <CalendarDays size={18} className="text-t2" />
+          <span className="flex-1 text-left text-sm font-medium text-t1">
+            {t("gym.app.calendar.title") || "Treinos no calendário"}
+          </span>
+          <ChevronRight size={16} className="text-t3" />
+        </button>
         <InstallRow />
         <NotificationsRow />
         {SETTINGS.map((s) => (

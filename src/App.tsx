@@ -20,6 +20,7 @@ import { WorkoutEditor } from "./screens/WorkoutEditor";
 import { History } from "./screens/History";
 import { Progress } from "./screens/Progress";
 import { Profile } from "./screens/Profile";
+import { CalendarSync } from "./screens/CalendarSync";
 
 /** Tenta restaurar a sessão a partir do token guardado. */
 function useRestoreSession() {
@@ -91,6 +92,7 @@ export default function App() {
               <Route path="/historico" element={<History />} />
               <Route path="/progresso" element={<Progress />} />
               <Route path="/perfil" element={<Profile />} />
+              <Route path="/calendario" element={<CalendarSync />} />
               <Route path="/login" element={<Navigate to="/" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
