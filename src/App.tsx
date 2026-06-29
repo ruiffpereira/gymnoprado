@@ -21,6 +21,7 @@ import { History } from "./screens/History";
 import { Progress } from "./screens/Progress";
 import { Profile } from "./screens/Profile";
 import { CalendarSync } from "./screens/CalendarSync";
+import { Privacy } from "./screens/Privacy";
 
 /** Tenta restaurar a sessão a partir do token guardado. */
 function useRestoreSession() {
@@ -64,6 +65,7 @@ export default function App() {
           <Route path="/registo" element={<Register />} />
           <Route path="/recuperar" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/privacidade" element={<Privacy />} />
           <Route path="*" element={<Navigate to="/login" replace state={{ from: location }} />} />
         </Routes>
       </>
@@ -93,6 +95,7 @@ export default function App() {
               <Route path="/progresso" element={<Progress />} />
               <Route path="/perfil" element={<Profile />} />
               <Route path="/calendario" element={<CalendarSync />} />
+              <Route path="/privacidade" element={<Privacy />} />
               <Route path="/login" element={<Navigate to="/" replace />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

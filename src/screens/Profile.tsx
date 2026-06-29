@@ -25,8 +25,8 @@ function Stat({ icon, value, label }: { icon: React.ReactNode; value: string | n
   );
 }
 
-const SETTINGS = [
-  { icon: Shield, label: "Privacidade", cmsKey: "gym.app.profile.privacy" },
+const SETTINGS: { icon: typeof Shield; label: string; cmsKey: string; to?: string }[] = [
+  { icon: Shield, label: "Privacidade", cmsKey: "gym.app.profile.privacy", to: "/privacidade" },
   { icon: LifeBuoy, label: "Suporte", cmsKey: "gym.app.profile.support" },
 ];
 
@@ -106,7 +106,11 @@ export function Profile() {
         <InstallRow />
         <NotificationsRow />
         {SETTINGS.map((s) => (
-          <button key={s.label} className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-bg transition-colors">
+          <button
+            key={s.label}
+            onClick={() => s.to && navigate(s.to)}
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-bg transition-colors"
+          >
             <s.icon size={18} className="text-t2" />
             <span className="flex-1 text-left text-sm font-medium text-t1">{t(s.cmsKey)}</span>
             <ChevronRight size={16} className="text-t3" />
