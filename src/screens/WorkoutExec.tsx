@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, ChevronRight, ChevronDown, Trophy, Pause, Play, Timer, List, Minus, Plus, Dumbbell, ArrowDown } from "lucide-react";
 import { useActiveWorkout } from "../store/useActiveWorkout";
@@ -27,27 +27,21 @@ export function WorkoutExec() {
   const wk = useActiveWorkout();
   const elapsed = useElapsed(wk.startedAt);
 
-  // Descanso inline (na barra fixa ao fundo)
-  const [resting, setResting] = useState(false);
-  const [restLeft, setRestLeft] = useState(0);
-  const [restTotal, setRestTotal] = useState(60);
-  const [restKind, setRestKind] = useState<"normal" | "drop">("normal");
-  const [restMsg, setRestMsg] = useState("");
+  // Descanso/pausa: vive no store persistido (sobrevive a fechar/reabrir a app).
+  const rest = wk.rest;
+  const resting = !!rest;
+  const restLeft = rest?.remaining ?? 0;
+  const restTotal = rest?.total ?? 60;
+  const restKind = rest?.kind ?? "normal";
+  const restMsg = rest?.msg ?? "";
 
   const [showFinish, setShowFinish] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [pickSel, setPickSel] = useState(0);
   const createLog = useCreateLog();
 
-  // O que fazer quando o descanso terminar: avança série/exercício só no fim do
-  // tempo (ou ao tocar para saltar), mantendo o card igual durante o descanso.
-  const pendingNextRef = useRef<(() => void) | null>(null);
-  const resolveRest = () => {
-    setResting(false);
-    const fn = pendingNextRef.current;
-    pendingNextRef.current = null;
-    if (fn) fn();
-  };
+  // Fim do descanso → conclui a série guardada e avança (no store).
+  const resolveRest = () => wk.finishRest();
 
   useEffect(() => {
     if (!wk.workoutId) navigate("/treinos", { replace: true });
@@ -57,7 +51,7 @@ export function WorkoutExec() {
   useEffect(() => {
     if (!resting) return;
     if (restLeft <= 0) { resolveRest(); return; }
-    const id = setTimeout(() => setRestLeft((s) => s - 1), 1000);
+    const id = setTimeout(() => wk.tickRest(), 1000);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resting, restLeft]);
@@ -105,17 +99,6 @@ export function WorkoutExec() {
       return;
     }
 
-    // Guarda o avanço para quando o descanso terminar.
-    pendingNextRef.current = () => {
-      wk.setDone(exIdx, sIdx, true);
-      if (willFinishEx) {
-        wk.setIndex(Math.min(exIdx + 1, totalEx - 1));
-      } else {
-        const np = sets.findIndex((s, i) => i !== sIdx && !s.done);
-        if (np !== -1) wk.setActiveSet(exIdx, np);
-      }
-    };
-
     // Texto "A seguir: …" e tipo de descanso (drop = mini-descanso).
     let kind: "normal" | "drop" = "normal";
     let msg: string;
@@ -132,27 +115,23 @@ export function WorkoutExec() {
 
     const restDur = cur.rest ?? ex.rest;
     if (restDur > 0) {
-      setRestKind(kind);
-      setRestMsg(msg);
-      setRestTotal(restDur);
-      setRestLeft(restDur);
-      setResting(true);
+      // Guarda o descanso no store (a série a concluir/avançar fica em exIdx/setIdx);
+      // o avanço acontece quando o descanso termina (finishRest).
+      wk.startRest({ remaining: restDur, total: restDur, kind, msg, exIdx, setIdx: sIdx });
     } else {
-      resolveRest(); // sem descanso → avança já
+      wk.advanceAfterSet(exIdx, sIdx); // sem descanso → avança já
     }
   };
 
   // Marca todas as séries do exercício como concluídas (salta as restantes).
   const completeExercise = () => {
-    pendingNextRef.current = null;
-    setResting(false);
+    wk.cancelRest();
     sets.forEach((_, si) => wk.setDone(current, si, true));
   };
 
   // Reabrir uma série (mesmo já concluída) para a editar durante o treino.
   const reopenSet = (si: number) => {
-    pendingNextRef.current = null;
-    setResting(false);
+    wk.cancelRest();
     if (sets[si].done) wk.setDone(current, si, false);
     wk.setActiveSet(current, si);
   };
@@ -163,8 +142,7 @@ export function WorkoutExec() {
   };
 
   const jumpTo = (i: number) => {
-    pendingNextRef.current = null;
-    setResting(false);
+    wk.cancelRest();
     wk.setIndex(i);
     const fp = wk.exercises[i].sets.findIndex((s) => !s.done);
     wk.setActiveSet(i, fp === -1 ? 0 : fp);

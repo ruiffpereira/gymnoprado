@@ -34,6 +34,22 @@ export interface ActiveExercise {
   sets: SetEntry[];
 }
 
+/**
+ * Estado de descanso/pausa entre séries. Vive no store persistido (e não em
+ * estado local do ecrã) para **sobreviver a fechar/reabrir a app**: ao voltar,
+ * o treino continua em descanso em vez de saltar para o "FAZER AGORA".
+ */
+export interface RestState {
+  /** Segundos restantes. Decrementa a cada tick e **congela** com a app fechada. */
+  remaining: number;
+  total: number;
+  kind: "normal" | "drop";
+  msg: string;
+  /** Série a concluir + a partir da qual avançar quando o descanso terminar. */
+  exIdx: number;
+  setIdx: number;
+}
+
 interface ActiveWorkoutState {
   workoutId: string | null;
   name: string;
@@ -42,12 +58,22 @@ interface ActiveWorkoutState {
   /** Série ativa por exercício (índice). */
   activeSet: number[];
   exercises: ActiveExercise[];
+  /** Descanso/pausa em curso (null = a treinar). Persistido. */
+  rest: RestState | null;
   start: (w: Workout, last?: LastPerformance | null) => void;
   setIndex: (i: number) => void;
   setActiveSet: (exIdx: number, setIdx: number) => void;
   updateSet: (exIdx: number, setIdx: number, patch: Partial<SetEntry>) => void;
   toggleDone: (exIdx: number, setIdx: number) => void;
   setDone: (exIdx: number, setIdx: number, done: boolean) => void;
+  /** Conclui a série e avança para a próxima série/exercício. */
+  advanceAfterSet: (exIdx: number, setIdx: number) => void;
+  startRest: (r: RestState) => void;
+  tickRest: () => void;
+  /** Fim do descanso → conclui a série guardada e avança. */
+  finishRest: () => void;
+  /** Cancela o descanso sem avançar (saltar/reabrir série, etc.). */
+  cancelRest: () => void;
   totalSets: () => number;
   doneSets: () => number;
   buildLog: () => LogInput;
@@ -147,6 +173,7 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
       currentIndex: 0,
       activeSet: [],
       exercises: [],
+      rest: null,
 
       start: (w, last) =>
         set({
@@ -155,6 +182,7 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
           startedAt: Date.now(),
           currentIndex: 0,
           activeSet: w.exercises.map(() => 0),
+          rest: null,
           exercises: w.exercises.map((e) => ({
             exerciseId: e.exerciseId ?? null,
             name: e.name,
@@ -208,6 +236,40 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
           return { exercises };
         }),
 
+      advanceAfterSet: (exIdx, setIdx) =>
+        set((s) => {
+          const exercises = s.exercises.map((ex, i) =>
+            i !== exIdx
+              ? ex
+              : { ...ex, sets: ex.sets.map((st, j) => (j === setIdx ? { ...st, done: true } : st)) },
+          );
+          const exer = exercises[exIdx];
+          const patch: Partial<ActiveWorkoutState> = { exercises, rest: null };
+          if (exer.sets.every((st) => st.done)) {
+            // Exercício concluído → próximo exercício.
+            patch.currentIndex = Math.min(exIdx + 1, exercises.length - 1);
+          } else {
+            // Próxima série por fazer dentro do mesmo exercício.
+            const np = exer.sets.findIndex((st, i) => i !== setIdx && !st.done);
+            if (np !== -1) {
+              const activeSet = [...s.activeSet];
+              activeSet[exIdx] = np;
+              patch.activeSet = activeSet;
+            }
+          }
+          return patch;
+        }),
+
+      startRest: (r) => set({ rest: r }),
+      tickRest: () =>
+        set((s) => (s.rest ? { rest: { ...s.rest, remaining: s.rest.remaining - 1 } } : {})),
+      finishRest: () => {
+        const r = get().rest;
+        if (r) get().advanceAfterSet(r.exIdx, r.setIdx);
+        else set({ rest: null });
+      },
+      cancelRest: () => set({ rest: null }),
+
       totalSets: () => get().exercises.reduce((acc, e) => acc + e.sets.length, 0),
       doneSets: () =>
         get().exercises.reduce((acc, e) => acc + e.sets.filter((s) => s.done).length, 0),
@@ -238,6 +300,7 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
           currentIndex: 0,
           activeSet: [],
           exercises: [],
+          rest: null,
         }),
     }),
     { name: "gymnoprado_active_workout" },

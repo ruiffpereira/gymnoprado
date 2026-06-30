@@ -96,6 +96,8 @@ Upload via o módulo `uploads/` da API (`POST /api/uploads`, autenticado). Guard
 
 Estrutura: `src/gen/` (gerado) · `src/api/` (cliente + facade + sessão) · `src/store/` (Zustand: tema, sessão, treino activo) · `src/components/` (UI Tailwind + nav) · `src/screens/` (9 ecrãs) · `src/hooks/` (invalidação + helpers) · `src/lib/` (tema, formatação, toast, exercícios).
 
+> **Treino activo** ([src/store/useActiveWorkout.ts](src/store/useActiveWorkout.ts), Zustand + `persist` → localStorage `gymnoprado_active_workout`): guarda o treino a decorrer **incluindo o estado de descanso/pausa** (`rest: { remaining, total, kind, msg, exIdx, setIdx } | null`). O descanso vive no store (não em estado local do `WorkoutExec`) para **sobreviver a fechar/reabrir a PWA** — ao voltar, o treino continua em descanso em vez de saltar para o "FAZER AGORA". O contador (`remaining`) decrementa via `tickRest()` e **congela** com a app fechada; `finishRest()` (fim do descanso) conclui a série guardada em `exIdx/setIdx` e avança via `advanceAfterSet()`; `cancelRest()` sai do descanso sem avançar (saltar/reabrir série).
+
 ## Conteúdo / Traduções (CMS)
 
 **Todo o texto da app vem do CMS** (multi-língua), à semelhança dos sites públicos (ex.: tifas-barber). Padrão:
