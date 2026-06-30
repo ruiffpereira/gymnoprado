@@ -98,6 +98,8 @@ Estrutura: `src/gen/` (gerado) · `src/api/` (cliente + facade + sessão) · `sr
 
 > **Treino activo** ([src/store/useActiveWorkout.ts](src/store/useActiveWorkout.ts), Zustand + `persist` → localStorage `gymnoprado_active_workout`): guarda o treino a decorrer **incluindo o estado de descanso/pausa** (`rest: { remaining, total, kind, msg, exIdx, setIdx } | null`). O descanso vive no store (não em estado local do `WorkoutExec`) para **sobreviver a fechar/reabrir a PWA** — ao voltar, o treino continua em descanso em vez de saltar para o "FAZER AGORA". O contador (`remaining`) decrementa via `tickRest()` e **congela** com a app fechada; `finishRest()` (fim do descanso) conclui a série guardada em `exIdx/setIdx` e avança via `advanceAfterSet()`; `cancelRest()` sai do descanso sem avançar (saltar/reabrir série).
 
+> **Mensalidade do membro (só-leitura)** — secção no **Perfil** (`MensalidadeCard`) + **banner no Dashboard** (`MensalidadeBanner`, só quando há mês por pagar/em atraso). Hook manual [src/hooks/useMensalidade.ts](src/hooks/useMensalidade.ts) → `GET /websites/gym/mensalidade` (subscrição + mês corrente **derivado** + histórico). Estado visível: **paga** (verde) · **por pagar** desde o dia 1 (laranja) · **em atraso** após o `dueDay` da subscrição (vermelho). Pagamento é em **dinheiro ao balcão** — a app nunca regista pagamentos (quem marca é o coach no Backoffice). A derivação de estado é a **mesma fonte de verdade** do backoffice (`API-FullStack/src/utils/mensalidade.ts`). Strings em `gym.app.mensalidade.*` (CMS).
+
 ## Conteúdo / Traduções (CMS)
 
 **Todo o texto da app vem do CMS** (multi-língua), à semelhança dos sites públicos (ex.: tifas-barber). Padrão:

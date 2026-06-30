@@ -12,6 +12,7 @@ import { NotificationsRow } from "../components/NotificationsRow";
 import { InstallRow } from "../components/InstallPrompt";
 import { useCms } from "../context/CmsContext";
 import { useLanguage } from "../context/LanguageContext";
+import { MensalidadeCard } from "../components/MensalidadeCard";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 
@@ -77,6 +78,9 @@ export function Profile() {
         <Stat icon={<Folder size={18} />} value={programs.length} label={t("gym.app.profile.stat_plans")} />
         <Stat icon={<CalendarDays size={18} />} value={memberMonths} label={t("gym.app.profile.stat_months")} />
       </div>
+
+      {/* Mensalidade (subscrição + mês corrente + histórico) */}
+      <MensalidadeCard />
 
       {/* Língua — só quando há mais do que uma língua ativa */}
       {languages.length > 1 && (

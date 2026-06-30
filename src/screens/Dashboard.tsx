@@ -9,6 +9,7 @@ import { useScreenHeader } from "../store/useHeader";
 import { greeting, relativeDays } from "../lib/format";
 import { WEEKDAYS_SHORT } from "../lib/exercises";
 import { useCms } from "../context/CmsContext";
+import { MensalidadeBanner } from "../components/MensalidadeBanner";
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -57,6 +58,8 @@ export function Dashboard() {
   return (
     <div className="animate-fadeIn">
       <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto">
+      {/* Aviso de mensalidade por pagar / em atraso (some quando paga) */}
+      <MensalidadeBanner />
       {/* Hero — treino de hoje */}
       <div className="relative rounded-card overflow-hidden mb-5 p-6 text-white bg-ink dark:bg-gradient-to-br dark:from-[#26391c] dark:via-[#13200d] dark:to-[#0b1207] shadow-lg">
         <div className="absolute -top-10 -right-6 w-40 h-40 rounded-full bg-brand/30 dark:bg-brand/45 blur-3xl" />
