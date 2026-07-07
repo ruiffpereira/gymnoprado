@@ -237,7 +237,7 @@ export function WorkoutExec() {
       : (t("gym.app.exec.cta_sub_rest") || "Terminei a série · descansar");
 
   return (
-    <div className="min-h-[100dvh] bg-bg flex flex-col">
+    <div className="min-h-[100dvh] bg-bg flex flex-col overflow-x-hidden">
       {/* ── Header escuro com cronómetro grande ── */}
       <div className="bg-ink px-[18px] pb-[18px] sticky top-0 z-50" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)" }}>
         <div className="flex items-center justify-between mb-1.5">
@@ -262,7 +262,7 @@ export function WorkoutExec() {
       </div>
 
       {/* Main (paddingBottom dá espaço à barra fixa do CTA) */}
-      <div className="flex-1 flex flex-col items-center px-4 py-[18px] lg:px-6 lg:py-6 w-full max-w-[520px] mx-auto" style={{ paddingBottom: 150 }}>
+      <div className="flex-1 flex flex-col items-center px-4 py-[18px] lg:px-6 lg:py-6 w-full max-w-[520px] mx-auto" style={{ paddingBottom: "calc(160px + env(safe-area-inset-bottom, 0px))" }}>
         {/* Posição do exercício */}
         <div className="flex items-center justify-between w-full mb-3">
           <span className="text-[13px] font-bold text-t2">{t("gym.app.exec.exercise_label")} {current + 1} {t("gym.app.common.of")} {totalEx}</span>
@@ -286,9 +286,9 @@ export function WorkoutExec() {
 
               {/* ── Pontos de série (tocar reabre p/ editar) ── */}
               {!exDone && (
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-[12.5px] font-bold text-t3">{t("gym.app.exec.target_sets")}</span>
-                  <div className="flex gap-1.5">
+                <div className="mb-4">
+                  <span className="block text-[12.5px] font-bold text-t3 mb-2">{t("gym.app.exec.target_sets")}</span>
+                  <div className="flex flex-wrap gap-1.5">
                     {sets.map((s, si) => (
                       <button key={si} onClick={() => reopenSet(si)} title={s.dropStep ? `${t("gym.app.exec.dropset_label") || "Dropset"} · ${t("gym.app.exec.step_label") || "passo"} ${s.dropStep}/${s.dropTotal}` : `${t("gym.app.exec.series_label")} ${si + 1}`}
                         className="w-8 h-8 rounded-[10px] flex items-center justify-center transition-all relative"
@@ -316,10 +316,10 @@ export function WorkoutExec() {
                         {fi === 1 && <div className="w-px bg-line my-3.5" />}
                         <div className="flex-1 flex flex-col items-center gap-[11px] pt-4 pb-[18px] px-1.5">
                           <span className="text-[11px] font-extrabold text-t3 tracking-[0.07em]">{f.label}</span>
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => updateField(f.field, -f.step)} className="w-[34px] h-[34px] rounded-full bg-surface shadow-card flex items-center justify-center active:scale-95 transition"><Minus size={15} className="text-t2" /></button>
-                            <span className="text-[32px] font-black text-t1 min-w-[50px] text-center tnum tracking-[-0.02em]">{f.val}</span>
-                            <button onClick={() => updateField(f.field, f.step)} className="w-[34px] h-[34px] rounded-full bg-brand flex items-center justify-center active:scale-95 transition"><Plus size={15} className="text-white" /></button>
+                          <div className="flex items-center gap-2 w-full">
+                            <button onClick={() => updateField(f.field, -f.step)} className="w-[34px] h-[34px] rounded-full bg-surface shadow-card flex items-center justify-center active:scale-95 transition shrink-0"><Minus size={15} className="text-t2" /></button>
+                            <span className="flex-1 min-w-0 text-[clamp(20px,6vw,30px)] font-black text-t1 text-center tnum tracking-[-0.02em]">{f.val}</span>
+                            <button onClick={() => updateField(f.field, f.step)} className="w-[34px] h-[34px] rounded-full bg-brand flex items-center justify-center active:scale-95 transition shrink-0"><Plus size={15} className="text-white" /></button>
                           </div>
                         </div>
                       </div>
@@ -362,7 +362,7 @@ export function WorkoutExec() {
       </div>
 
       {/* ──── BARRA FIXA AO FUNDO — CTA grande, sempre no mesmo lugar ──── */}
-      <div className="fixed bottom-0 left-0 right-0 z-[90] bg-surface/95 backdrop-blur-xl border-t border-line" style={{ padding: "12px 16px calc(14px + env(safe-area-inset-bottom, 0px))" }}>
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-t border-line" style={{ padding: "12px 16px calc(14px + env(safe-area-inset-bottom, 0px))" }}>
         <div className="max-w-[520px] mx-auto w-full">
           {/* Próximo / Terminar (exercício concluído) */}
           {exDone && (
