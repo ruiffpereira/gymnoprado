@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, ChevronRight, ChevronDown, Trophy, Pause, Play, Timer, List, Minus, Plus, Dumbbell, ArrowDown } from "lucide-react";
+import { Check, ChevronRight, ChevronDown, Trophy, Timer, Minus, Plus, Dumbbell, ArrowDown, Flag } from "lucide-react";
 import { useActiveWorkout } from "../store/useActiveWorkout";
 import { useCreateLog } from "../hooks/useGym";
-import { Button, Modal, Badge } from "../components/ui";
+import { Button, Modal } from "../components/ui";
 import { formatClock } from "../lib/format";
 import { groupColor } from "../lib/exercises";
 import { apiErrorMessage } from "../api/client";
 import { toast } from "../lib/toast";
 import { useCms } from "../context/CmsContext";
+import { useStatusBarColor } from "../hooks/useStatusBarColor";
 
 function useElapsed(startedAt: number | null) {
   const [now, setNow] = useState(Date.now());
@@ -36,11 +37,22 @@ async function requestWakeLock(): Promise<WakeLockSentinel | null> {
 
 const round2 = (v: number) => Math.round(v * 100) / 100;
 
+// Hex reais do token `--dark` (index.css) por tema — o header (`bg-ink`) já é
+// sempre escuro nos dois temas da app, mas com um hex ligeiramente diferente
+// por tema (light: #15171b · dark: #070809). Passar o par exato (em vez de um
+// valor único) dá um encaixe perfeito com a status bar em AMBOS os temas —
+// zero "costura" no topo do ecrã de treino.
+const HEADER_INK_LIGHT = "#15171b";
+const HEADER_INK_DARK = "#070809";
+
 export function WorkoutExec() {
   const navigate = useNavigate();
   const { t } = useCms();
   const wk = useActiveWorkout();
   const elapsed = useElapsed(wk.startedAt);
+
+  // Status bar do dispositivo acompanha o header sempre-escuro (sem "costura").
+  useStatusBarColor(HEADER_INK_LIGHT, HEADER_INK_DARK);
 
   // Descanso/pausa: vive no store persistido (sobrevive a fechar/reabrir a app).
   // `endsAt` é wall-clock (epoch ms) — os segundos restantes derivam-se sempre
@@ -55,8 +67,6 @@ export function WorkoutExec() {
   const restMsg = rest?.msg ?? "";
 
   const [showFinish, setShowFinish] = useState(false);
-  const [showPicker, setShowPicker] = useState(false);
-  const [pickSel, setPickSel] = useState(0);
   const createLog = useCreateLog();
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
@@ -118,36 +128,63 @@ export function WorkoutExec() {
   const current = wk.currentIndex;
   const totalEx = wk.exercises.length;
   const ex = wk.exercises[current];
-  const aSet = wk.activeSet[current] ?? 0;
   const sets = ex.sets;
-  const cur = sets[aSet];
+
+  // ── Duas posições (brief §3): ATUAL (sequência) vs SELECIONADA (vista) ──
+  // currentSetIdx = 1.ª série `!done && !skipped` — a que o CTA conclui e
+  // sobre a qual corre o descanso. -1 quando não há nenhuma pendente (só
+  // possível aqui via "Dar exercício como concluído", que marca tudo `done`
+  // sem avançar `currentIndex`).
+  const currentSetIdx = sets.findIndex((s) => !s.done && !s.skipped);
+  const hasPending = currentSetIdx !== -1;
+
+  // selectedSetIdx = índice de VISTA — por omissão acompanha o atual; só muda
+  // ao clicar num botão de série (nunca avança a sequência).
+  const selRaw = wk.selectedSet[current];
+  const selectedSetIdx = Math.min(Math.max(selRaw ?? (hasPending ? currentSetIdx : 0), 0), sets.length - 1);
+  const selected = sets[selectedSetIdx];
+  const curSet = hasPending ? sets[currentSetIdx] : null;
+
   const completedSets = wk.doneSets();
   const totalSets = wk.totalSets();
-  const exDone = sets.every((s) => s.done);
   const isLastEx = current === totalEx - 1;
   const isTime = ex.type === "time";
 
   const color = groupColor(ex.group);
 
-  // doneAfter = quantas séries ficam feitas ao concluir a série atual
-  const doneAfter = sets.filter((s) => s.done).length + (cur.done ? 0 : 1);
-  const willFinishEx = doneAfter >= sets.length;
+  // willFinishEx = concluir a série ATUAL esgota as pendentes do exercício
+  // (contando as já saltadas, que também "saem da sequência").
+  const doneOrSkipped = sets.filter((s) => s.done || s.skipped).length;
+  const willFinishEx = hasPending && doneOrSkipped + 1 >= sets.length;
 
-  // ── Drop set (modelo achatado): a série atual é um "passo" de um dropset. ──
-  // Agrupamos os passos consecutivos (dropStep 1..dropTotal) para mostrar a
-  // cascata de drops, sem mudar o modelo de dados (apenas visual).
-  const isDropStep = cur.dropStep != null;
-  const dropTotal = cur.dropTotal ?? 0;
-  const isLastDropStep = !isDropStep || (cur.dropStep ?? 1) >= dropTotal;
+  // Card de fim de exercício (FIX 2, review overhaul): distingue "concluído de
+  // facto" (todas `done`) de "terminado com saltos" (há ≥1 `skipped`) — skip≠done,
+  // o texto/visual triunfante não pode aparecer quando na verdade faltou fazer
+  // alguma série. Mesmo critério dos dots de progresso por exercício (abaixo).
+  const exDoneCount = sets.filter((s) => s.done).length;
+  const exSkippedCount = sets.filter((s) => s.skipped).length;
+  const exFullyDone = exDoneCount === sets.length;
 
+  // ── Drop set (modelo achatado): a série ATUAL é um "passo" de um dropset. ──
+  const isDropStep = !!curSet && curSet.dropStep != null;
+  const dropTotal = curSet?.dropTotal ?? 0;
+  const isLastDropStep = !isDropStep || (curSet?.dropStep ?? 1) >= dropTotal;
+
+  // Steppers/referência do último treino editam/mostram sempre a SELECIONADA.
+  // Uma série já `done`/`skipped` fica só-leitura (dá para rever, não para
+  // editar em silêncio o que já foi para o log — FIX 3, review overhaul).
+  const selectedLocked = selected.done || selected.skipped;
   const updateField = (field: "weight" | "reps" | "duration", delta: number) => {
-    wk.updateSet(current, aSet, { [field]: Math.max(0, round2(cur[field] + delta)) });
+    if (selectedLocked) return;
+    wk.updateSet(current, selectedSetIdx, { [field]: Math.max(0, round2(selected[field] + delta)) });
   };
 
-  // Conclui o passo atual e arranca o descanso. O avanço para a próxima
+  // Conclui o passo ATUAL e arranca o descanso. O avanço para a próxima
   // série/passo só acontece quando o descanso termina (resolveRest).
   const completeAndRest = () => {
-    const exIdx = current, sIdx = aSet;
+    if (!hasPending || !curSet) return;
+    const exIdx = current, sIdx = currentSetIdx;
+    const setEntry = curSet;
 
     // Último passo do treino → conclui já, sem descanso.
     if (willFinishEx && isLastEx) {
@@ -156,21 +193,22 @@ export function WorkoutExec() {
       return;
     }
 
-    // Texto "A seguir: …" e tipo de descanso (drop = mini-descanso).
+    // Texto "A seguir: …" (por extenso) e tipo de descanso (drop = mini-descanso).
     let kind: "normal" | "drop" = "normal";
     let msg: string;
     if (isDropStep && !isLastDropStep) {
       kind = "drop";
-      msg = `${t("gym.app.exec.dropset_label") || "Dropset"} ${(cur.dropStep ?? 1) + 1}/${dropTotal}`;
+      msg = `${t("gym.app.exec.dropset_label") || "Dropset"} ${(setEntry.dropStep ?? 1) + 1}/${dropTotal}`;
     } else if (willFinishEx) {
-      msg = `${t("gym.app.exec.next_up") || "A seguir"}: ${t("gym.app.exec.next_up_exercise") || "próximo exercício"}`;
+      const nextName = wk.exercises[exIdx + 1]?.name || t("gym.app.exec.next_up_exercise") || "próximo exercício";
+      msg = `${t("gym.app.exec.next_up") || "A seguir"}: ${nextName}`;
     } else {
-      const np = sets.findIndex((s, i) => i !== sIdx && !s.done);
+      const np = sets.findIndex((s, i) => i !== sIdx && !s.done && !s.skipped);
       const n = (np !== -1 ? np : sIdx + 1) + 1;
-      msg = `${t("gym.app.exec.next_up") || "A seguir"}: ${n}ª ${t("gym.app.exec.series_label") || "Série"}`;
+      msg = `${t("gym.app.exec.next_up") || "A seguir"}: ${t("gym.app.exec.series_label") || "Série"} ${n} ${t("gym.app.common.of") || "de"} ${sets.length}`;
     }
 
-    const restDur = cur.rest ?? ex.rest;
+    const restDur = setEntry.rest ?? ex.rest;
     if (restDur > 0) {
       // Guarda o descanso no store (a série a concluir/avançar fica em exIdx/setIdx);
       // o avanço acontece quando o descanso termina (finishRest). O store calcula
@@ -181,30 +219,44 @@ export function WorkoutExec() {
     }
   };
 
-  // Marca todas as séries do exercício como concluídas (salta as restantes).
+  // Marca as séries PENDENTES do exercício como concluídas (não avança sozinho —
+  // fica no exercício, mostra o resumo; "Próximo Exercício" avança). Nunca toca
+  // nas já `done` nem nas `skipped` — evita o conflito `{done:true, skipped:true}`
+  // que fazia o contador e o log divergirem (FIX 1, review overhaul).
   const completeExercise = () => {
     wk.cancelRest();
-    sets.forEach((_, si) => wk.setDone(current, si, true));
+    sets.forEach((s, si) => {
+      if (!s.done && !s.skipped) wk.setDone(current, si, true);
+    });
   };
 
-  // Reabrir uma série (mesmo já concluída) para a editar durante o treino.
-  const reopenSet = (si: number) => {
-    wk.cancelRest();
-    if (sets[si].done) wk.setDone(current, si, false);
-    wk.setActiveSet(current, si);
+  // Salta a série ATUAL (fica por fazer — nunca done). Avança a sequência. Se
+  // isto esgotar as pendentes do ÚLTIMO exercício (treino inteiro terminado —
+  // mesmo critério de `completeAndRest`: `willFinishEx && isLastEx`), abre o
+  // resumo de fim de treino (FIX 7, review overhaul).
+  const skipCurrentSet = () => {
+    if (!hasPending) return;
+    const willFinishWorkout = willFinishEx && isLastEx;
+    wk.skipSet(current, currentSetIdx);
+    if (willFinishWorkout) setShowFinish(true);
+  };
+
+  // Salta o exercício inteiro (pendentes ficam por fazer). Avança já para o
+  // próximo (ou, se for o último, abre o resumo de fim de treino).
+  const skipCurrentExercise = () => {
+    const wasLast = isLastEx;
+    wk.skipExercise(current);
+    if (wasLast) setShowFinish(true);
+  };
+
+  // Ver/editar outra série (não avança a sequência, não altera done/skipped).
+  const selectSet = (si: number) => {
+    wk.setSelectedSet(current, si);
   };
 
   const goNext = () => {
     if (current < totalEx - 1) wk.setIndex(current + 1);
     else setShowFinish(true);
-  };
-
-  const jumpTo = (i: number) => {
-    wk.cancelRest();
-    wk.setIndex(i);
-    const fp = wk.exercises[i].sets.findIndex((s) => !s.done);
-    wk.setActiveSet(i, fp === -1 ? 0 : fp);
-    setShowPicker(false);
   };
 
   const finishWorkout = () => {
@@ -229,42 +281,51 @@ export function WorkoutExec() {
     navigate("/", { replace: true });
   };
 
-  // Subtítulo do CTA "FAZER AGORA" (orientado à ação, como no protótipo).
+  // Subtítulo do CTA "FAZER AGORA" (orientado à ação, como no protótipo). A
+  // série ATUAL mantém sempre a border azul a piscar, mesmo quando estás a
+  // ESPREITAR outra série (`selectedSetIdx !== currentSetIdx`) — mas o botão
+  // continua a concluir a ATUAL, por isso o subtítulo deixa isso explícito
+  // nesse caso (FIX 4, review overhaul); no caso comum (vista = atual) não
+  // acrescenta nada de novo.
   const ctaSub = isDropStep && !isLastDropStep
     ? (t("gym.app.exec.cta_sub_drop") || "Terminei o drop · baixar peso")
     : willFinishEx && isLastEx
       ? (t("gym.app.exec.cta_sub_finish") || "Terminei · concluir treino")
       : (t("gym.app.exec.cta_sub_rest") || "Terminei a série · descansar");
+  const ctaSubFull = hasPending && selectedSetIdx !== currentSetIdx
+    ? `${ctaSub} · ${t("gym.app.exec.cta_completes_set") || "conclui série"} ${currentSetIdx + 1}`
+    : ctaSub;
 
   return (
-    <div className="min-h-[100dvh] bg-bg flex flex-col overflow-x-hidden">
-      {/* ── Header escuro com cronómetro grande ── */}
-      <div className="bg-ink px-[18px] pb-[18px] sticky top-0 z-50" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)" }}>
-        <div className="flex items-center justify-between mb-1.5">
+    <div className="h-[100dvh] bg-bg flex flex-col overflow-hidden">
+      {/* ── Header escuro com cronómetro grande (shrink-0: 1º filho do flex) ── */}
+      <div className="shrink-0 bg-ink px-[18px] pb-3.5" style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)" }}>
+        <div className="flex items-center justify-between mb-1">
           <button onClick={minimize} title={t("gym.app.exec.minimize")} className="w-[38px] h-[38px] rounded-[11px] bg-white/10 flex items-center justify-center"><ChevronDown size={20} className="text-white" /></button>
           <div className="text-[13px] font-bold text-white/85 truncate max-w-[55%]">{wk.name}</div>
           <button onClick={() => setShowFinish(true)} className="px-[15px] py-[9px] rounded-[11px] bg-brand text-white text-[13px] font-extrabold">{t("gym.app.exec.finish")}</button>
         </div>
         {/* Tempo a correr */}
-        <div className="flex flex-col items-center gap-0.5 pt-2 pb-1">
+        <div className="flex flex-col items-center gap-0.5 pt-1.5 pb-0.5">
           <div className="flex items-center gap-[7px]">
             <span className="w-[9px] h-[9px] rounded-full animate-pulse" style={{ background: resting ? "#F97316" : "var(--green)" }} />
             <span className="text-[11px] font-extrabold tracking-[0.14em]" style={{ color: resting ? "#FBBF77" : "rgba(255,255,255,0.55)" }}>{resting ? t("gym.app.exec.state_resting") : t("gym.app.exec.state_training")}</span>
           </div>
-          <div className="text-[52px] font-black text-white leading-none tnum tracking-[-0.02em]">{formatClock(elapsed)}</div>
+          <div className="text-[48px] font-black text-white leading-none tnum tracking-[-0.02em]">{formatClock(elapsed)}</div>
           <div className="text-[12.5px] text-white/50 font-medium">{completedSets}/{totalSets} {t("gym.app.exec.sets_done")}</div>
         </div>
       </div>
 
       {/* Barra de progresso */}
-      <div className="h-1 bg-line">
+      <div className="shrink-0 h-1 bg-line">
         <div className="h-full bg-gradient-to-r from-brand to-brand-dk transition-[width] duration-500" style={{ width: `${totalSets ? (completedSets / totalSets) * 100 : 0}%` }} />
       </div>
 
-      {/* Main (paddingBottom dá espaço à barra fixa do CTA) */}
-      <div className="flex-1 flex flex-col items-center px-4 py-[18px] lg:px-6 lg:py-6 w-full max-w-[520px] mx-auto" style={{ paddingBottom: "calc(160px + env(safe-area-inset-bottom, 0px))" }}>
+      {/* Conteúdo do meio: cresce, e só ele scrolla (nunca o documento) se um
+          exercício tiver demasiadas séries para caber. */}
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center px-4 py-3 lg:px-6 lg:py-4 w-full max-w-[520px] mx-auto">
         {/* Posição do exercício */}
-        <div className="flex items-center justify-between w-full mb-3">
+        <div className="flex items-center justify-between w-full mb-2.5">
           <span className="text-[13px] font-bold text-t2">{t("gym.app.exec.exercise_label")} {current + 1} {t("gym.app.common.of")} {totalEx}</span>
           <div className="flex gap-[5px]">
             {wk.exercises.map((e, i) => {
@@ -274,75 +335,100 @@ export function WorkoutExec() {
           </div>
         </div>
 
-        <div key={current} className={`w-full animate-fadeIn rounded-card ${!exDone && !resting ? "go-border" : ""}${!exDone && resting ? "rest-border" : ""}`}>
+        <div key={current} className={`w-full animate-fadeIn rounded-card ${hasPending && !resting ? "go-border" : ""}${hasPending && resting ? "rest-border" : ""}`}>
           <div className="bg-surface rounded-card shadow-card overflow-hidden">
-            <div className="p-5 lg:p-6">
+            <div className="p-4 lg:p-5">
               {/* Grupo + nome */}
-              <div className="flex items-center gap-[7px] mb-[7px]">
+              <div className="flex items-center gap-[7px] mb-1.5">
                 <span className="w-[9px] h-[9px] rounded-full" style={{ background: color }} />
                 <span className="text-[12px] font-extrabold uppercase tracking-[0.06em]" style={{ color }}>{ex.group}</span>
               </div>
-              <div className="text-[26px] font-black text-t1 leading-[1.05] tracking-[-0.03em] mb-[18px]">{ex.name}</div>
+              <div className="text-[24px] font-black text-t1 leading-[1.05] tracking-[-0.03em] mb-3">{ex.name}</div>
 
-              {/* ── Pontos de série (tocar reabre p/ editar) ── */}
-              {!exDone && (
-                <div className="mb-4">
-                  <span className="block text-[12.5px] font-bold text-t3 mb-2">{t("gym.app.exec.target_sets")}</span>
+              {/* ── Pontos de série: ATUAL (azul a piscar) vs SELECIONADA (ring estático) ── */}
+              {hasPending && (
+                <div className="mb-3">
+                  <span className="block text-[12.5px] font-bold text-t3 mb-1.5">{t("gym.app.exec.target_sets")}</span>
                   <div className="flex flex-wrap gap-1.5">
-                    {sets.map((s, si) => (
-                      <button key={si} onClick={() => reopenSet(si)} title={s.dropStep ? `${t("gym.app.exec.dropset_label") || "Dropset"} · ${t("gym.app.exec.step_label") || "passo"} ${s.dropStep}/${s.dropTotal}` : `${t("gym.app.exec.series_label")} ${si + 1}`}
-                        className="w-8 h-8 rounded-[10px] flex items-center justify-center transition-all relative"
-                        style={{ background: s.done ? "var(--green)" : si === aSet ? "var(--surface)" : "var(--bg)", boxShadow: si === aSet && !s.done ? "inset 0 0 0 2px var(--green)" : s.dropStep ? "inset 0 0 0 1.5px #F9731788" : "none" }}>
-                        {s.done ? <Check size={15} className="text-white" /> : <span className="text-[13.5px] font-extrabold" style={{ color: si === aSet ? "var(--green-dk)" : s.dropStep ? "#C2742B" : "var(--t3)" }}>{si + 1}</span>}
-                        {s.dropStep != null && !s.done && <span className="absolute -top-1 -right-1 text-[9px] font-black" style={{ color: "#F97316" }}>↓</span>}
-                      </button>
-                    ))}
+                    {sets.map((s, si) => {
+                      const isCurrent = si === currentSetIdx;
+                      const isSelected = si === selectedSetIdx && !isCurrent;
+                      return (
+                        <button key={si} onClick={() => selectSet(si)} title={s.dropStep ? `${t("gym.app.exec.dropset_label") || "Dropset"} · ${t("gym.app.exec.step_label") || "passo"} ${s.dropStep}/${s.dropTotal}` : `${t("gym.app.exec.series_label")} ${si + 1}`}
+                          className={`w-8 h-8 rounded-[10px] flex items-center justify-center transition-all relative ${isCurrent ? "set-current-pulse" : ""}`}
+                          style={{
+                            background: s.done ? "var(--green)" : (isCurrent || isSelected) ? "var(--surface)" : "var(--bg)",
+                            boxShadow: isCurrent
+                              ? undefined
+                              // Estático (nunca pisca — distinto do azul-a-piscar da ATUAL) mas com
+                              // contraste suficiente em dark, onde `--border` fica quase invisível
+                              // sobre `--surface` (FIX 5, review overhaul).
+                              : isSelected
+                                ? "inset 0 0 0 2px var(--t2)"
+                                : s.dropStep && !s.done ? "inset 0 0 0 1.5px #F9731788" : "none",
+                            opacity: s.skipped ? 0.55 : 1,
+                          }}>
+                          {s.done ? <Check size={15} className="text-white" /> : (
+                            <span className={`text-[13.5px] font-extrabold ${s.skipped ? "line-through" : ""}`} style={{ color: isCurrent ? "var(--now)" : s.dropStep ? "#C2742B" : "var(--t3)" }}>{si + 1}</span>
+                          )}
+                          {s.dropStep != null && !s.done && !s.skipped && <span className="absolute -top-1 -right-1 text-[9px] font-black" style={{ color: "#F97316" }}>↓</span>}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
-              {/* ── Steppers (visíveis também durante o descanso) ── */}
-              {!exDone && (
+              {/* ── Steppers (mostram/editam a série SELECIONADA; visíveis também durante o descanso) ── */}
+              {hasPending && (
                 <>
-                  <div className="flex items-stretch bg-bg rounded-[18px] overflow-hidden mb-3">
+                  <div className="flex items-stretch bg-bg rounded-[18px] overflow-hidden mb-2">
                     {(isTime
-                      ? [{ label: t("gym.app.exec.duration_label") || "Duração (s)", field: "duration" as const, step: 5, val: cur.duration }]
+                      ? [{ label: t("gym.app.exec.duration_label") || "Duração (s)", field: "duration" as const, step: 5, val: selected.duration }]
                       : [
-                          { label: t("gym.app.exec.weight_label"), field: "weight" as const, step: 2.5, val: cur.weight },
-                          { label: t("gym.app.exec.reps_label"), field: "reps" as const, step: 1, val: cur.reps },
+                          { label: t("gym.app.exec.weight_label"), field: "weight" as const, step: 2.5, val: selected.weight },
+                          { label: t("gym.app.exec.reps_label"), field: "reps" as const, step: 1, val: selected.reps },
                         ]
                     ).map((f, fi) => (
                       <div key={f.field} className="flex-1 flex">
-                        {fi === 1 && <div className="w-px bg-line my-3.5" />}
-                        <div className="flex-1 flex flex-col items-center gap-[11px] pt-4 pb-[18px] px-1.5">
+                        {fi === 1 && <div className="w-px bg-line my-3" />}
+                        <div className="flex-1 flex flex-col items-center gap-2 pt-3 pb-3.5 px-1.5">
                           <span className="text-[11px] font-extrabold text-t3 tracking-[0.07em]">{f.label}</span>
                           <div className="flex items-center gap-2 w-full">
-                            <button onClick={() => updateField(f.field, -f.step)} className="w-[34px] h-[34px] rounded-full bg-surface shadow-card flex items-center justify-center active:scale-95 transition shrink-0"><Minus size={15} className="text-t2" /></button>
+                            <button onClick={() => updateField(f.field, -f.step)} disabled={selectedLocked} className={`w-[34px] h-[34px] rounded-full bg-surface shadow-card flex items-center justify-center transition shrink-0 ${selectedLocked ? "opacity-40" : "active:scale-95"}`}><Minus size={15} className="text-t2" /></button>
                             <span className="flex-1 min-w-0 text-[clamp(20px,6vw,30px)] font-black text-t1 text-center tnum tracking-[-0.02em]">{f.val}</span>
-                            <button onClick={() => updateField(f.field, f.step)} className="w-[34px] h-[34px] rounded-full bg-brand flex items-center justify-center active:scale-95 transition shrink-0"><Plus size={15} className="text-white" /></button>
+                            <button onClick={() => updateField(f.field, f.step)} disabled={selectedLocked} className={`w-[34px] h-[34px] rounded-full bg-brand flex items-center justify-center transition shrink-0 ${selectedLocked ? "opacity-40" : "active:scale-95"}`}><Plus size={15} className="text-white" /></button>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  {/* Referência: valor do último treino para esta série */}
-                  {(isTime ? cur.lastDuration != null : cur.lastWeight != null) && (
-                    <div className="text-center text-[12px] text-t3 font-medium mb-1 -mt-1">
-                      {t("gym.app.exec.last_label")}: {isTime ? `${cur.lastDuration}s` : `${cur.lastWeight}kg · ${cur.lastReps} ${t("gym.app.common.reps")}`}
+                  {/* Referência discreta: valor do último treino para a série SELECIONADA */}
+                  {(isTime ? selected.lastDuration != null : selected.lastWeight != null) && (
+                    <div className="text-center text-[11.5px] text-t3 font-medium mb-1.5">
+                      {t("gym.app.exec.last_short") || "Último"}: {isTime ? `${selected.lastDuration}s` : `${selected.lastWeight}kg · ${selected.lastReps} ${t("gym.app.common.reps")}`}
                     </div>
                   )}
 
-                  {/* Dar exercício como concluído (salta séries restantes) */}
-                  {!resting && sets.length > 1 && (
-                    <button onClick={completeExercise} className="flex items-center justify-center gap-1.5 w-full mt-2.5 py-2.5 rounded-xl text-t2 text-[13px] font-semibold active:bg-bg transition-colors">
-                      <Check size={15} className="text-t3" /> {t("gym.app.exec.mark_exercise_done")}
-                    </button>
+                  {/* Ações secundárias — compactas, uma linha (nunca durante o descanso) */}
+                  {!resting && (
+                    <div className="flex items-center justify-center flex-wrap gap-x-2 gap-y-1 text-[12.5px] font-semibold text-t3">
+                      <button onClick={skipCurrentSet} className="px-1 py-0.5 active:text-t2 transition-colors">{t("gym.app.exec.skip_set") || "Saltar série"}</button>
+                      <span>·</span>
+                      <button onClick={skipCurrentExercise} className="px-1 py-0.5 active:text-t2 transition-colors">{t("gym.app.exec.skip_exercise") || "Saltar exercício"}</button>
+                      {sets.length > 1 && (
+                        <>
+                          <span>·</span>
+                          <button onClick={completeExercise} className="px-1 py-0.5 active:text-t2 transition-colors">{t("gym.app.exec.mark_exercise_done") || "Concluir exercício"}</button>
+                        </>
+                      )}
+                    </div>
                   )}
                 </>
               )}
 
-              {exDone && (
+              {!hasPending && exFullyDone && (
                 <div className="text-center py-1">
                   <div className="w-[60px] h-[60px] rounded-full bg-brand-xlt flex items-center justify-center mx-auto mt-1 mb-3.5">
                     <Check size={28} className="text-brand" />
@@ -351,29 +437,37 @@ export function WorkoutExec() {
                   <div className="text-[14px] text-t2">{t("gym.app.exec.ex_done_prefix")} {sets.length} {t("gym.app.exec.ex_done_suffix")}</div>
                 </div>
               )}
+
+              {/* Terminado com saltos (skip≠done — nunca o check verde triunfal aqui). */}
+              {!hasPending && !exFullyDone && (
+                <div className="text-center py-1">
+                  <div className="w-[60px] h-[60px] rounded-full bg-bg flex items-center justify-center mx-auto mt-1 mb-3.5">
+                    <Flag size={26} className="text-t3" />
+                  </div>
+                  <div className="text-[16px] font-extrabold text-t1 mb-1">{t("gym.app.exec.ex_ended_title") || "Exercício terminado"}</div>
+                  <div className="text-[14px] text-t2">
+                    {t("gym.app.exec.ex_ended_prefix") || "Terminaste com"} {exDoneCount} {t("gym.app.common.of") || "de"} {sets.length} {t("gym.app.exec.ex_ended_suffix") || "séries feitas"}, {exSkippedCount} {t("gym.app.exec.ex_ended_skipped_suffix") || "saltadas."}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
-
-        {/* Acesso secundário: saltar para outro exercício */}
-        <div className="mt-3.5 w-full">
-          <Button variant="ghost" fullWidth onClick={() => { setPickSel(current); setShowPicker(true); }} icon={<List size={17} className="text-t2" />}>{t("gym.app.exec.choose_other")}</Button>
-        </div>
       </div>
 
-      {/* ──── BARRA FIXA AO FUNDO — CTA grande, sempre no mesmo lugar ──── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-surface/95 backdrop-blur-xl border-t border-line" style={{ padding: "12px 16px calc(14px + env(safe-area-inset-bottom, 0px))" }}>
+      {/* ──── BARRA DO CTA (shrink-0, último filho do flex — sempre no fundo) ──── */}
+      <div className="shrink-0 bg-surface/95 backdrop-blur-xl border-t border-line" style={{ padding: "12px 16px calc(14px + env(safe-area-inset-bottom, 0px))" }}>
         <div className="max-w-[520px] mx-auto w-full">
-          {/* Próximo / Terminar (exercício concluído) */}
-          {exDone && (
+          {/* Próximo / Terminar (exercício concluído — via "Dar exercício como concluído") */}
+          {!hasPending && (
             <Button fullWidth size="lg" onClick={goNext} className="!h-[96px] !rounded-[20px] text-[17px]"
               icon={isLastEx ? <Trophy size={20} className="text-white" /> : <ChevronRight size={20} className="text-white" />}>
               {isLastEx ? t("gym.app.exec.finish_workout") : t("gym.app.exec.next_exercise")}
             </Button>
           )}
 
-          {/* FAZER AGORA (verde, toca para concluir + descansar) */}
-          {!exDone && !resting && (
+          {/* FAZER AGORA (verde, toca para concluir a série ATUAL + descansar) */}
+          {hasPending && !resting && (
             <button onClick={completeAndRest} className="w-full h-[96px] box-border text-left border-none cursor-pointer relative rounded-[20px] px-[18px] overflow-hidden"
               style={{ background: "linear-gradient(135deg, var(--green) 0%, var(--green-dk) 100%)", boxShadow: "0 6px 20px rgba(141,198,63,0.32)", animation: "goGlow 1.8s ease-in-out infinite, goPop 0.35s ease" }}>
               <span className="absolute rounded-full pointer-events-none" style={{ top: "50%", left: 38, width: 54, height: 54, marginTop: -27, marginLeft: -27, border: "2px solid rgba(255,255,255,0.45)", animation: "goRing 1.8s ease-out infinite" }} />
@@ -384,17 +478,17 @@ export function WorkoutExec() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[23px] font-black text-white leading-none tracking-[-0.02em]" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.18)" }}>{t("gym.app.exec.go_now")}</div>
-                  <div className="text-[13.5px] font-bold text-white/90 mt-[5px] truncate">{ctaSub}</div>
+                  <div className="text-[13.5px] font-bold text-white/90 mt-[5px] truncate">{ctaSubFull}</div>
                 </div>
                 {isDropStep
-                  ? <div className="shrink-0 text-white text-[10px] font-black tracking-[0.05em] px-2 py-1 rounded-lg" style={{ background: "rgba(255,255,255,0.22)" }}>{t("gym.app.exec.drop_short") || "DROP"} {cur.dropStep}/{dropTotal}</div>
+                  ? <div className="shrink-0 text-white text-[10px] font-black tracking-[0.05em] px-2 py-1 rounded-lg" style={{ background: "rgba(255,255,255,0.22)" }}>{t("gym.app.exec.drop_short") || "DROP"} {curSet?.dropStep}/{dropTotal}</div>
                   : <ChevronRight size={22} className="text-white" />}
               </div>
             </button>
           )}
 
-          {/* DESCANSO (laranja, toca para saltar) */}
-          {!exDone && resting && (
+          {/* DESCANSO (laranja, toca para saltar) — "A seguir: …" trunca com reticências + tempo sempre legível */}
+          {hasPending && resting && (
             <button onClick={resolveRest} title={t("gym.app.exec.rest_skip_hint")} className="w-full h-[96px] box-border border-none cursor-pointer rounded-[20px] px-[18px] relative overflow-hidden animate-fadeIn"
               style={{ background: "#FFF7ED", boxShadow: "inset 0 0 0 1.5px #F9731833" }}>
               <div className="relative h-full flex items-center gap-3.5">
@@ -402,8 +496,14 @@ export function WorkoutExec() {
                   {restKind === "drop" ? <ArrowDown size={28} className="text-white" /> : <Timer size={28} className="text-white" />}
                 </div>
                 <div className="flex-1 min-w-0 text-left">
-                  <div className="text-[12px] font-extrabold tracking-[0.1em]" style={{ color: "#F97316" }}>{restKind === "drop" ? (t("gym.app.exec.rest_drop_label") || "BAIXA O PESO") : t("gym.app.exec.rest_label")}</div>
-                  <div className="text-[13px] font-bold mt-[3px] truncate" style={{ color: "#C2742B" }}>{restMsg || t("gym.app.exec.rest_label")} · {t("gym.app.exec.rest_skip_hint")}</div>
+                  {/* A dica "toca para saltar" nunca partilha o nó truncado da mensagem
+                      "A seguir: …" (um nome de exercício comprido engolia-a) — fica na
+                      linha do rótulo, como fragmento que não trunca (FIX 6, review overhaul). */}
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-[12px] font-extrabold tracking-[0.1em]" style={{ color: "#F97316" }}>{restKind === "drop" ? (t("gym.app.exec.rest_drop_label") || "BAIXA O PESO") : t("gym.app.exec.rest_label")}</span>
+                    <span className="shrink-0 text-[10.5px] font-bold" style={{ color: "#C2742B99" }}>· {t("gym.app.exec.rest_skip_hint")}</span>
+                  </div>
+                  <div className="text-[13px] font-bold mt-[3px] truncate min-w-0" style={{ color: "#C2742B" }}>{restMsg || t("gym.app.exec.rest_label")}</div>
                 </div>
                 <span className="text-[40px] font-black leading-none tnum tracking-[-0.02em] shrink-0" style={{ color: "#B45309" }}>{restLeft >= 60 ? formatClock(restLeft) : restLeft}</span>
               </div>
@@ -414,52 +514,6 @@ export function WorkoutExec() {
           )}
         </div>
       </div>
-
-      {/* Picker de exercício — dois passos */}
-      <Modal open={showPicker} onClose={() => setShowPicker(false)} title={t("gym.app.exec.picker_title")}>
-        <div className="flex flex-col gap-2">
-          {wk.exercises.map((e, i) => {
-            const done = e.sets.filter((s) => s.done).length;
-            const all = e.sets.length;
-            const isCur = i === current;
-            const isSel = i === pickSel;
-            const finished = done === all;
-            const paused = done > 0 && !finished && !isCur;
-            const c = groupColor(e.group);
-            return (
-              <button key={i} onClick={() => setPickSel(i)}
-                className="flex items-center gap-3 p-3 rounded-[14px] text-left transition-all"
-                style={{ border: `2px solid ${isSel ? "var(--green)" : "var(--border)"}`, background: isSel ? "var(--green-xlt)" : "var(--surface)" }}>
-                <div className="w-[34px] h-[34px] rounded-[10px] flex items-center justify-center shrink-0" style={{ background: finished ? "var(--green)" : `${c}18` }}>
-                  {finished ? <Check size={16} className="text-white" /> : <span className="text-[14px] font-extrabold" style={{ color: c }}>{i + 1}</span>}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[14px] font-bold text-t1 truncate">{e.name}</div>
-                  <div className="text-[12px] text-t2">{e.group} · {done}/{all} {t("gym.app.common.sets")}</div>
-                </div>
-                {isCur && <Badge color="green">{t("gym.app.exec.badge_current")}</Badge>}
-                {paused && <Badge color="orange">{t("gym.app.exec.badge_paused")}</Badge>}
-                {finished && !isCur && <Badge color="gray">{t("gym.app.exec.badge_done")}</Badge>}
-              </button>
-            );
-          })}
-        </div>
-        {/* Confirmar troca */}
-        <div className="mt-4">
-          {pickSel === current ? (
-            <Button fullWidth size="lg" onClick={() => setShowPicker(false)}>{t("gym.app.exec.continue_current")}</Button>
-          ) : (
-            <>
-              {sets.some((s) => s.done) && !sets.every((s) => s.done) && (
-                <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl mb-3 text-[12.5px] font-medium" style={{ background: "#FEF3C7", color: "#92400E" }}>
-                  <Pause size={15} style={{ color: "#92400E" }} /> “{ex.name}” {t("gym.app.exec.pause_hint_suffix")}
-                </div>
-              )}
-              <Button fullWidth size="lg" onClick={() => jumpTo(pickSel)} icon={<Play size={17} className="text-white" fill="currentColor" />}>{t("gym.app.exec.start_new_exercise")}</Button>
-            </>
-          )}
-        </div>
-      </Modal>
 
       {/* Finish modal */}
       <Modal open={showFinish} onClose={() => setShowFinish(false)} title={t("gym.app.exec.finish_workout")}>

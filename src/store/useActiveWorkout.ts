@@ -9,6 +9,12 @@ export interface SetEntry {
   reps: number;
   duration: number;
   done: boolean;
+  /**
+   * Saltada (fica por fazer — NUNCA `done`). Serve só para sair da sequência
+   * (não voltar a ser pedida); não conta como concluída e não entra no log
+   * (overhaul do ecrã de treino, `.design/workout-exec-overhaul/`).
+   */
+  skipped?: boolean;
   /** Descanso (s) a fazer DEPOIS desta série (0 entre passos de um dropset). */
   rest: number;
   /** Série composta (dropset): nº do passo (1-based) e total de passos do grupo. */
@@ -66,19 +72,36 @@ interface ActiveWorkoutState {
   name: string;
   startedAt: number | null;
   currentIndex: number;
-  /** Série ativa por exercício (índice). */
-  activeSet: number[];
+  /**
+   * Série SELECIONADA por exercício (índice) — a que se vê/edita nos steppers.
+   * Por omissão acompanha a série ATUAL da sequência (1.ª `!done && !skipped`,
+   * derivada on-the-fly, não guardada); só muda quando o utilizador clica num
+   * botão de série (não avança a sequência nem altera done/skipped).
+   */
+  selectedSet: number[];
   exercises: ActiveExercise[];
   /** Descanso/pausa em curso (null = a treinar). Persistido. */
   rest: RestState | null;
   start: (w: Workout, last?: LastPerformance | null) => void;
   setIndex: (i: number) => void;
-  setActiveSet: (exIdx: number, setIdx: number) => void;
+  setSelectedSet: (exIdx: number, setIdx: number) => void;
   updateSet: (exIdx: number, setIdx: number, patch: Partial<SetEntry>) => void;
   toggleDone: (exIdx: number, setIdx: number) => void;
   setDone: (exIdx: number, setIdx: number, done: boolean) => void;
   /** Conclui a série e avança para a próxima série/exercício. */
   advanceAfterSet: (exIdx: number, setIdx: number) => void;
+  /**
+   * Salta a série (fica por fazer, `skipped:true`, NUNCA `done`) — cancela o
+   * descanso e avança a sequência para a próxima `!done && !skipped` (ou para
+   * o próximo exercício, se este ficou terminado).
+   */
+  skipSet: (exIdx: number, setIdx: number) => void;
+  /**
+   * Salta o exercício: marca as séries pendentes (`!done && !skipped`) como
+   * `skipped` (as já `done` mantêm-se) e passa ao próximo exercício (ou fica
+   * no último, se não houver mais).
+   */
+  skipExercise: (exIdx: number) => void;
   /** Inicia o descanso — calcula `endsAt = Date.now() + total*1000` (wall-clock). */
   startRest: (r: StartRestInput) => void;
   /** Fim do descanso → conclui a série guardada e avança. */
@@ -89,6 +112,44 @@ interface ActiveWorkoutState {
   doneSets: () => number;
   buildLog: () => LogInput;
   clear: () => void;
+}
+
+/**
+ * Depois de marcar uma série `done` ou `skipped`, avança a SEQUÊNCIA: para a
+ * próxima série pendente (`!done && !skipped`) do mesmo exercício, ou para o
+ * próximo exercício se este ficou terminado (todas `done || skipped`). O
+ * `selectedSet` (vista) acompanha sempre a nova posição atual — mesmo que o
+ * utilizador estivesse a ver outra série (decisão do brief: a vista "re-foca"
+ * quando a sequência avança).
+ */
+function advanceSequence(
+  exercises: ActiveExercise[],
+  exIdx: number,
+  selectedSet: number[],
+): Partial<ActiveWorkoutState> {
+  const exer = exercises[exIdx];
+  const finished = exer.sets.every((st) => st.done || st.skipped);
+  const patch: Partial<ActiveWorkoutState> = { exercises, rest: null };
+
+  if (finished) {
+    const nextIdx = Math.min(exIdx + 1, exercises.length - 1);
+    patch.currentIndex = nextIdx;
+    if (nextIdx !== exIdx) {
+      const nextEx = exercises[nextIdx];
+      const np = nextEx.sets.findIndex((st) => !st.done && !st.skipped);
+      const sel = [...selectedSet];
+      sel[nextIdx] = np === -1 ? 0 : np;
+      patch.selectedSet = sel;
+    }
+  } else {
+    const np = exer.sets.findIndex((st) => !st.done && !st.skipped);
+    if (np !== -1) {
+      const sel = [...selectedSet];
+      sel[exIdx] = np;
+      patch.selectedSet = sel;
+    }
+  }
+  return patch;
 }
 
 /**
@@ -182,7 +243,7 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
       name: "",
       startedAt: null,
       currentIndex: 0,
-      activeSet: [],
+      selectedSet: [],
       exercises: [],
       rest: null,
 
@@ -192,7 +253,7 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
           name: w.name,
           startedAt: Date.now(),
           currentIndex: 0,
-          activeSet: w.exercises.map(() => 0),
+          selectedSet: w.exercises.map(() => 0),
           rest: null,
           exercises: w.exercises.map((e) => ({
             exerciseId: e.exerciseId ?? null,
@@ -210,11 +271,11 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
 
       setIndex: (i) => set({ currentIndex: i }),
 
-      setActiveSet: (exIdx, setIdx) =>
+      setSelectedSet: (exIdx, setIdx) =>
         set((s) => {
-          const activeSet = [...s.activeSet];
-          activeSet[exIdx] = setIdx;
-          return { activeSet };
+          const selectedSet = [...s.selectedSet];
+          selectedSet[exIdx] = setIdx;
+          return { selectedSet };
         }),
 
       updateSet: (exIdx, setIdx, patch) =>
@@ -254,21 +315,27 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
               ? ex
               : { ...ex, sets: ex.sets.map((st, j) => (j === setIdx ? { ...st, done: true } : st)) },
           );
-          const exer = exercises[exIdx];
-          const patch: Partial<ActiveWorkoutState> = { exercises, rest: null };
-          if (exer.sets.every((st) => st.done)) {
-            // Exercício concluído → próximo exercício.
-            patch.currentIndex = Math.min(exIdx + 1, exercises.length - 1);
-          } else {
-            // Próxima série por fazer dentro do mesmo exercício.
-            const np = exer.sets.findIndex((st, i) => i !== setIdx && !st.done);
-            if (np !== -1) {
-              const activeSet = [...s.activeSet];
-              activeSet[exIdx] = np;
-              patch.activeSet = activeSet;
-            }
-          }
-          return patch;
+          return advanceSequence(exercises, exIdx, s.selectedSet);
+        }),
+
+      skipSet: (exIdx, setIdx) =>
+        set((s) => {
+          const exercises = s.exercises.map((ex, i) =>
+            i !== exIdx
+              ? ex
+              : { ...ex, sets: ex.sets.map((st, j) => (j === setIdx ? { ...st, skipped: true } : st)) },
+          );
+          return advanceSequence(exercises, exIdx, s.selectedSet);
+        }),
+
+      skipExercise: (exIdx) =>
+        set((s) => {
+          const exercises = s.exercises.map((ex, i) =>
+            i !== exIdx
+              ? ex
+              : { ...ex, sets: ex.sets.map((st) => (st.done || st.skipped ? st : { ...st, skipped: true })) },
+          );
+          return advanceSequence(exercises, exIdx, s.selectedSet);
         }),
 
       startRest: (r) => set({ rest: { ...r, endsAt: Date.now() + r.total * 1000 } }),
@@ -296,7 +363,10 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
           entries: s.exercises.map((e) => ({
             exerciseName: e.name,
             group: e.group,
-            sets: e.sets.map((st) => ({ weight: st.weight, reps: st.reps, duration: st.duration, done: st.done } as any)),
+            // Séries saltadas ficam por fazer — nunca entram no log (overhaul do ecrã de treino).
+            sets: e.sets
+              .filter((st) => !st.skipped)
+              .map((st) => ({ weight: st.weight, reps: st.reps, duration: st.duration, done: st.done } as any)),
           })),
         };
       },
@@ -307,7 +377,7 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
           name: "",
           startedAt: null,
           currentIndex: 0,
-          activeSet: [],
+          selectedSet: [],
           exercises: [],
           rest: null,
         }),
@@ -318,12 +388,21 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
       // (`endsAt`). Migra qualquer estado persistido de uma versão anterior
       // (treino já em curso no telemóvel, com um `rest` sem `endsAt`) em vez de
       // simplesmente descartar o descanso em progresso.
-      version: 1,
+      // v2: `activeSet` foi renomeado para `selectedSet` (overhaul do ecrã de
+      // treino, brief §3 — passou a existir uma posição SELECIONADA distinta da
+      // ATUAL). Sem esta migração explícita, um treino em curso persistido numa
+      // versão anterior perdia o `activeSet` gravado (o merge do zustand só o
+      // reaproveitava por sorte via o default `?? currentSetIdx`).
+      version: 2,
       migrate: (persisted: any, version) => {
         if (version < 1 && persisted?.rest && typeof persisted.rest.endsAt !== "number") {
           const remaining = typeof persisted.rest.remaining === "number" ? persisted.rest.remaining : 0;
           persisted.rest = { ...persisted.rest, endsAt: Date.now() + Math.max(0, remaining) * 1000 };
           delete persisted.rest.remaining;
+        }
+        if (version < 2 && persisted && "activeSet" in persisted) {
+          if (persisted.selectedSet === undefined) persisted.selectedSet = persisted.activeSet;
+          delete persisted.activeSet;
         }
         return persisted;
       },
