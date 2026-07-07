@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, ChevronRight, ChevronDown, Trophy, Timer, Minus, Plus, Dumbbell, ArrowDown, Flag } from "lucide-react";
+import { Check, ChevronRight, ChevronDown, Trophy, Timer, Minus, Plus, Dumbbell, ArrowDown } from "lucide-react";
 import { useActiveWorkout } from "../store/useActiveWorkout";
 import { useCreateLog } from "../hooks/useGym";
 import { Button, Modal } from "../components/ui";
@@ -162,8 +162,14 @@ export function WorkoutExec() {
   // o texto/visual triunfante não pode aparecer quando na verdade faltou fazer
   // alguma série. Mesmo critério dos dots de progresso por exercício (abaixo).
   const exDoneCount = sets.filter((s) => s.done).length;
-  const exSkippedCount = sets.filter((s) => s.skipped).length;
   const exFullyDone = exDoneCount === sets.length;
+
+  // hasWork = há alguma série por fazer (pendente OU saltada) — os quadrados de
+  // série aparecem mesmo com o exercício inteiro saltado, para se poder tocar
+  // numa saltada e desfazer o skip (ajuste 2b). Distinto de `hasPending`, que só
+  // conta séries pendentes (gate dos steppers/ações, que precisam de uma série
+  // ATUAL para editar).
+  const hasWork = sets.some((s) => !s.done);
 
   // ── Drop set (modelo achatado): a série ATUAL é um "passo" de um dropset. ──
   const isDropStep = !!curSet && curSet.dropStep != null;
@@ -249,8 +255,12 @@ export function WorkoutExec() {
     if (wasLast) setShowFinish(true);
   };
 
-  // Ver/editar outra série (não avança a sequência, não altera done/skipped).
+  // Ver/editar outra série (nunca avança a sequência). Tocar numa série SALTADA
+  // desfaz o skip — a regra é que um skip fica por fazer e é reversível; a série
+  // volta a pendente/editável (recompõe `currentSetIdx` se for a mais antiga
+  // pendente). Tocar numa `done` ou já pendente só muda a vista, como antes.
   const selectSet = (si: number) => {
+    if (sets[si].skipped) wk.updateSet(current, si, { skipped: false });
     wk.setSelectedSet(current, si);
   };
 
@@ -330,7 +340,20 @@ export function WorkoutExec() {
           <div className="flex gap-[5px]">
             {wk.exercises.map((e, i) => {
               const eDone = e.sets.every((s) => s.done);
-              return <span key={i} className="h-2 rounded-full transition-all duration-200" style={{ width: i === current ? 22 : 8, background: i === current ? "var(--green)" : eDone ? "var(--green-dk)" : "var(--border)" }} />;
+              // Dots tocáveis (ajuste 2c): navegação de volta a um exercício já
+              // passado/saltado — cancela um descanso em curso para não ficar
+              // num estado estranho ao saltar de posição.
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => { wk.cancelRest(); wk.setIndex(i); }}
+                  title={e.name || `${t("gym.app.exec.exercise_label")} ${i + 1}`}
+                  aria-label={e.name || `${t("gym.app.exec.exercise_label")} ${i + 1}`}
+                  className="h-2 rounded-full transition-all duration-200 border-none p-0 cursor-pointer active:opacity-70"
+                  style={{ width: i === current ? 22 : 8, background: i === current ? "var(--green)" : eDone ? "var(--green-dk)" : "var(--border)" }}
+                />
+              );
             })}
           </div>
         </div>
@@ -345,8 +368,11 @@ export function WorkoutExec() {
               </div>
               <div className="text-[24px] font-black text-t1 leading-[1.05] tracking-[-0.03em] mb-3">{ex.name}</div>
 
-              {/* ── Pontos de série: ATUAL (azul a piscar) vs SELECIONADA (ring estático) ── */}
-              {hasPending && (
+              {/* ── Pontos de série: ATUAL (azul a piscar) vs SELECIONADA (ring estático) ──
+                  Gated por `hasWork` (não `hasPending`): mesmo um exercício
+                  inteiramente saltado mostra os quadrados, para se poder tocar
+                  numa série saltada e desfazer o skip (ajuste 2b). */}
+              {hasWork && (
                 <div className="mb-3">
                   <span className="block text-[12.5px] font-bold text-t3 mb-1.5">{t("gym.app.exec.target_sets")}</span>
                   <div className="flex flex-wrap gap-1.5">
@@ -438,16 +464,13 @@ export function WorkoutExec() {
                 </div>
               )}
 
-              {/* Terminado com saltos (skip≠done — nunca o check verde triunfal aqui). */}
+              {/* Terminado com saltos (skip≠done — nunca o check verde triunfal aqui).
+                  Sem card grande: os quadrados já aparecem acima (via `hasWork`)
+                  riscados/dimmed para se tocar e desfazer o skip — aqui só uma
+                  dica fina a apontar para essa ação. */}
               {!hasPending && !exFullyDone && (
-                <div className="text-center py-1">
-                  <div className="w-[60px] h-[60px] rounded-full bg-bg flex items-center justify-center mx-auto mt-1 mb-3.5">
-                    <Flag size={26} className="text-t3" />
-                  </div>
-                  <div className="text-[16px] font-extrabold text-t1 mb-1">{t("gym.app.exec.ex_ended_title") || "Exercício terminado"}</div>
-                  <div className="text-[14px] text-t2">
-                    {t("gym.app.exec.ex_ended_prefix") || "Terminaste com"} {exDoneCount} {t("gym.app.common.of") || "de"} {sets.length} {t("gym.app.exec.ex_ended_suffix") || "séries feitas"}, {exSkippedCount} {t("gym.app.exec.ex_ended_skipped_suffix") || "saltadas."}
-                  </div>
+                <div className="text-center text-[13px] font-semibold text-t3 py-1">
+                  {t("gym.app.exec.ex_skipped_hint") || "Exercício saltado — toca numa série para a fazer"}
                 </div>
               )}
             </div>
@@ -487,25 +510,28 @@ export function WorkoutExec() {
             </button>
           )}
 
-          {/* DESCANSO (laranja, toca para saltar) — "A seguir: …" trunca com reticências + tempo sempre legível */}
+          {/* DESCANSO (laranja, toca para saltar) — 3 colunas: ícone · rótulo+"A
+              seguir" (quebra até 2 linhas, nunca corta um nome) · tempo+dica
+              (empilhados, nunca sobrepostos ao "toca para saltar"). */}
           {hasPending && resting && (
-            <button onClick={resolveRest} title={t("gym.app.exec.rest_skip_hint")} className="w-full h-[96px] box-border border-none cursor-pointer rounded-[20px] px-[18px] relative overflow-hidden animate-fadeIn"
+            <button onClick={resolveRest} title={t("gym.app.exec.rest_skip_hint")} className="w-full h-[96px] box-border border-none cursor-pointer rounded-[20px] px-4 relative overflow-hidden animate-fadeIn"
               style={{ background: "#FFF7ED", boxShadow: "inset 0 0 0 1.5px #F9731833" }}>
-              <div className="relative h-full flex items-center gap-3.5">
-                <div className="w-[58px] h-[58px] rounded-[17px] shrink-0 flex items-center justify-center" style={{ background: "#F97316", animation: "breathe 1.6s ease-in-out infinite" }}>
-                  {restKind === "drop" ? <ArrowDown size={28} className="text-white" /> : <Timer size={28} className="text-white" />}
+              <div className="relative h-full flex items-center gap-3">
+                <div className="w-[50px] h-[50px] rounded-[15px] shrink-0 flex items-center justify-center" style={{ background: "#F97316", animation: "breathe 1.6s ease-in-out infinite" }}>
+                  {restKind === "drop" ? <ArrowDown size={24} className="text-white" /> : <Timer size={24} className="text-white" />}
                 </div>
                 <div className="flex-1 min-w-0 text-left">
-                  {/* A dica "toca para saltar" nunca partilha o nó truncado da mensagem
-                      "A seguir: …" (um nome de exercício comprido engolia-a) — fica na
-                      linha do rótulo, como fragmento que não trunca (FIX 6, review overhaul). */}
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-[12px] font-extrabold tracking-[0.1em]" style={{ color: "#F97316" }}>{restKind === "drop" ? (t("gym.app.exec.rest_drop_label") || "BAIXA O PESO") : t("gym.app.exec.rest_label")}</span>
-                    <span className="shrink-0 text-[10.5px] font-bold" style={{ color: "#C2742B99" }}>· {t("gym.app.exec.rest_skip_hint")}</span>
-                  </div>
-                  <div className="text-[13px] font-bold mt-[3px] truncate min-w-0" style={{ color: "#C2742B" }}>{restMsg || t("gym.app.exec.rest_label")}</div>
+                  <span className="block text-[12px] font-extrabold tracking-[0.1em]" style={{ color: "#F97316" }}>{restKind === "drop" ? (t("gym.app.exec.rest_drop_label") || "BAIXA O PESO") : t("gym.app.exec.rest_label")}</span>
+                  {/* `restMsg` quebra até 2 linhas (nunca `truncate`) — um nome de
+                      exercício normal tem de se ler por inteiro. */}
+                  <div className="text-[12.5px] font-bold leading-[1.25] mt-[2px] line-clamp-2" style={{ color: "#C2742B" }}>{restMsg || t("gym.app.exec.rest_label")}</div>
                 </div>
-                <span className="text-[40px] font-black leading-none tnum tracking-[-0.02em] shrink-0" style={{ color: "#B45309" }}>{restLeft >= 60 ? formatClock(restLeft) : restLeft}</span>
+                {/* Coluna direita: tempo por cima, dica de skip por baixo — nunca
+                    encostados/sobrepostos ao centro. */}
+                <div className="shrink-0 flex flex-col items-end gap-0.5">
+                  <span className="text-[34px] font-black leading-none tnum tracking-[-0.02em]" style={{ color: "#B45309" }}>{restLeft >= 60 ? formatClock(restLeft) : restLeft}</span>
+                  <span className="text-[10px] font-bold whitespace-nowrap" style={{ color: "#C2742B99" }}>{t("gym.app.exec.rest_skip_hint")}</span>
+                </div>
               </div>
               <div className="absolute left-0 right-0 bottom-0 h-1.5" style={{ background: "#FCE3C8" }}>
                 <div className="h-full transition-[width] duration-1000 ease-linear" style={{ width: `${restTotal ? (restLeft / restTotal) * 100 : 0}%`, background: "#F97316" }} />
