@@ -38,10 +38,18 @@ export interface ActiveExercise {
  * Estado de descanso/pausa entre séries. Vive no store persistido (e não em
  * estado local do ecrã) para **sobreviver a fechar/reabrir a app**: ao voltar,
  * o treino continua em descanso em vez de saltar para o "FAZER AGORA".
+ *
+ * Wall-clock (não decremental): `endsAt` é o instante (epoch ms) em que o
+ * descanso termina. Os segundos restantes derivam-se sempre de
+ * `endsAt - Date.now()` no ecrã — nunca se guarda um contador que decrementa
+ * a cada tick, porque esse tipo de contador **congela** quando a app vai para
+ * background (o `setTimeout`/`setInterval` para de correr) e fica errado ao
+ * voltar. Com `endsAt`, mesmo que a app esteja fechada 2 minutos com um
+ * descanso de 60s, ao reabrir o cálculo dá logo "terminado" e avança.
  */
 export interface RestState {
-  /** Segundos restantes. Decrementa a cada tick e **congela** com a app fechada. */
-  remaining: number;
+  /** Instante (epoch ms) em que o descanso termina. */
+  endsAt: number;
   total: number;
   kind: "normal" | "drop";
   msg: string;
@@ -49,6 +57,9 @@ export interface RestState {
   exIdx: number;
   setIdx: number;
 }
+
+/** Dados para iniciar um descanso — `endsAt` é calculado pelo store a partir de `total`. */
+type StartRestInput = Omit<RestState, "endsAt">;
 
 interface ActiveWorkoutState {
   workoutId: string | null;
@@ -68,8 +79,8 @@ interface ActiveWorkoutState {
   setDone: (exIdx: number, setIdx: number, done: boolean) => void;
   /** Conclui a série e avança para a próxima série/exercício. */
   advanceAfterSet: (exIdx: number, setIdx: number) => void;
-  startRest: (r: RestState) => void;
-  tickRest: () => void;
+  /** Inicia o descanso — calcula `endsAt = Date.now() + total*1000` (wall-clock). */
+  startRest: (r: StartRestInput) => void;
   /** Fim do descanso → conclui a série guardada e avança. */
   finishRest: () => void;
   /** Cancela o descanso sem avançar (saltar/reabrir série, etc.). */
@@ -260,9 +271,7 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
           return patch;
         }),
 
-      startRest: (r) => set({ rest: r }),
-      tickRest: () =>
-        set((s) => (s.rest ? { rest: { ...s.rest, remaining: s.rest.remaining - 1 } } : {})),
+      startRest: (r) => set({ rest: { ...r, endsAt: Date.now() + r.total * 1000 } }),
       finishRest: () => {
         const r = get().rest;
         if (r) get().advanceAfterSet(r.exIdx, r.setIdx);
@@ -303,6 +312,21 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
           rest: null,
         }),
     }),
-    { name: "gymnoprado_active_workout" },
+    {
+      name: "gymnoprado_active_workout",
+      // v1: `rest` passou de contador decremental (`remaining`) para wall-clock
+      // (`endsAt`). Migra qualquer estado persistido de uma versão anterior
+      // (treino já em curso no telemóvel, com um `rest` sem `endsAt`) em vez de
+      // simplesmente descartar o descanso em progresso.
+      version: 1,
+      migrate: (persisted: any, version) => {
+        if (version < 1 && persisted?.rest && typeof persisted.rest.endsAt !== "number") {
+          const remaining = typeof persisted.rest.remaining === "number" ? persisted.rest.remaining : 0;
+          persisted.rest = { ...persisted.rest, endsAt: Date.now() + Math.max(0, remaining) * 1000 };
+          delete persisted.rest.remaining;
+        }
+        return persisted;
+      },
+    },
   ),
 );

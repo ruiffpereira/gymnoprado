@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, ChevronRight, ChevronDown, Trophy, Pause, Play, Timer, List, Minus, Plus, Dumbbell, ArrowDown } from "lucide-react";
 import { useActiveWorkout } from "../store/useActiveWorkout";
@@ -19,6 +19,21 @@ function useElapsed(startedAt: number | null) {
   return startedAt ? Math.floor((now - startedAt) / 1000) : 0;
 }
 
+/**
+ * Pede o Screen Wake Lock (mantém o ecrã aceso) e devolve uma função para o
+ * libertar. Feature-detect (`'wakeLock' in navigator`) — ignora silenciosamente
+ * em browsers sem suporte (ex.: iOS Safari <16.4) ou se o pedido for recusado
+ * (ex.: bateria fraca).
+ */
+async function requestWakeLock(): Promise<WakeLockSentinel | null> {
+  if (!("wakeLock" in navigator)) return null;
+  try {
+    return await navigator.wakeLock.request("screen");
+  } catch {
+    return null;
+  }
+}
+
 const round2 = (v: number) => Math.round(v * 100) / 100;
 
 export function WorkoutExec() {
@@ -28,9 +43,13 @@ export function WorkoutExec() {
   const elapsed = useElapsed(wk.startedAt);
 
   // Descanso/pausa: vive no store persistido (sobrevive a fechar/reabrir a app).
+  // `endsAt` é wall-clock (epoch ms) — os segundos restantes derivam-se sempre
+  // de `endsAt - now`, nunca de um contador decremental (esse congela em
+  // background). `now` só existe para forçar o re-render a cada segundo.
   const rest = wk.rest;
   const resting = !!rest;
-  const restLeft = rest?.remaining ?? 0;
+  const [now, setNow] = useState(() => Date.now());
+  const restLeft = rest ? Math.max(0, Math.ceil((rest.endsAt - now) / 1000)) : 0;
   const restTotal = rest?.total ?? 60;
   const restKind = rest?.kind ?? "normal";
   const restMsg = rest?.msg ?? "";
@@ -39,6 +58,7 @@ export function WorkoutExec() {
   const [showPicker, setShowPicker] = useState(false);
   const [pickSel, setPickSel] = useState(0);
   const createLog = useCreateLog();
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   // Fim do descanso → conclui a série guardada e avança (no store).
   const resolveRest = () => wk.finishRest();
@@ -47,14 +67,51 @@ export function WorkoutExec() {
     if (!wk.workoutId) navigate("/treinos", { replace: true });
   }, [wk.workoutId, navigate]);
 
-  // Contagem decrescente do descanso → ao chegar a 0, resolve (avança).
+  // Ticker do descanso: só corre enquanto há descanso em curso — força um
+  // re-render por segundo para `restLeft` ser recalculado a partir de `endsAt`.
   useEffect(() => {
     if (!resting) return;
-    if (restLeft <= 0) { resolveRest(); return; }
-    const id = setTimeout(() => wk.tickRest(), 1000);
-    return () => clearTimeout(id);
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [resting]);
+
+  // Ao chegar a 0 (mesmo vindo de um salto grande, ex.: 2 min em background
+  // com um descanso de 60s), resolve já — avança para a próxima série/exercício.
+  useEffect(() => {
+    if (!resting) return;
+    if (restLeft <= 0) resolveRest();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resting, restLeft]);
+
+  // Screen Wake Lock: mantém o ecrã aceso só enquanto o treino está a decorrer
+  // (este ecrã montado). O browser LIBERTA o wake lock sozinho quando a página
+  // vai para background — por isso o mesmo handler de `visibilitychange` que
+  // re-sincroniza o descanso volta também a pedi-lo ao ficar visível.
+  useEffect(() => {
+    requestWakeLock().then((s) => { wakeLockRef.current = s; });
+    return () => {
+      wakeLockRef.current?.release().catch(() => {});
+      wakeLockRef.current = null;
+    };
+  }, []);
+
+  // Um único handler para as duas coisas ao voltar a ficar visível (reabrir a
+  // app depois de background/ecrã bloqueado): (1) recalcula o descanso já,
+  // sem esperar pelo próximo tick do interval acima; (2) readquire o wake lock.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      setNow(Date.now());
+      if (!wakeLockRef.current) requestWakeLock().then((s) => { wakeLockRef.current = s; });
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, []);
 
   if (!wk.workoutId || wk.exercises.length === 0) return null;
 
@@ -116,8 +173,9 @@ export function WorkoutExec() {
     const restDur = cur.rest ?? ex.rest;
     if (restDur > 0) {
       // Guarda o descanso no store (a série a concluir/avançar fica em exIdx/setIdx);
-      // o avanço acontece quando o descanso termina (finishRest).
-      wk.startRest({ remaining: restDur, total: restDur, kind, msg, exIdx, setIdx: sIdx });
+      // o avanço acontece quando o descanso termina (finishRest). O store calcula
+      // `endsAt` a partir de `total` (wall-clock).
+      wk.startRest({ total: restDur, kind, msg, exIdx, setIdx: sIdx });
     } else {
       wk.advanceAfterSet(exIdx, sIdx); // sem descanso → avança já
     }

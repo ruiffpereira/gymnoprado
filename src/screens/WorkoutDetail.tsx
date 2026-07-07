@@ -26,6 +26,7 @@ export function WorkoutDetail() {
   const { t } = useCms();
   const { workout, program, isLoading } = useFindWorkout(id);
   const start = useActiveWorkout((s) => s.start);
+  const activeWorkoutId = useActiveWorkout((s) => s.workoutId);
   const invalidate = useInvalidateGym();
   const [starting, setStarting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -55,6 +56,14 @@ export function WorkoutDetail() {
 
   const begin = async () => {
     if (starting) return;
+    // Já há um treino ativo para ESTE workout (ex.: reentrou pela lista/detalhe
+    // depois de a app ter ido para background/ter sido fechada) → RETOMA em vez
+    // de reiniciar, preservando o store (séries já feitas + descanso a decorrer).
+    // Mesmo caminho de retoma que a ActiveWorkoutBar usa (só navega).
+    if (activeWorkoutId === workout.id) {
+      navigate(`/treino/${workout.id}/executar`);
+      return;
+    }
     setStarting(true);
     // Pré-preenche com a última sessão (pesos/reps). Se falhar, arranca na mesma.
     let last = null;
