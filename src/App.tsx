@@ -3,6 +3,8 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "./store/useSession";
 import { fetchProfile } from "./api/session";
+import { isAuthApiError, isTransientApiError } from "./api/client";
+import { usePendingLogsSync } from "./hooks/usePendingLogsSync";
 import { Layout } from "./components/Layout";
 import { Toaster } from "./components/Toaster";
 import { InstallPrompt } from "./components/InstallPrompt";
@@ -23,26 +25,44 @@ import { Profile } from "./screens/Profile";
 import { CalendarSync } from "./screens/CalendarSync";
 import { Privacy } from "./screens/Privacy";
 
-/** Tenta restaurar a sessão a partir do token guardado. */
+/**
+ * Tenta restaurar a sessão a partir do token guardado.
+ *
+ * A sessão só morre com 401/403 (token realmente inválido — o interceptor já
+ * tentou o refresh antes de o erro chegar aqui). Apenas erros transitórios
+ * (offline, 5xx, timeout) continuam a tentar com backoff — erros não-axios/4xx
+ * falham de imediato. Isto impede retry infinito em erros definitivos (ex:
+ * servidor recusando a conexão) e retém a sessão só enquanto houver esperança
+ * de poder recuperá-la.
+ */
 function useRestoreSession() {
   const { status, hasToken, setAuthed, setGuest } = useSession();
   const enabled = status === "loading" && hasToken();
-  const { data, isError } = useQuery({
+  const { data, error, isError } = useQuery({
     queryKey: ["me"],
     queryFn: fetchProfile,
     enabled,
-    retry: false,
+    // Auth (401/403) → falha imediata (sem retries) e despromove.
+    // Transitório (5xx, 429, 408, sem rede) → retry infinito com backoff.
+    // Outro 4xx (400, 404, etc.) → falha imediata (não vai resolver sozinho).
+    retry: (_failureCount, err) => {
+      if (isAuthApiError(err)) return false;
+      return isTransientApiError(err);
+    },
+    retryDelay: (attempt) => Math.min(30_000, 1000 * 2 ** attempt),
   });
   useEffect(() => {
     if (data) setAuthed(data);
   }, [data, setAuthed]);
   useEffect(() => {
-    if (isError) setGuest();
-  }, [isError, setGuest]);
+    if (isError && isAuthApiError(error)) setGuest();
+  }, [isError, error, setGuest]);
 }
 
 export default function App() {
   useRestoreSession();
+  // Drena a fila offline de logs (arranque + online + visível; só autenticado).
+  usePendingLogsSync();
   const status = useSession((s) => s.status);
   const location = useLocation();
 

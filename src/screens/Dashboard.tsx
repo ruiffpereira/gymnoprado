@@ -10,6 +10,7 @@ import { greeting, relativeDays } from "../lib/format";
 import { WEEKDAYS_SHORT } from "../lib/exercises";
 import { useCms } from "../context/CmsContext";
 import { MensalidadeBanner } from "../components/MensalidadeBanner";
+import { PendingSyncBanner } from "../components/PendingSyncBanner";
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -58,6 +59,8 @@ export function Dashboard() {
   return (
     <div className="animate-fadeIn">
       <div className="px-5 lg:px-9 py-6 max-w-3xl mx-auto">
+      {/* Treinos guardados no telemóvel à espera de rede (fila offline) */}
+      <PendingSyncBanner />
       {/* Aviso de mensalidade por pagar / em atraso (some quando paga) */}
       <MensalidadeBanner />
       {/* Hero — treino de hoje */}

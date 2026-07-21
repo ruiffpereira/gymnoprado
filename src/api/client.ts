@@ -91,3 +91,23 @@ export function apiErrorMessage(err: unknown, fallback = "Ocorreu um erro"): str
   }
   return fallback;
 }
+
+/**
+ * Erro TRANSITÓRIO (vale a pena reter/reenviar): sem resposta do servidor
+ * (offline/timeout/DNS), 5xx, 429 (rate limit) ou 408 (request timeout).
+ * Um 4xx é definitivo — reenviar dá o mesmo resultado. Usado pela fila offline
+ * de logs e pelo restauro de sessão.
+ */
+export function isTransientApiError(err: unknown): boolean {
+  if (!axios.isAxiosError(err)) return false;
+  if (!err.response) return true; // rede/timeout — nunca chegou ao servidor
+  const status = err.response.status;
+  return status >= 500 || status === 429 || status === 408;
+}
+
+/** Erro de AUTENTICAÇÃO definitivo (401/403) — o único que justifica despromover a sessão. */
+export function isAuthApiError(err: unknown): boolean {
+  if (!axios.isAxiosError(err)) return false;
+  const s = err.response?.status;
+  return s === 401 || s === 403;
+}

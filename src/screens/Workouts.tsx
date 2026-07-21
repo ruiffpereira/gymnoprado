@@ -22,10 +22,13 @@ function WorkoutCard({ workout, readOnly, clientPrograms, onChanged }: {
   const navigate = useNavigate();
   const { t } = useCms();
   const [cloneOpen, setCloneOpen] = useState(false);
+  // Apagar um treino a partir da LISTA tem a mesma confirmação que o detalhe já
+  // tinha — era o único sítio onde um toque apagava sem perguntar.
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const remove = useMutation({
     mutationFn: () => deleteWorkout(workout.id),
-    onSuccess: () => { onChanged(); toast.success(t("gym.app.workouts.deleted")); },
+    onSuccess: () => { setConfirmDelete(false); onChanged(); toast.success(t("gym.app.workouts.deleted")); },
     onError: (e) => toast.error(apiErrorMessage(e)),
   });
   const clone = useMutation({
@@ -35,6 +38,7 @@ function WorkoutCard({ workout, readOnly, clientPrograms, onChanged }: {
   });
 
   const doClone = () => {
+    if (clone.isPending) return; // double-tap = 2 cópias
     if (clientPrograms.length === 0) { toast.error(t("gym.app.workouts.clone_need_group")); return; }
     if (clientPrograms.length === 1) clone.mutate(clientPrograms[0].id);
     else setCloneOpen(true);
@@ -70,11 +74,11 @@ function WorkoutCard({ workout, readOnly, clientPrograms, onChanged }: {
 
         <div className="flex items-center gap-1.5">
           <Button size="sm" icon={<Play size={15} fill="currentColor" />} onClick={() => navigate(`/treino/${workout.id}`)}>{t("gym.app.common.start")}</Button>
-          <Button size="sm" variant="greenLight" icon={<Copy size={15} />} onClick={doClone}>{t("gym.app.workouts.clone")}</Button>
+          <Button size="sm" variant="greenLight" icon={<Copy size={15} />} disabled={clone.isPending} onClick={doClone}>{t("gym.app.workouts.clone")}</Button>
           {!readOnly && (
             <>
               <button onClick={() => navigate(`/treino/${workout.id}/editar`)} className="ml-auto w-8 h-8 rounded-lg bg-bg flex items-center justify-center text-t2"><Pencil size={15} /></button>
-              <button onClick={() => remove.mutate()} className="w-8 h-8 rounded-lg bg-bg flex items-center justify-center text-red"><Trash2 size={15} /></button>
+              <button onClick={() => setConfirmDelete(true)} title={t("gym.app.detail.delete")} className="w-8 h-8 rounded-lg bg-bg flex items-center justify-center text-red"><Trash2 size={15} /></button>
             </>
           )}
         </div>
@@ -83,10 +87,21 @@ function WorkoutCard({ workout, readOnly, clientPrograms, onChanged }: {
       <Modal open={cloneOpen} onClose={() => setCloneOpen(false)} title={t("gym.app.workouts.clone_to")}>
         <div className="flex flex-col gap-2">
           {clientPrograms.map((p) => (
-            <button key={p.id} onClick={() => clone.mutate(p.id)} className="text-left p-3 rounded-xl border border-line hover:border-brand transition-colors">
+            <button key={p.id} disabled={clone.isPending} onClick={() => { if (!clone.isPending) clone.mutate(p.id); }} className="text-left p-3 rounded-xl border border-line hover:border-brand transition-colors disabled:opacity-50">
               <span className="font-semibold text-t1">{p.name}</span>
             </button>
           ))}
+        </div>
+      </Modal>
+
+      {/* Confirmação de apagar treino — mesma confirmação do detalhe */}
+      <Modal open={confirmDelete} onClose={() => setConfirmDelete(false)} title={t("gym.app.detail.delete_title")}>
+        <div className="pt-1">
+          <p className="text-[14px] text-t2 mb-5">{t("gym.app.detail.delete_confirm")}</p>
+          <div className="flex flex-col gap-2.5">
+            <Button fullWidth size="lg" variant="danger" disabled={remove.isPending} onClick={() => remove.mutate()}>{remove.isPending ? t("gym.app.common.saving") : t("gym.app.detail.delete")}</Button>
+            <Button fullWidth variant="ghost" onClick={() => setConfirmDelete(false)}>{t("gym.app.common.cancel")}</Button>
+          </div>
         </div>
       </Modal>
     </Card>
@@ -102,9 +117,11 @@ function ProgramAccordion({ program, readOnly, clientPrograms, onChanged }: {
   const navigate = useNavigate();
   const { t } = useCms();
   const [open, setOpen] = useState(true);
+  // Apagar um grupo leva TODOS os treinos dentro dele — nunca sem confirmação.
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const remove = useMutation({
     mutationFn: () => deleteProgram(program.id),
-    onSuccess: () => { onChanged(); toast.success(t("gym.app.workouts.group_deleted")); },
+    onSuccess: () => { setConfirmDelete(false); onChanged(); toast.success(t("gym.app.workouts.group_deleted")); },
     onError: (e) => toast.error(apiErrorMessage(e)),
   });
 
@@ -116,9 +133,22 @@ function ProgramAccordion({ program, readOnly, clientPrograms, onChanged }: {
         {readOnly && <Lock size={13} className="text-t3" />}
         <span className="text-xs text-t3">({program.workouts.length})</span>
         {!readOnly && (
-          <span onClick={(e) => { e.stopPropagation(); remove.mutate(); }} className="ml-auto text-t3 hover:text-red p-1"><Trash2 size={15} /></span>
+          <span onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }} className="ml-auto text-t3 hover:text-red p-1"><Trash2 size={15} /></span>
         )}
       </button>
+
+      {/* Confirmação de apagar grupo (leva os treinos todos) */}
+      <Modal open={confirmDelete} onClose={() => setConfirmDelete(false)} title={t("gym.app.workouts.group_delete_title") || "Apagar grupo?"}>
+        <div className="pt-1">
+          <p className="text-[14px] text-t2 mb-5">
+            {t("gym.app.workouts.group_delete_confirm") || "Apaga o grupo e todos os treinos dentro dele. Esta ação não pode ser anulada."}
+          </p>
+          <div className="flex flex-col gap-2.5">
+            <Button fullWidth size="lg" variant="danger" disabled={remove.isPending} onClick={() => remove.mutate()}>{remove.isPending ? t("gym.app.common.saving") : t("gym.app.detail.delete")}</Button>
+            <Button fullWidth variant="ghost" onClick={() => setConfirmDelete(false)}>{t("gym.app.common.cancel")}</Button>
+          </div>
+        </div>
+      </Modal>
 
       {open && (
         <div className="grid sm:grid-cols-2 gap-3 pb-3">

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@kubb/plugin-client/clients/axios";
 import { createLog, usePrograms } from "../api";
 import type { GymProgram, GymWorkout } from "../api";
@@ -47,18 +47,25 @@ export function useFindWorkout(id?: string) {
   return { workout: found?.workout, program: found?.program, isLoading, isError };
 }
 
+/**
+ * Invalida tudo o que depende de treinos/sessões (chaves do Kubb por url).
+ * Versão "plana" para quem não está num componente (ex.: a fila offline de
+ * logs invalida o histórico/dashboard ao drenar).
+ */
+export function invalidateGym(qc: QueryClient) {
+  qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/programs" }] });
+  qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/programs/active" }] });
+  qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/logs" }] });
+  qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/stats/summary" }] });
+  qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/stats/weekly" }] });
+  qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/stats/records" }] });
+  qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/me" }] });
+}
+
 /** Invalida tudo o que depende de treinos/sessões (chaves do Kubb por url). */
 export function useInvalidateGym() {
   const qc = useQueryClient();
-  return () => {
-    qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/programs" }] });
-    qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/programs/active" }] });
-    qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/logs" }] });
-    qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/stats/summary" }] });
-    qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/stats/weekly" }] });
-    qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/stats/records" }] });
-    qc.invalidateQueries({ queryKey: [{ url: "/websites/gym/me" }] });
-  };
+  return () => invalidateGym(qc);
 }
 
 export function useCreateLog() {

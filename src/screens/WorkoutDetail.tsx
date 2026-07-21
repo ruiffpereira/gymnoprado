@@ -20,6 +20,17 @@ function Metric({ icon, value, label }: { icon: React.ReactNode; value: string |
   );
 }
 
+/**
+ * Formata a duração estimada em minutos. ≥90 min mostra horas (Xh / Xh Ym).
+ * Ex: 45 → "~45", 90 → "~1h 30m", 120 → "~2h"
+ */
+function formatDurationMin(minutes: number): string {
+  if (minutes < 90) return `~${minutes}`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m === 0 ? `~${h}h` : `~${h}h ${m}m`;
+}
+
 export function WorkoutDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -27,9 +38,13 @@ export function WorkoutDetail() {
   const { workout, program, isLoading } = useFindWorkout(id);
   const start = useActiveWorkout((s) => s.start);
   const activeWorkoutId = useActiveWorkout((s) => s.workoutId);
+  const activeName = useActiveWorkout((s) => s.name);
+  const activeStartedAt = useActiveWorkout((s) => s.startedAt);
   const invalidate = useInvalidateGym();
   const [starting, setStarting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // Confirmação antes de descartar um OUTRO treino em curso para começar este.
+  const [confirmReplace, setConfirmReplace] = useState(false);
 
   const del = useMutation({
     mutationFn: () => deleteWorkout(workout!.id),
@@ -54,16 +69,8 @@ export function WorkoutDetail() {
   const totalSets = workout.exercises.reduce((a, e) => a + e.sets, 0);
   const estMin = Math.round(workout.exercises.reduce((a, e) => a + e.sets * (e.rest + 40), 0) / 60);
 
-  const begin = async () => {
-    if (starting) return;
-    // Já há um treino ativo para ESTE workout (ex.: reentrou pela lista/detalhe
-    // depois de a app ter ido para background/ter sido fechada) → RETOMA em vez
-    // de reiniciar, preservando o store (séries já feitas + descanso a decorrer).
-    // Mesmo caminho de retoma que a ActiveWorkoutBar usa (só navega).
-    if (activeWorkoutId === workout.id) {
-      navigate(`/treino/${workout.id}/executar`);
-      return;
-    }
+  // Arranque efetivo (depois de todos os guards/confirmações).
+  const reallyBegin = async () => {
     setStarting(true);
     // Pré-preenche com a última sessão (pesos/reps). Se falhar, arranca na mesma.
     let last = null;
@@ -75,6 +82,34 @@ export function WorkoutDetail() {
     start(workout, last);
     navigate(`/treino/${workout.id}/executar`);
   };
+
+  const begin = async () => {
+    if (starting) return;
+    // Treino sem exercícios: não arranca (o ecrã de execução não tem nada para
+    // mostrar — era um softlock com a barra "EM TREINO" pendurada).
+    if (workout.exercises.length === 0) {
+      toast.error(t("gym.app.detail.empty_workout") || "Este treino ainda não tem exercícios.");
+      return;
+    }
+    // Já há um treino ativo para ESTE workout (ex.: reentrou pela lista/detalhe
+    // depois de a app ter ido para background/ter sido fechada) → RETOMA em vez
+    // de reiniciar, preservando o store (séries já feitas + descanso a decorrer).
+    // Mesmo caminho de retoma que a ActiveWorkoutBar usa (só navega).
+    if (activeWorkoutId === workout.id) {
+      navigate(`/treino/${workout.id}/executar`);
+      return;
+    }
+    // Há OUTRO treino em curso: começar este repunha o store e apagava as
+    // séries já feitas em silêncio — pede confirmação explícita primeiro.
+    if (activeWorkoutId) {
+      setConfirmReplace(true);
+      return;
+    }
+    await reallyBegin();
+  };
+
+  // "há N min" do treino em curso, para o texto da confirmação (formato neutro).
+  const activeMins = activeStartedAt ? Math.max(1, Math.round((Date.now() - activeStartedAt) / 60000)) : 0;
 
   return (
     <div className="pb-28 animate-fadeIn">
@@ -95,7 +130,7 @@ export function WorkoutDetail() {
           <div className="flex">
             <Metric icon={<Dumbbell size={18} />} value={workout.exercises.length} label={t("gym.app.common.exercises")} />
             <Metric icon={<Layers size={18} />} value={totalSets} label={t("gym.app.common.sets")} />
-            <Metric icon={<Clock size={18} />} value={`~${estMin}`} label={t("gym.app.common.min")} />
+            <Metric icon={<Clock size={18} />} value={formatDurationMin(estMin)} label={t("gym.app.common.min")} />
             <Metric icon={<Target size={18} />} value={(workout.muscleGroups ?? []).length} label={t("gym.app.common.groups")} />
           </div>
         </div>
@@ -127,12 +162,12 @@ export function WorkoutDetail() {
                   <span className="font-semibold text-t1 truncate">{e.name}</span>
                   <GroupChip group={e.group} />
                 </div>
-                <p className="text-xs text-t2 mb-1.5">{(e as any).type === "time"
-                  ? `${e.sets} ${t("gym.app.common.sets")} · ${(e as any).duration ?? 0}s · ${e.rest}s ${t("gym.app.common.rest")}`
+                <p className="text-xs text-t2 mb-1.5">{e.type === "time"
+                  ? `${e.sets} ${t("gym.app.common.sets")} · ${e.duration ?? 0}s · ${e.rest}s ${t("gym.app.common.rest")}`
                   : `${e.sets} ${t("gym.app.common.sets")} · ${e.reps} ${t("gym.app.common.reps")} · ${e.weight}kg · ${e.rest}s ${t("gym.app.common.rest")}`}</p>
                 <div className="flex flex-wrap gap-1">
                   {Array.from({ length: e.sets }).map((_, s) => (
-                    <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-bg text-t2">{(e as any).type === "time" ? `${(e as any).duration ?? 0}s` : `${e.reps} ${t("gym.app.common.reps")} · ${e.weight}kg`}</span>
+                    <span key={s} className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-bg text-t2">{e.type === "time" ? `${e.duration ?? 0}s` : `${e.reps} ${t("gym.app.common.reps")} · ${e.weight}kg`}</span>
                   ))}
                 </div>
               </div>
@@ -155,6 +190,29 @@ export function WorkoutDetail() {
           <div className="flex flex-col gap-2.5">
             <Button fullWidth size="lg" variant="danger" disabled={del.isPending} onClick={() => del.mutate()}>{del.isPending ? t("gym.app.common.saving") : t("gym.app.detail.delete")}</Button>
             <Button fullWidth variant="ghost" onClick={() => setConfirmDelete(false)}>{t("gym.app.common.cancel")}</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Confirmação: há OUTRO treino em curso — começar este descarta-o */}
+      <Modal open={confirmReplace} onClose={() => setConfirmReplace(false)} title={t("gym.app.detail.active_conflict_title") || "Treino em curso"}>
+        <div className="pt-1">
+          <p className="text-[14px] font-semibold text-t1 mb-1.5">{activeName} · {activeMins} min</p>
+          <p className="text-[14px] text-t2 mb-5">
+            {t("gym.app.detail.active_conflict_question") ||
+              "Começar este treino descarta o progresso do que está em curso. Continuar?"}
+          </p>
+          <div className="flex flex-col gap-2.5">
+            <Button
+              fullWidth
+              size="lg"
+              variant="danger"
+              disabled={starting}
+              onClick={async () => { setConfirmReplace(false); await reallyBegin(); }}
+            >
+              {t("gym.app.detail.active_conflict_discard") || "Descartar e começar este"}
+            </Button>
+            <Button fullWidth variant="ghost" onClick={() => setConfirmReplace(false)}>{t("gym.app.common.cancel")}</Button>
           </div>
         </div>
       </Modal>

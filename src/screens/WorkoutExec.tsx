@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, ChevronRight, ChevronDown, Trophy, Timer, Minus, Plus, Dumbbell, ArrowDown } from "lucide-react";
+import { Check, ChevronRight, ChevronDown, Trophy, Timer, Minus, Plus, Dumbbell, ArrowDown, RotateCcw } from "lucide-react";
 import { useActiveWorkout } from "../store/useActiveWorkout";
+import { usePendingLogs } from "../store/usePendingLogs";
 import { useCreateLog } from "../hooks/useGym";
 import { Button, Modal } from "../components/ui";
 import { formatClock } from "../lib/format";
 import { groupColor } from "../lib/exercises";
-import { apiErrorMessage } from "../api/client";
+import { apiErrorMessage, isTransientApiError } from "../api/client";
 import { toast } from "../lib/toast";
 import { useCms } from "../context/CmsContext";
 import { useStatusBarColor } from "../hooks/useStatusBarColor";
@@ -67,11 +68,19 @@ export function WorkoutExec() {
   const restMsg = rest?.msg ?? "";
 
   const [showFinish, setShowFinish] = useState(false);
+  // "Cancelar treino" em dois passos: 1.º toque arma a confirmação (o botão
+  // muda de texto), 2.º toque dentro da janela descarta mesmo. Ação destrutiva
+  // sem confirmação era o caminho mais curto para perder 40 min de séries.
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const confirmDiscardTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const createLog = useCreateLog();
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   // Fim do descanso → conclui a série guardada e avança (no store).
   const resolveRest = () => wk.finishRest();
+
+  // Limpa o timer da confirmação de descartar ao desmontar.
+  useEffect(() => () => { if (confirmDiscardTimer.current) clearTimeout(confirmDiscardTimer.current); }, []);
 
   useEffect(() => {
     if (!wk.workoutId) navigate("/treinos", { replace: true });
@@ -230,6 +239,9 @@ export function WorkoutExec() {
   // nas já `done` nem nas `skipped` — evita o conflito `{done:true, skipped:true}`
   // que fazia o contador e o log divergirem (FIX 1, review overhaul).
   const completeExercise = () => {
+    // Nota: só alcançável fora de um descanso (as ações secundárias escondem-se
+    // com `resting`). O cancelRest aqui é inofensivo para dados: a série que um
+    // descanso fecharia é pendente deste exercício e é marcada `done` já abaixo.
     wk.cancelRest();
     sets.forEach((s, si) => {
       if (!s.done && !s.skipped) wk.setDone(current, si, true);
@@ -256,12 +268,20 @@ export function WorkoutExec() {
   };
 
   // Ver/editar outra série (nunca avança a sequência). Tocar numa série SALTADA
-  // desfaz o skip — a regra é que um skip fica por fazer e é reversível; a série
-  // volta a pendente/editável (recompõe `currentSetIdx` se for a mais antiga
-  // pendente). Tocar numa `done` ou já pendente só muda a vista, como antes.
+  // já NÃO desfaz o skip no próprio toque (era uma mutação num gesto de
+  // inspeção): o toque só a seleciona, e aparece um botão explícito
+  // "Repor esta série" (unskipSelected) — o desfazer passa a ser um 2.º toque
+  // deliberado. Tocar numa `done` ou já pendente só muda a vista, como antes.
   const selectSet = (si: number) => {
-    if (sets[si].skipped) wk.updateSet(current, si, { skipped: false });
     wk.setSelectedSet(current, si);
+  };
+
+  // Desfaz o skip da série SELECIONADA (botão explícito): volta a
+  // pendente/editável e a sequência recompõe `currentSetIdx` sozinha se esta
+  // for a pendente mais antiga.
+  const unskipSelected = () => {
+    if (!selected.skipped) return;
+    wk.updateSet(current, selectedSetIdx, { skipped: false });
   };
 
   const goNext = () => {
@@ -270,13 +290,33 @@ export function WorkoutExec() {
   };
 
   const finishWorkout = () => {
-    createLog.mutate(wk.buildLog(), {
+    // Backstop: terminar com um descanso a decorrer CONCLUI a série que esse
+    // descanso ia fechar (já foi feita fisicamente) — nunca a deixa fora do log.
+    const st = useActiveWorkout.getState();
+    if (st.rest) st.finishRest();
+    const log = useActiveWorkout.getState().buildLog();
+    createLog.mutate(log, {
       onSuccess: () => {
         toast.success(t("gym.app.exec.saved"));
         wk.clear();
         navigate("/", { replace: true });
       },
-      onError: (e) => toast.error(apiErrorMessage(e, t("gym.app.exec.save_error"))),
+      onError: (e) => {
+        if (isTransientApiError(e)) {
+          // Sem rede / timeout / 5xx: o treino vai para a fila offline
+          // persistida (reenvio automático, dedupe por clientUuid) — o
+          // utilizador segue em frente, nunca fica bloqueado nem perde a sessão.
+          usePendingLogs.getState().enqueue(log);
+          toast.success(
+            t("gym.app.exec.saved_offline") ||
+              "Sem rede — treino guardado no telemóvel. Será enviado automaticamente.",
+          );
+          wk.clear();
+          navigate("/", { replace: true });
+          return;
+        }
+        toast.error(apiErrorMessage(e, t("gym.app.exec.save_error")));
+      },
     });
   };
 
@@ -285,10 +325,24 @@ export function WorkoutExec() {
     navigate("/");
   };
 
-  // Descartar: termina o treino sem guardar.
+  // Descartar: termina o treino sem guardar — SÓ via confirmação em dois passos.
   const discard = () => {
+    if (!confirmDiscard) {
+      setConfirmDiscard(true);
+      if (confirmDiscardTimer.current) clearTimeout(confirmDiscardTimer.current);
+      confirmDiscardTimer.current = setTimeout(() => setConfirmDiscard(false), 4000);
+      return;
+    }
+    if (confirmDiscardTimer.current) clearTimeout(confirmDiscardTimer.current);
     wk.clear();
     navigate("/", { replace: true });
+  };
+
+  // Fechar o modal de fim desarma a confirmação de descartar.
+  const closeFinish = () => {
+    setShowFinish(false);
+    setConfirmDiscard(false);
+    if (confirmDiscardTimer.current) clearTimeout(confirmDiscardTimer.current);
   };
 
   // Subtítulo do CTA "FAZER AGORA" (orientado à ação, como no protótipo). A
@@ -313,7 +367,9 @@ export function WorkoutExec() {
         <div className="flex items-center justify-between mb-1">
           <button onClick={minimize} title={t("gym.app.exec.minimize")} className="w-[38px] h-[38px] rounded-[11px] bg-white/10 flex items-center justify-center"><ChevronDown size={20} className="text-white" /></button>
           <div className="text-[13px] font-bold text-white/85 truncate max-w-[55%]">{wk.name}</div>
-          <button onClick={() => setShowFinish(true)} className="px-[15px] py-[9px] rounded-[11px] bg-brand text-white text-[13px] font-extrabold">{t("gym.app.exec.finish")}</button>
+          {/* "Terminar" durante um descanso CONCLUI primeiro a série que o
+              descanso ia fechar (nunca a engole) — o resumo do modal já a conta. */}
+          <button onClick={() => { if (wk.rest) wk.finishRest(); setShowFinish(true); }} className="px-[15px] py-[9px] rounded-[11px] bg-brand text-white text-[13px] font-extrabold">{t("gym.app.exec.finish")}</button>
         </div>
         {/* Tempo a correr */}
         <div className="flex flex-col items-center gap-0.5 pt-1.5 pb-0.5">
@@ -341,13 +397,14 @@ export function WorkoutExec() {
             {wk.exercises.map((e, i) => {
               const eDone = e.sets.every((s) => s.done);
               // Dots tocáveis (ajuste 2c): navegação de volta a um exercício já
-              // passado/saltado — cancela um descanso em curso para não ficar
-              // num estado estranho ao saltar de posição.
+              // passado/saltado. Um descanso em curso é RESOLVIDO (finishRest:
+              // conclui a série feita que ele ia fechar), nunca cancelado —
+              // cancelar deitava fora uma série já executada.
               return (
                 <button
                   key={i}
                   type="button"
-                  onClick={() => { wk.cancelRest(); wk.setIndex(i); }}
+                  onClick={() => { wk.finishRest(); wk.setIndex(i); }}
                   title={e.name || `${t("gym.app.exec.exercise_label")} ${i + 1}`}
                   aria-label={e.name || `${t("gym.app.exec.exercise_label")} ${i + 1}`}
                   className="h-2 rounded-full transition-all duration-200 border-none p-0 cursor-pointer active:opacity-70"
@@ -403,6 +460,18 @@ export function WorkoutExec() {
                     })}
                   </div>
                 </div>
+              )}
+
+              {/* Série SALTADA selecionada → desfazer é um botão explícito (2.º
+                  toque deliberado), nunca o próprio toque de inspeção no quadrado. */}
+              {selected?.skipped && (
+                <button
+                  onClick={unskipSelected}
+                  className="mb-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-pill bg-brand-lt text-brand-dk text-[12.5px] font-bold active:scale-95 transition"
+                >
+                  <RotateCcw size={13} />
+                  {t("gym.app.exec.unskip_set") || "Repor esta série"} · {selectedSetIdx + 1}
+                </button>
               )}
 
               {/* ── Steppers (mostram/editam a série SELECIONADA; visíveis também durante o descanso) ── */}
@@ -542,7 +611,7 @@ export function WorkoutExec() {
       </div>
 
       {/* Finish modal */}
-      <Modal open={showFinish} onClose={() => setShowFinish(false)} title={t("gym.app.exec.finish_workout")}>
+      <Modal open={showFinish} onClose={closeFinish} title={t("gym.app.exec.finish_workout")}>
         <div className="text-center">
           <div className="w-20 h-20 rounded-full bg-brand-xlt flex items-center justify-center mx-auto mb-5">
             <Trophy size={36} className="text-brand" />
@@ -562,8 +631,13 @@ export function WorkoutExec() {
           </div>
           <div className="flex flex-col gap-2.5">
             <Button fullWidth size="lg" disabled={createLog.isPending} onClick={finishWorkout}>{createLog.isPending ? t("gym.app.common.saving") : t("gym.app.exec.finish_now")}</Button>
-            <Button fullWidth variant="danger" onClick={discard}>{t("gym.app.exec.cancel_workout")}</Button>
-            <Button fullWidth variant="ghost" onClick={() => setShowFinish(false)}>{t("gym.app.exec.keep_training")}</Button>
+            {/* Dois passos: 1.º toque arma ("tocar outra vez…"), 2.º descarta. */}
+            <Button fullWidth variant="danger" className={confirmDiscard ? "animate-pulse" : ""} onClick={discard}>
+              {confirmDiscard
+                ? t("gym.app.exec.cancel_workout_confirm") || "Tocar outra vez para descartar"
+                : t("gym.app.exec.cancel_workout")}
+            </Button>
+            <Button fullWidth variant="ghost" onClick={closeFinish}>{t("gym.app.exec.keep_training")}</Button>
           </div>
         </div>
       </Modal>

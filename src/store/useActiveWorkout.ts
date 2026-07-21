@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import type { GymWorkout as Workout } from "../gen/types/GymWorkout";
 import type { PostWebsitesGymLogsMutationRequest as LogInput } from "../gen/types/PostWebsitesGymLogs";
 import type { GetWebsitesGymWorkoutsIdLast200 as LastPerformance } from "../gen/types/GetWebsitesGymWorkoutsIdLast";
+import { uuid, localDateISO } from "../lib/format";
 
 export interface SetEntry {
   weight: number;
@@ -71,6 +72,12 @@ interface ActiveWorkoutState {
   workoutId: string | null;
   name: string;
   startedAt: number | null;
+  /**
+   * UUID gerado no telemóvel no `start()` e incluído no `buildLog()` — a API
+   * faz dedupe por `(customerId, clientUuid)`, por isso qualquer retry
+   * (timeout, fila offline) é seguro: nunca cria um log duplicado.
+   */
+  clientUuid: string | null;
   currentIndex: number;
   /**
    * Série SELECIONADA por exercício (índice) — a que se vê/edita nos steppers.
@@ -86,7 +93,6 @@ interface ActiveWorkoutState {
   setIndex: (i: number) => void;
   setSelectedSet: (exIdx: number, setIdx: number) => void;
   updateSet: (exIdx: number, setIdx: number, patch: Partial<SetEntry>) => void;
-  toggleDone: (exIdx: number, setIdx: number) => void;
   setDone: (exIdx: number, setIdx: number, done: boolean) => void;
   /** Conclui a série e avança para a próxima série/exercício. */
   advanceAfterSet: (exIdx: number, setIdx: number) => void;
@@ -163,18 +169,20 @@ function prefillSets(
   last?: LastPerformance | null,
 ): SetEntry[] {
   const prev = last?.entries.find((e) => e.exerciseName === ex.name)?.sets;
-  const isTime = (ex as any).type === "time";
+  const isTime = ex.type === "time";
   const rest = ex.rest || 60;
   return Array.from({ length: count }, (_, j) => {
     const src = prev && prev.length > 0 ? prev[Math.min(j, prev.length - 1)] : null;
     return {
       weight: src ? src.weight : ex.weight,
       reps: src ? src.reps : ex.reps,
-      duration: isTime ? ((ex as any).duration ?? 0) : ((src as any)?.duration ?? 0),
+      // TODO(spec): `duration` ainda não existe nos sets de /workouts/:id/last no spec.
+      duration: isTime ? (ex.duration ?? 0) : ((src as any)?.duration ?? 0),
       done: false,
       rest,
       lastWeight: src ? src.weight : null,
       lastReps: src ? src.reps : null,
+      // TODO(spec): idem — `duration` fora do spec da última sessão.
       lastDuration: src ? ((src as any).duration ?? null) : null,
     };
   });
@@ -191,6 +199,8 @@ function buildSets(
   ex: Workout["exercises"][number],
   last?: LastPerformance | null,
 ): SetEntry[] {
+  // TODO(spec): `mode`/`setRows` ainda não existem no spec.gym.json (drift do
+  // swagger — outro agente está a atualizá-lo); até lá lêem-se via cast.
   const setRows = (ex as any).setRows as
     | { reps?: number; weight?: number; rest?: number; drop?: boolean; steps?: { reps?: number; weight?: number; rest?: number }[] }[]
     | null
@@ -229,6 +239,7 @@ function buildSets(
         dropTotal: t.dropTotal,
         lastWeight: src ? src.weight : null,
         lastReps: src ? src.reps : null,
+        // TODO(spec): `duration` fora do spec da última sessão.
         lastDuration: src ? ((src as any).duration ?? null) : null,
       };
     });
@@ -242,6 +253,7 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
       workoutId: null,
       name: "",
       startedAt: null,
+      clientUuid: null,
       currentIndex: 0,
       selectedSet: [],
       exercises: [],
@@ -252,6 +264,9 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
           workoutId: w.id,
           name: w.name,
           startedAt: Date.now(),
+          // Gerado UMA vez por sessão de treino — todos os envios (incl. retries
+          // da fila offline) usam o mesmo, e a API dedupa por ele.
+          clientUuid: uuid(),
           currentIndex: 0,
           selectedSet: w.exercises.map(() => 0),
           rest: null,
@@ -259,12 +274,12 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
             exerciseId: e.exerciseId ?? null,
             name: e.name,
             group: e.group,
-            type: (e as any).type === "time" ? "time" : "strength",
+            type: e.type === "time" ? "time" : "strength",
             rest: e.rest || 60,
             mediaUrl: e.mediaUrl ?? null,
             targetReps: e.reps,
             targetWeight: e.weight,
-            targetDuration: (e as any).duration ?? 0,
+            targetDuration: e.duration ?? 0,
             sets: buildSets(e, last),
           })),
         }),
@@ -284,16 +299,6 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
             i !== exIdx
               ? ex
               : { ...ex, sets: ex.sets.map((st, j) => (j === setIdx ? { ...st, ...patch } : st)) },
-          );
-          return { exercises };
-        }),
-
-      toggleDone: (exIdx, setIdx) =>
-        set((s) => {
-          const exercises = s.exercises.map((ex, i) =>
-            i !== exIdx
-              ? ex
-              : { ...ex, sets: ex.sets.map((st, j) => (j === setIdx ? { ...st, done: !st.done } : st)) },
           );
           return { exercises };
         }),
@@ -358,6 +363,12 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
         return {
           workoutId: s.workoutId,
           workoutName: s.name,
+          // Data LOCAL explícita — sem ela a API usa o default UTC do servidor,
+          // que na janela 00:00–01:00 (verão PT) carimba o dia anterior.
+          date: localDateISO(),
+          // Idempotência: a API dedupa por (customerId, clientUuid) — retries e
+          // a fila offline nunca criam duplicados.
+          clientUuid: s.clientUuid ?? undefined,
           durationMin,
           totalSets: s.doneSets(),
           entries: s.exercises.map((e) => ({
@@ -366,7 +377,7 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
             // Séries saltadas ficam por fazer — nunca entram no log (overhaul do ecrã de treino).
             sets: e.sets
               .filter((st) => !st.skipped)
-              .map((st) => ({ weight: st.weight, reps: st.reps, duration: st.duration, done: st.done } as any)),
+              .map((st) => ({ weight: st.weight, reps: st.reps, duration: st.duration, done: st.done })),
           })),
         };
       },
@@ -376,6 +387,7 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
           workoutId: null,
           name: "",
           startedAt: null,
+          clientUuid: null,
           currentIndex: 0,
           selectedSet: [],
           exercises: [],
@@ -393,7 +405,10 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
       // ATUAL). Sem esta migração explícita, um treino em curso persistido numa
       // versão anterior perdia o `activeSet` gravado (o merge do zustand só o
       // reaproveitava por sorte via o default `?? currentSetIdx`).
-      version: 2,
+      // v3: `clientUuid` (idempotência do POST /logs). Um treino em curso
+      // persistido por uma versão anterior ganha um uuid na migração — assim o
+      // log desse treino já sai dedupável.
+      version: 3,
       migrate: (persisted: any, version) => {
         if (version < 1 && persisted?.rest && typeof persisted.rest.endsAt !== "number") {
           const remaining = typeof persisted.rest.remaining === "number" ? persisted.rest.remaining : 0;
@@ -403,6 +418,9 @@ export const useActiveWorkout = create<ActiveWorkoutState>()(
         if (version < 2 && persisted && "activeSet" in persisted) {
           if (persisted.selectedSet === undefined) persisted.selectedSet = persisted.activeSet;
           delete persisted.activeSet;
+        }
+        if (version < 3 && persisted && persisted.workoutId && !persisted.clientUuid) {
+          persisted.clientUuid = uuid();
         }
         return persisted;
       },

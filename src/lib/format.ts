@@ -25,6 +25,19 @@ export function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/**
+ * Data LOCAL `yyyy-MM-dd` (não UTC). Usar para carimbar registos do utilizador
+ * (ex.: a `date` do log de treino): entre as 00:00 e a 01:00 em horário de
+ * verão PT, `toISOString()` ainda devolve o dia ANTERIOR — o treino ficaria no
+ * dia errado no histórico/streak.
+ */
+export function localDateISO(d: Date = new Date()): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export function uuid(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
     return crypto.randomUUID();

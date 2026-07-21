@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { ChevronLeft, Plus, Trash2, ArrowUp, ArrowDown, Check, Dumbbell } from "lucide-react";
 import { useCatalog, createWorkout, updateWorkout } from "../api";
-import type { GymCatalogExercise } from "../api";
+import type { GymCatalogExercise, GymExerciseInput } from "../api";
 import { useFindWorkout, useInvalidateGym } from "../hooks/useGym";
 import { Button, Input, Modal, Stepper, GroupChip, Spinner, Tabs } from "../components/ui";
 import { WEEKDAYS_SHORT, MUSCLE_GROUPS, groupColor } from "../lib/exercises";
@@ -11,6 +11,13 @@ import { apiErrorMessage } from "../api/client";
 import { toast } from "../lib/toast";
 import { useCms } from "../context/CmsContext";
 
+/**
+ * Rascunho de um exercício no editor. Além dos 4 escalares editáveis
+ * (sets/reps/weight/rest), faz ROUND-TRIP de tudo o que o editor não edita —
+ * o PATCH substitui o array `exercises` por inteiro, por isso qualquer campo
+ * que não voltasse aqui era destruído em silêncio ao guardar (`type:"time"`
+ * virava força, dropsets perdiam os `setRows`, notas do coach e media sumiam).
+ */
 interface Draft {
   exerciseId: string | null;
   name: string;
@@ -19,6 +26,29 @@ interface Draft {
   reps: number;
   weight: number;
   rest: number;
+  // Preservados (não editáveis aqui) — devolvidos intactos no guardar.
+  type?: "strength" | "time";
+  duration?: number | null;
+  notes?: string | null;
+  mediaUrl?: string | null;
+  // TODO(spec): `mode`/`setRows`/`subGroup`/`media` ainda não existem nos tipos
+  // gerados (drift do swagger, já corrigido na fonte); até lá viajam como `unknown`.
+  mode?: unknown;
+  setRows?: unknown;
+  subGroup?: unknown;
+  media?: unknown;
+  /**
+   * O utilizador mexeu nos steppers desta linha. Num exercício série-a-série
+   * (`mode:"perSet"`), editar os escalares converte-o para uniforme (os
+   * escalares passam a mandar); sem toque, `mode`/`setRows` seguem intactos.
+   * Marcado APENAS se o valor final ≠ valor inicial (snapshot ao carregar).
+   */
+  scalarsTouched?: boolean;
+  // Snapshot dos valores iniciais para detetar mudanças reais (não apenas toque+volta).
+  _initialSets?: number;
+  _initialReps?: number;
+  _initialWeight?: number;
+  _initialRest?: number;
 }
 
 export function WorkoutEditor() {
@@ -36,21 +66,66 @@ export function WorkoutEditor() {
   const [rows, setRows] = useState<Draft[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [filter, setFilter] = useState<string>("all");
+  const seededId = useRef<string | null>(null);
 
+  // Seed do form — UMA VEZ por id de treino. Refetch em background não limpa
+  // edições não guardadas (um refetch antigo mudava a ordem do `rows` de maneira
+  // subtil, mas agora está imune porque só semeia uma vez).
   useEffect(() => {
-    if (workout) {
+    if (workout && seededId.current !== workout.id) {
+      seededId.current = workout.id;
       setName(workout.name);
       setDays(workout.daysOfWeek ?? []);
       setRows(workout.exercises.map((e) => ({
         exerciseId: e.exerciseId ?? null, name: e.name, group: e.group,
         sets: e.sets, reps: e.reps, weight: e.weight ?? 0, rest: e.rest ?? 60,
+        // Round-trip: o PATCH substitui `exercises` por inteiro — preservar
+        // tudo o que este editor não edita.
+        type: e.type, duration: e.duration ?? null, notes: e.notes ?? null, mediaUrl: e.mediaUrl ?? null,
+        // TODO(spec): `mode`/`setRows`/`subGroup`/`media` fora dos tipos gerados (drift do swagger).
+        mode: (e as any).mode, setRows: (e as any).setRows, subGroup: (e as any).subGroup,
+        media: (e as any).media,
+        // Snapshot dos valores iniciais para detetar mudanças reais.
+        _initialSets: e.sets,
+        _initialReps: e.reps,
+        _initialWeight: e.weight ?? 0,
+        _initialRest: e.rest ?? 60,
       })));
     }
   }, [workout]);
 
+  /**
+   * Constrói o payload de um exercício a partir do rascunho. Decisão (#20):
+   * num exercício série-a-série, mexer nos steppers converte-o para uniforme
+   * (`mode:"uniform"`, sem `setRows` — os escalares mandam); sem toque,
+   * `mode`/`setRows` passam intactos.
+   */
+  const toExerciseInput = (row: Draft): GymExerciseInput => {
+    const perSetDropped = row.scalarsTouched && row.mode === "perSet";
+    const base = {
+      exerciseId: row.exerciseId,
+      name: row.name,
+      group: row.group,
+      sets: row.sets,
+      reps: row.reps,
+      weight: row.weight,
+      rest: row.rest,
+      type: row.type,
+      duration: row.duration,
+      notes: row.notes,
+      mediaUrl: row.mediaUrl,
+      // TODO(spec): `mode`/`setRows`/`subGroup`/`media` ainda fora do GymExerciseInput gerado.
+      mode: perSetDropped ? "uniform" : row.mode,
+      setRows: perSetDropped ? undefined : row.setRows,
+      subGroup: row.subGroup,
+      media: row.media,
+    };
+    return base as GymExerciseInput;
+  };
+
   const save = useMutation({
     mutationFn: () => {
-      const payload = { name: name.trim(), daysOfWeek: days, exercises: rows };
+      const payload = { name: name.trim(), daysOfWeek: days, exercises: rows.map(toExerciseInput) };
       if (editing && id) return updateWorkout(id, payload);
       return createWorkout(programId!, payload);
     },
@@ -63,10 +138,27 @@ export function WorkoutEditor() {
   });
 
   const addExercise = (ex: GymCatalogExercise) => {
-    setRows((r) => [...r, { exerciseId: ex.exerciseId, name: ex.name, group: ex.group, sets: 3, reps: 10, weight: 0, rest: 60 }]);
+    setRows((r) => [...r, { exerciseId: ex.exerciseId, name: ex.name, group: ex.group, sets: 3, reps: 10, weight: 0, rest: 60, mediaUrl: ex.mediaUrl ?? null, _initialSets: 3, _initialReps: 10, _initialWeight: 0, _initialRest: 60 }]);
     setPickerOpen(false);
   };
-  const update = (i: number, patch: Partial<Draft>) => setRows((r) => r.map((row, idx) => (idx === i ? { ...row, ...patch } : row)));
+  // Só chamado pelos steppers (sets/reps/weight/rest) → marca a linha como
+  // "escalares tocados" APENAS se o valor final ≠ valor inicial (num perSet,
+  // converte para uniforme ao guardar — ver Draft). Tocar +/− e voltar ao
+  // original não marca.
+  const update = (i: number, patch: Partial<Draft>) =>
+    setRows((r) =>
+      r.map((row, idx) => {
+        if (idx !== i) return row;
+        const newRow = { ...row, ...patch };
+        // Marca `scalarsTouched` apenas se algum escalar mudou do initial.
+        const setsTouched = newRow.sets !== row._initialSets;
+        const repsTouched = newRow.reps !== row._initialReps;
+        const weightTouched = newRow.weight !== row._initialWeight;
+        const restTouched = newRow.rest !== row._initialRest;
+        const changed = setsTouched || repsTouched || weightTouched || restTouched;
+        return { ...newRow, scalarsTouched: changed ? true : newRow.scalarsTouched };
+      }),
+    );
   const removeRow = (i: number) => setRows((r) => r.filter((_, idx) => idx !== i));
   const move = (i: number, dir: -1 | 1) => setRows((r) => {
     const j = i + dir;
