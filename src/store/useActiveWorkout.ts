@@ -173,17 +173,17 @@ function prefillSets(
   const rest = ex.rest || 60;
   return Array.from({ length: count }, (_, j) => {
     const src = prev && prev.length > 0 ? prev[Math.min(j, prev.length - 1)] : null;
+    // #13: Tempo herda última sessão (padrão ao peso/reps na força)
+    const srcDuration = src ? ((src as any).duration ?? null) : null;
     return {
       weight: src ? src.weight : ex.weight,
       reps: src ? src.reps : ex.reps,
-      // TODO(spec): `duration` ainda não existe nos sets de /workouts/:id/last no spec.
-      duration: isTime ? (ex.duration ?? 0) : ((src as any)?.duration ?? 0),
+      duration: isTime ? (srcDuration ?? ex.duration ?? 0) : 0,
       done: false,
       rest,
       lastWeight: src ? src.weight : null,
       lastReps: src ? src.reps : null,
-      // TODO(spec): idem — `duration` fora do spec da última sessão.
-      lastDuration: src ? ((src as any).duration ?? null) : null,
+      lastDuration: isTime ? srcDuration : null,
     };
   });
 }

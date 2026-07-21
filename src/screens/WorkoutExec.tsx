@@ -11,6 +11,7 @@ import { apiErrorMessage, isTransientApiError } from "../api/client";
 import { toast } from "../lib/toast";
 import { useCms } from "../context/CmsContext";
 import { useStatusBarColor } from "../hooks/useStatusBarColor";
+import { restEndFeedback } from "../lib/feedback";
 
 function useElapsed(startedAt: number | null) {
   const [now, setNow] = useState(Date.now());
@@ -73,14 +74,29 @@ export function WorkoutExec() {
   // sem confirmação era o caminho mais curto para perder 40 min de séries.
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const confirmDiscardTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // #8: Input numérico inline para peso/reps/duração
+  const [inputMode, setInputMode] = useState<{ exIdx: number; setIdx: number; field: "weight" | "reps" | "duration" } | null>(null);
+  const [inputValue, setInputValue] = useState("");
+
+  // #9: Timer de cronómetro para exercícios de tempo (padrão ao descanso wall-clock)
+  const [timeEndsAt, setTimeEndsAt] = useState<number | null>(null);
+  const [timeClock, setTimeClock] = useState(Date.now());
+
   const createLog = useCreateLog();
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   // Fim do descanso → conclui a série guardada e avança (no store).
-  const resolveRest = () => wk.finishRest();
+  const resolveRest = () => {
+    wk.finishRest();
+    // #6: Feedback sensorial no fim do descanso (só ao terminar sozinho, nunca em manual)
+    restEndFeedback();
+  };
 
-  // Limpa o timer da confirmação de descartar ao desmontar.
-  useEffect(() => () => { if (confirmDiscardTimer.current) clearTimeout(confirmDiscardTimer.current); }, []);
+  // Limpa timers ao desmontar.
+  useEffect(() => () => {
+    if (confirmDiscardTimer.current) clearTimeout(confirmDiscardTimer.current);
+  }, []);
 
   useEffect(() => {
     if (!wk.workoutId) navigate("/treinos", { replace: true });
@@ -94,6 +110,21 @@ export function WorkoutExec() {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, [resting]);
+
+  // #9: Ticker do cronómetro para tempo — mesmo padrão ao descanso
+  useEffect(() => {
+    if (!timeEndsAt) return;
+    setTimeClock(Date.now());
+    const id = setInterval(() => {
+      const now = Date.now();
+      setTimeClock(now);
+      if (now >= timeEndsAt) {
+        setTimeEndsAt(null);
+        restEndFeedback();
+      }
+    }, 100);
+    return () => clearInterval(id);
+  }, [timeEndsAt]);
 
   // Ao chegar a 0 (mesmo vindo de um salto grande, ex.: 2 min em background
   // com um descanso de 60s), resolve já — avança para a próxima série/exercício.
@@ -194,6 +225,33 @@ export function WorkoutExec() {
     wk.updateSet(current, selectedSetIdx, { [field]: Math.max(0, round2(selected[field] + delta)) });
   };
 
+  // #8: press-and-hold nos steppers — após 400ms de hold repete a cada 130ms.
+  // `holdFired` suprime o onClick sintético que o browser dispara no pointerup
+  // depois de um hold (senão o largar somava um passo extra).
+  const holdTimer = useRef<number | null>(null);
+  const holdInterval = useRef<number | null>(null);
+  const holdFired = useRef(false);
+  const stopHold = () => {
+    if (holdTimer.current != null) { window.clearTimeout(holdTimer.current); holdTimer.current = null; }
+    if (holdInterval.current != null) { window.clearInterval(holdInterval.current); holdInterval.current = null; }
+  };
+  useEffect(() => stopHold, []);
+  const holdProps = (fn: () => void, disabled?: boolean) => ({
+    onPointerDown: () => {
+      if (disabled) return;
+      holdTimer.current = window.setTimeout(() => {
+        holdInterval.current = window.setInterval(() => { holdFired.current = true; fn(); }, 130);
+      }, 400);
+    },
+    onPointerUp: stopHold,
+    onPointerLeave: stopHold,
+    onPointerCancel: stopHold,
+  });
+  const clickUnlessHeld = (fn: () => void) => () => {
+    if (holdFired.current) { holdFired.current = false; return; }
+    fn();
+  };
+
   // Conclui o passo ATUAL e arranca o descanso. O avanço para a próxima
   // série/passo só acontece quando o descanso termina (resolveRest).
   const completeAndRest = () => {
@@ -229,6 +287,9 @@ export function WorkoutExec() {
       // o avanço acontece quando o descanso termina (finishRest). O store calcula
       // `endsAt` a partir de `total` (wall-clock).
       wk.startRest({ total: restDur, kind, msg, exIdx, setIdx: sIdx });
+    } else if (isDropStep && !isLastDropStep) {
+      // #14: Dropset com rest 0 → mostra "BAIXA O PESO" durante ~2.5s (auto-avança)
+      wk.startRest({ total: 2.5, kind: "drop", msg: t("gym.app.exec.rest_drop_label") || "BAIXA O PESO", exIdx, setIdx: sIdx });
     } else {
       wk.advanceAfterSet(exIdx, sIdx); // sem descanso → avança já
     }
@@ -401,15 +462,21 @@ export function WorkoutExec() {
               // conclui a série feita que ele ia fechar), nunca cancelado —
               // cancelar deitava fora uma série já executada.
               return (
+                // #5: Hit-area ≥44px via padding invisível (p-3 -m-1 = ~46×46px efetivo)
                 <button
                   key={i}
                   type="button"
                   onClick={() => { wk.finishRest(); wk.setIndex(i); }}
                   title={e.name || `${t("gym.app.exec.exercise_label")} ${i + 1}`}
                   aria-label={e.name || `${t("gym.app.exec.exercise_label")} ${i + 1}`}
-                  className="h-2 rounded-full transition-all duration-200 border-none p-0 cursor-pointer active:opacity-70"
-                  style={{ width: i === current ? 22 : 8, background: i === current ? "var(--green)" : eDone ? "var(--green-dk)" : "var(--border)" }}
-                />
+                  className="p-3 -m-1 rounded-full transition-all duration-200 border-none cursor-pointer active:opacity-70"
+                  style={{ width: "auto", height: "auto" }}
+                >
+                  <div
+                    className="h-2 rounded-full transition-all duration-200"
+                    style={{ width: i === current ? 22 : 8, background: i === current ? "var(--green)" : eDone ? "var(--green-dk)" : "var(--border)" }}
+                  />
+                </button>
               );
             })}
           </div>
@@ -424,6 +491,34 @@ export function WorkoutExec() {
                 <span className="text-[12px] font-extrabold uppercase tracking-[0.06em]" style={{ color }}>{ex.group}</span>
               </div>
               <div className="text-[24px] font-black text-t1 leading-[1.05] tracking-[-0.03em] mb-3">{ex.name}</div>
+
+              {/* #12: Media + notas do coach */}
+              {ex.mediaUrl && (
+                <div className="mb-3 rounded-lg overflow-hidden">
+                  <img
+                    src={ex.mediaUrl}
+                    alt={ex.name}
+                    className="w-full max-h-[200px] object-cover cursor-pointer hover:opacity-90 transition"
+                    onClick={() => {
+                      // Fullscreen simples via modal
+                      const modal = document.createElement("div");
+                      modal.className = "fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4";
+                      modal.onclick = () => modal.remove();
+                      modal.innerHTML = `<img src="${ex.mediaUrl}" alt="${ex.name}" class="max-w-full max-h-[90dvh] object-contain" />`;
+                      document.body.appendChild(modal);
+                    }}
+                  />
+                </div>
+              )}
+              {ex.mediaUrl && <div className="text-[11px] text-t3 mb-2">{t("gym.app.exec.tap_image") || "Toca para ampliar"}</div>}
+
+              {/* Notas do coach (se existirem) */}
+              {(ex as any).notes && (
+                <div className="mb-3 p-2.5 bg-bg rounded-lg text-[13px] text-t2 italic border-l-2" style={{ borderColor: color }}>
+                  <span className="inline-block mr-1.5" style={{ color }}>📝</span>
+                  {(ex as any).notes}
+                </div>
+              )}
 
               {/* ── Pontos de série: ATUAL (azul a piscar) vs SELECIONADA (ring estático) ──
                   Gated por `hasWork` (não `hasPending`): mesmo um exercício
@@ -490,9 +585,40 @@ export function WorkoutExec() {
                         <div className="flex-1 flex flex-col items-center gap-2 pt-3 pb-3.5 px-1.5">
                           <span className="text-[11px] font-extrabold text-t3 tracking-[0.07em]">{f.label}</span>
                           <div className="flex items-center gap-2 w-full">
-                            <button onClick={() => updateField(f.field, -f.step)} disabled={selectedLocked} className={`w-[34px] h-[34px] rounded-full bg-surface shadow-card flex items-center justify-center transition shrink-0 ${selectedLocked ? "opacity-40" : "active:scale-95"}`}><Minus size={15} className="text-t2" /></button>
-                            <span className="flex-1 min-w-0 text-[clamp(20px,6vw,30px)] font-black text-t1 text-center tnum tracking-[-0.02em]">{f.val}</span>
-                            <button onClick={() => updateField(f.field, f.step)} disabled={selectedLocked} className={`w-[34px] h-[34px] rounded-full bg-brand flex items-center justify-center transition shrink-0 ${selectedLocked ? "opacity-40" : "active:scale-95"}`}><Plus size={15} className="text-white" /></button>
+                            {/* #8: Botão - com hit-area ≥44px + press-and-hold */}
+                            <button
+                              onClick={clickUnlessHeld(() => updateField(f.field, -f.step))}
+                              {...holdProps(() => updateField(f.field, -f.step), selectedLocked)}
+                              disabled={selectedLocked}
+                              className={`p-2 -m-1 rounded-full transition shrink-0 hit44 ${selectedLocked ? "opacity-40" : "active:scale-95"}`}
+                              style={{ background: "var(--surface)", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+                            >
+                              <Minus size={15} className="text-t2" />
+                            </button>
+                            {/* #8: Clique no valor abre input numérico */}
+                            <button
+                              onClick={() => {
+                                if (!selectedLocked) {
+                                  setInputMode({ exIdx: current, setIdx: selectedSetIdx, field: f.field });
+                                  setInputValue(String(f.val));
+                                }
+                              }}
+                              className="flex-1 min-w-0 text-[clamp(20px,6vw,30px)] font-black text-t1 text-center tnum tracking-[-0.02em] p-2 rounded-lg active:bg-bg transition"
+                              disabled={selectedLocked}
+                              title={t("gym.app.exec.tap_to_edit") || "Toca para editar"}
+                            >
+                              {f.val}
+                            </button>
+                            {/* #8: Botão + com hit-area ≥44px + press-and-hold */}
+                            <button
+                              onClick={clickUnlessHeld(() => updateField(f.field, f.step))}
+                              {...holdProps(() => updateField(f.field, f.step), selectedLocked)}
+                              disabled={selectedLocked}
+                              className={`p-2 -m-1 rounded-full transition shrink-0 hit44 ${selectedLocked ? "opacity-40" : "active:scale-95"}`}
+                              style={{ background: "var(--brand)" }}
+                            >
+                              <Plus size={15} className="text-white" />
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -503,6 +629,29 @@ export function WorkoutExec() {
                   {(isTime ? selected.lastDuration != null : selected.lastWeight != null) && (
                     <div className="text-center text-[11.5px] text-t3 font-medium mb-1.5">
                       {t("gym.app.exec.last_short") || "Último"}: {isTime ? `${selected.lastDuration}s` : `${selected.lastWeight}kg · ${selected.lastReps} ${t("gym.app.common.reps")}`}
+                    </div>
+                  )}
+
+                  {/* #9: Cronómetro para exercícios de tempo */}
+                  {isTime && (
+                    <div className="mb-3 text-center">
+                      <button
+                        onClick={() => {
+                          if (timeEndsAt) {
+                            setTimeEndsAt(null);
+                          } else {
+                            setTimeEndsAt(Date.now() + (selected.duration * 1000));
+                          }
+                        }}
+                        className="px-3 py-2 rounded-lg bg-brand text-white text-[13px] font-bold transition active:scale-95"
+                      >
+                        {timeEndsAt ? t("gym.app.exec.stop_timer") || "Parar" : t("gym.app.exec.start_timer") || "Iniciar cronómetro"}
+                      </button>
+                      {timeEndsAt && (
+                        <div className="mt-2 text-[32px] font-black text-brand tnum tracking-[-0.02em]">
+                          {Math.max(0, Math.ceil((timeEndsAt - timeClock) / 1000))}s
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -609,6 +758,58 @@ export function WorkoutExec() {
           )}
         </div>
       </div>
+
+      {/* #8: Modal de input numérico */}
+      {inputMode && (
+        <Modal open={!!inputMode} onClose={() => setInputMode(null)} title={t("gym.app.exec.type_value") || "Digita o valor"}>
+          <div className="flex flex-col gap-3">
+            <input
+              type={inputMode.field === "weight" ? "decimal" : "numeric"}
+              inputMode={inputMode.field === "weight" ? "decimal" : "numeric"}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="0"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const val = parseFloat(inputValue);
+                  if (!isNaN(val)) {
+                    const min = inputMode.field === "reps" ? 1 : 0;
+                    const clamped = Math.max(min, val);
+                    const step = inputMode.field === "weight" ? 0.5 : 1;
+                    const rounded = Math.round(clamped / step) * step;
+                    wk.updateSet(inputMode.exIdx, inputMode.setIdx, { [inputMode.field]: round2(rounded) });
+                    setInputMode(null);
+                    setInputValue("");
+                  }
+                }
+              }}
+              className="px-3 py-2 border border-line rounded-lg text-lg font-bold text-t1"
+            />
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => setInputMode(null)} fullWidth>{t("gym.app.common.cancel")}</Button>
+              <Button
+                onClick={() => {
+                  const val = parseFloat(inputValue);
+                  if (!isNaN(val)) {
+                    const min = inputMode.field === "reps" ? 1 : 0;
+                    const clamped = Math.max(min, val);
+                    const step = inputMode.field === "weight" ? 0.5 : 1;
+                    const rounded = Math.round(clamped / step) * step;
+                    wk.updateSet(inputMode.exIdx, inputMode.setIdx, { [inputMode.field]: round2(rounded) });
+                    setInputMode(null);
+                    setInputValue("");
+                  }
+                }}
+                fullWidth
+              >
+                {t("gym.app.common.save")}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Finish modal */}
       <Modal open={showFinish} onClose={closeFinish} title={t("gym.app.exec.finish_workout")}>
