@@ -192,7 +192,7 @@ export function WorkoutEditor() {
           <div className="flex gap-1.5">
             {WEEKDAYS_SHORT.map((d, i) => (
               <button key={i} onClick={() => toggleDay(i)} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${days.includes(i) ? "bg-brand text-white" : "bg-surface text-t3"}`}>
-                {d}
+                {t(`gym.app.calendar.day.short.${["sun", "mon", "tue", "wed", "thu", "fri", "sat"][i]}`) || d}
               </button>
             ))}
           </div>

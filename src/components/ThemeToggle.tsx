@@ -1,26 +1,34 @@
 import { Sun, Moon, Monitor } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useTheme } from "../store/useTheme";
+import { useCms } from "../context/CmsContext";
 import type { ThemeMode } from "../store/useTheme";
 
-const MODES: { id: ThemeMode; label: string; icon: LucideIcon }[] = [
-  { id: "light", label: "Claro", icon: Sun },
-  { id: "dark", label: "Escuro", icon: Moon },
-  { id: "system", label: "Sistema", icon: Monitor },
-];
+const THEME_ICON: Record<ThemeMode, LucideIcon> = {
+  light: Sun,
+  dark: Moon,
+  system: Monitor,
+};
 
 export function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const { mode, setMode } = useTheme();
+  const { t } = useCms();
+
+  const modes = [
+    { id: "light" as ThemeMode, label: t("gym.app.theme.light") || "Claro", icon: Sun },
+    { id: "dark" as ThemeMode, label: t("gym.app.theme.dark") || "Escuro", icon: Moon },
+    { id: "system" as ThemeMode, label: t("gym.app.theme.system") || "Sistema", icon: Monitor },
+  ];
 
   if (compact) {
     // Botão único que cicla Claro → Escuro → Sistema; o ícone reflecte o modo actual.
     const order: ThemeMode[] = ["light", "dark", "system"];
     const next = order[(order.indexOf(mode) + 1) % order.length];
-    const Icon = mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
+    const Icon = THEME_ICON[mode];
     return (
       <button
         onClick={() => setMode(next)}
-        aria-label="Alternar tema"
+        aria-label={t("gym.app.theme.toggle_label") || "Alternar tema"}
         className="w-10 h-10 rounded-xl bg-surface shadow-card flex items-center justify-center"
       >
         <Icon size={19} className={mode === "light" ? "text-orange" : mode === "dark" ? "text-brand" : "text-t2"} />
@@ -30,7 +38,7 @@ export function ThemeToggle({ compact = false }: { compact?: boolean }) {
 
   return (
     <div className="flex gap-1 p-1 rounded-pill border border-line bg-bg">
-      {MODES.map((m) => {
+      {modes.map((m) => {
         const active = mode === m.id;
         return (
           <button

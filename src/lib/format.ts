@@ -1,22 +1,33 @@
 import { differenceInCalendarDays, parseISO } from "date-fns";
 
-/** "há X dias" / "hoje" / "ontem" a partir de uma data ISO. */
-export function relativeDays(iso: string | null | undefined): string {
+/** Traduz "há X dias" / "hoje" / "ontem" a partir de uma data ISO.
+ * @param iso Data em formato ISO ou undefined
+ * @param t Função de tradução CMS que devolve a chave traduzida
+ */
+export function relativeDays(iso: string | null | undefined, t: (key: string) => string): string {
   if (!iso) return "—";
   const d = typeof iso === "string" ? parseISO(iso) : iso;
   const diff = differenceInCalendarDays(new Date(), d);
-  if (diff <= 0) return "hoje";
-  if (diff === 1) return "ontem";
-  if (diff < 7) return `há ${diff} dias`;
-  if (diff < 14) return "há 1 semana";
-  if (diff < 30) return `há ${Math.floor(diff / 7)} semanas`;
-  if (diff < 60) return "há 1 mês";
-  return `há ${Math.floor(diff / 30)} meses`;
+  if (diff <= 0) return t("gym.app.time.today") || "hoje";
+  if (diff === 1) return t("gym.app.time.yesterday") || "ontem";
+  if (diff < 7) return (t("gym.app.time.days_ago") || "há {n} dias").replace("{n}", String(diff));
+  if (diff < 14) return (t("gym.app.time.days_ago") || "há {n} dias").replace("{n}", "7");
+  if (diff < 30) return (t("gym.app.time.days_ago") || "há {n} dias").replace("{n}", String(Math.floor(diff / 7)));
+  if (diff < 60) return (t("gym.app.time.days_ago") || "há {n} dias").replace("{n}", "1");
+  return (t("gym.app.time.days_ago") || "há {n} dias").replace("{n}", String(Math.floor(diff / 30)));
 }
 
-export function greeting(name?: string): string {
+/** Traduz saudação consoante hora do dia.
+ * @param name Nome do utilizador (opcional)
+ * @param t Função de tradução CMS
+ */
+export function greeting(t: (key: string) => string, name?: string): string {
   const h = new Date().getHours();
-  const part = h < 12 ? "Bom dia" : h < 20 ? "Boa tarde" : "Boa noite";
+  const part = h < 12
+    ? t("gym.app.greeting.morning") || "Bom dia"
+    : h < 20
+    ? t("gym.app.greeting.afternoon") || "Boa tarde"
+    : t("gym.app.greeting.evening") || "Boa noite";
   const first = name?.trim().split(" ")[0];
   return first ? `${part}, ${first}` : part;
 }

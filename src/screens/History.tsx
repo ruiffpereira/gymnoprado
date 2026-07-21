@@ -13,22 +13,25 @@ import { useCms } from "../context/CmsContext";
 import { relativeDays, localDateISO } from "../lib/format";
 import { groupColor } from "../lib/exercises";
 import { startOfWeek, format } from "date-fns";
-import { pt } from "date-fns/locale";
+import { useLanguage } from "../context/LanguageContext";
+import { getDateLocale } from "../lib/dateLocale";
 
 /** Modal de detalhe de uma sessão: exercícios + séries feitas (peso · reps). */
 function SessionDetailModal({ logId, onClose }: { logId: string; onClose: () => void }) {
   const { t } = useCms();
+  const { currentLang } = useLanguage();
   const { data, isLoading } = useLogDetail(logId);
   const invalidate = useInvalidateGym();
   const [confirming, setConfirming] = useState(false);
   const log = data as { workoutName?: string; durationMin?: number; date?: string; createdAt?: string | null; entries?: { exerciseName: string; group?: string | null; sets: { weight?: number; reps?: number; done?: boolean }[] }[] } | undefined;
   const entries = log?.entries ?? [];
+  const dateLocale = getDateLocale(currentLang);
 
   const del = useMutation({
     mutationFn: () => deleteLog(logId),
     onSuccess: () => {
       invalidate();
-      toast.success(t("gym.app.history.deleted"));
+      toast.success(t("gym.app.history.deleted") || "Sessão apagada");
       onClose();
     },
     onError: (e) => toast.error(apiErrorMessage(e)),
@@ -37,9 +40,9 @@ function SessionDetailModal({ logId, onClose }: { logId: string; onClose: () => 
   // Dia + hora do treino (da data de registo; fallback para a data do treino).
   const when = log?.createdAt ?? (log?.date ? `${log.date}T00:00:00` : null);
   const parts: string[] = [];
-  if (when) parts.push(format(new Date(when), "EEE, d 'de' MMM", { locale: pt }));
+  if (when) parts.push(format(new Date(when), "EEE, d 'de' MMM", { locale: dateLocale }));
   if (log?.createdAt) parts.push(format(new Date(log.createdAt), "HH:mm"));
-  if (log?.durationMin) parts.push(`${log.durationMin} ${t("gym.app.common.min")}`);
+  if (log?.durationMin) parts.push(`${log.durationMin} ${t("gym.app.common.min") || "min"}`);
   const subtitle = parts.length ? parts.join(" · ") : undefined;
 
   return (
@@ -103,9 +106,11 @@ function StatPill({ icon, value, label }: { icon: React.ReactNode; value: string
 export function History() {
   const navigate = useNavigate();
   const { t } = useCms();
+  const { currentLang } = useLanguage();
   const { data, isLoading } = useLogs({});
   const { data: summary } = useSummary();
   const logs = (data ?? []) as GymLog[];
+  const dateLocale = getDateLocale(currentLang);
   const [detailId, setDetailId] = useState<string | null>(null);
 
   useScreenHeader({ title: t("gym.app.nav.history") });
@@ -139,7 +144,7 @@ export function History() {
           {[...groups.entries()].map(([key, items]) => (
             <div key={key}>
               <h2 className="text-sm font-bold text-t2 mb-2">
-                {key === thisWeekKey ? t("gym.app.history.this_week") : `${t("gym.app.history.week_of")} ${format(new Date(key), "d 'de' MMM", { locale: pt })}`}
+                {key === thisWeekKey ? t("gym.app.history.this_week") || "Esta Semana" : `${t("gym.app.history.week_of") || "Semana de"} ${format(new Date(key), "d 'de' MMM", { locale: dateLocale })}`}
               </h2>
               <div className="flex flex-col gap-2">
                 {items.map((l) => (
@@ -149,7 +154,7 @@ export function History() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm text-t1 truncate">{l.workoutName}</p>
-                      <p className="text-xs text-t3">{relativeDays(l.date)} · {l.durationMin} {t("gym.app.common.min")} · {l.totalSets} {t("gym.app.common.sets")}</p>
+                      <p className="text-xs text-t3">{relativeDays(l.date, t)} · {l.durationMin} {t("gym.app.common.min") || "min"} · {l.totalSets} {t("gym.app.common.sets") || "séries"}</p>
                     </div>
                     {l.workoutId && (
                       <button onClick={(e) => { e.stopPropagation(); navigate(`/treino/${l.workoutId}`); }} className="flex items-center gap-1 text-xs font-semibold text-brand px-2.5 py-1.5 rounded-lg bg-brand-lt">

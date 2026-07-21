@@ -5,7 +5,7 @@ import type { GymLoadSeries, GymRecord } from "../api";
 import { Card, Spinner } from "../components/ui";
 import { useScreenHeader } from "../store/useHeader";
 import { useCms } from "../context/CmsContext";
-import { groupColor } from "../lib/exercises";
+import { groupColor, translateMuscleGroup } from "../lib/exercises";
 import { format } from "date-fns";
 
 /** Gráfico de linha simples (SVG) da carga ao longo das sessões. */
@@ -133,7 +133,7 @@ export function Progress() {
               {[...focus.entries()].sort((a, b) => b[1] - a[1]).map(([g, n]) => (
                 <div key={g}>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="font-medium text-t1">{g}</span>
+                    <span className="font-medium text-t1">{translateMuscleGroup(g, t)}</span>
                     <span className="text-t3 tnum">{Math.round((n / focusTotal) * 100)}%</span>
                   </div>
                   <div className="h-2 rounded-full bg-bg overflow-hidden">

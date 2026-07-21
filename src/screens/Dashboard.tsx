@@ -39,8 +39,8 @@ export function Dashboard() {
   const weekCount = weekDates.filter((d) => loggedDays.has(d)).length;
 
   useScreenHeader({
-    title: greeting(profile?.name),
-    subtitle: t("gym.app.dashboard.subtitle"),
+    title: greeting(t, profile?.name),
+    subtitle: t("gym.app.dashboard.subtitle") || "",
     right: (
       <>
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill bg-white/20 dark:bg-orange/10">
@@ -93,13 +93,16 @@ export function Dashboard() {
         <Card className="p-5">
           <p className="text-sm font-bold text-t1 mb-3">{t("gym.app.dashboard.this_week")}</p>
           <div className="flex justify-between mb-3">
-            {weekDates.map((d, i) => (
-              <div key={d} className="flex flex-col items-center gap-1.5">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${loggedDays.has(d) ? "bg-brand text-white" : "bg-bg text-t3"}`}>
-                  {WEEKDAYS_SHORT[(i + 1) % 7]}
+            {weekDates.map((d, i) => {
+              const dayName = t(`gym.app.calendar.day.short.${["sun", "mon", "tue", "wed", "thu", "fri", "sat"][(i + 1) % 7]}`) || WEEKDAYS_SHORT[(i + 1) % 7];
+              return (
+                <div key={d} className="flex flex-col items-center gap-1.5">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${loggedDays.has(d) ? "bg-brand text-white" : "bg-bg text-t3"}`}>
+                    {dayName}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <p className="text-xs text-t2">{weekCount} {t("gym.app.common.workouts")} {t("gym.app.dashboard.week_suffix")}</p>
         </Card>
@@ -129,7 +132,7 @@ export function Dashboard() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-sm text-t1 truncate">{l.workoutName}</p>
-              <p className="text-xs text-t3">{relativeDays(l.date)} · {l.totalSets} {t("gym.app.common.sets")}</p>
+              <p className="text-xs text-t3">{relativeDays(l.date, t)} · {l.totalSets} {t("gym.app.common.sets") || "séries"}</p>
             </div>
           </Card>
         ))}

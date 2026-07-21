@@ -14,7 +14,7 @@ import { useCms } from "../context/CmsContext";
 import { useLanguage } from "../context/LanguageContext";
 import { MensalidadeCard } from "../components/MensalidadeCard";
 import { format, differenceInCalendarMonths } from "date-fns";
-import { pt } from "date-fns/locale";
+import { getDateLocale } from "../lib/dateLocale";
 
 function Stat({ icon, value, label }: { icon: React.ReactNode; value: string | number; label: string }) {
   return (
@@ -38,7 +38,8 @@ export function Profile() {
   const { data: summary } = useSummary();
   const { data: programsData } = usePrograms();
   const programs = (programsData ?? []) as GymProgram[];
-  const { languages } = useLanguage();
+  const { languages, currentLang } = useLanguage();
+  const dateLocale = getDateLocale(currentLang);
 
   const memberMonths = profile?.memberSince
     ? Math.max(1, differenceInCalendarMonths(new Date(), new Date(profile.memberSince)))
@@ -63,7 +64,7 @@ export function Profile() {
           <div className="min-w-0">
             <h2 className="text-xl font-black truncate">{profile?.name}</h2>
             {profile?.memberSince && (
-              <p className="text-white/60 text-sm">{t("gym.app.profile.member_since")} {format(new Date(profile.memberSince), "MMM yyyy", { locale: pt })}</p>
+              <p className="text-white/60 text-sm">{t("gym.app.profile.member_since") || "Membro desde"} {format(new Date(profile.memberSince), "MMM yyyy", { locale: dateLocale })}</p>
             )}
             <Badge className="mt-1.5">{t("gym.app.member_active")}</Badge>
           </div>

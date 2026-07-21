@@ -1,6 +1,7 @@
 import React, { useState, type ReactNode, type ButtonHTMLAttributes, type InputHTMLAttributes } from "react";
 import { Dumbbell, X } from "lucide-react";
-import { groupColor } from "../../lib/exercises";
+import { groupColor, translateMuscleGroup } from "../../lib/exercises";
+import { useCms } from "../../context/CmsContext";
 
 // ── Logo ──────────────────────────────────────────────────────────────────────
 export function Logo({ size = "md", light = false }: { size?: "sm" | "md" | "lg"; light?: boolean }) {
@@ -262,10 +263,11 @@ export function Empty({ icon, title, subtitle, action }: { icon?: ReactNode; tit
 
 // ── Group chip ────────────────────────────────────────────────────────────────
 export function GroupChip({ group }: { group: string }) {
-  const color = groupColor(group);
+  const { t } = useCms();
+  const color = groupColor(group); // cor sempre pelo token cru; só o TEXTO é traduzido
   return (
     <span className="inline-flex items-center px-2 py-0.5 rounded-pill text-[11px] font-bold" style={{ background: `${color}22`, color }}>
-      {group}
+      {translateMuscleGroup(group, t)}
     </span>
   );
 }

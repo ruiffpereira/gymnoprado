@@ -1,14 +1,15 @@
 import { Wallet, Banknote, Lock } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { pt } from "date-fns/locale";
 import { Card, Badge } from "./ui";
 import { useCms } from "../context/CmsContext";
+import { useLanguage } from "../context/LanguageContext";
+import { getDateLocale } from "../lib/dateLocale";
 import { useMensalidade, viewOf, type MemberPayment, type MensalidadeView } from "../hooks/useMensalidade";
 
 const eur = (n: number) => n.toLocaleString("pt-PT", { style: "currency", currency: "EUR" });
-const monthLabel = (period: string) => {
+const monthLabel = (period: string, locale: ReturnType<typeof getDateLocale>) => {
   try {
-    return format(parseISO(`${period}-01`), "MMMM yyyy", { locale: pt });
+    return format(parseISO(`${period}-01`), "MMMM yyyy", { locale });
   } catch {
     return period;
   }
@@ -21,11 +22,11 @@ function StateBadge({ view }: { view: MensalidadeView }) {
   return <Badge color="orange">{t("gym.app.mensalidade.due") || "Por pagar"}</Badge>;
 }
 
-function HistoryRow({ p }: { p: MemberPayment }) {
+function HistoryRow({ p, locale }: { p: MemberPayment; locale: ReturnType<typeof getDateLocale> }) {
   const view = viewOf(p);
   return (
     <li className="flex items-center justify-between py-2 border-t border-line first:border-t-0">
-      <span className="text-[13px] text-t2 capitalize">{monthLabel(p.period)}</span>
+      <span className="text-[13px] text-t2 capitalize">{monthLabel(p.period, locale)}</span>
       <div className="flex items-center gap-2.5">
         <span className="text-[12px] text-t3 tnum">{eur(p.amount)}</span>
         {view && <StateBadge view={view} />}
@@ -37,7 +38,9 @@ function HistoryRow({ p }: { p: MemberPayment }) {
 /** Secção de mensalidade no Perfil (só-leitura). */
 export function MensalidadeCard() {
   const { t } = useCms();
+  const { currentLang } = useLanguage();
   const { data, isLoading } = useMensalidade();
+  const dateLocale = getDateLocale(currentLang);
 
   if (isLoading) {
     return (
@@ -83,13 +86,13 @@ export function MensalidadeCard() {
         </div>
         <p className="text-[12px] text-t3 mt-0.5 capitalize">
           {(t("gym.app.mensalidade.due_day") || "Vence dia {d}").replace("{d}", String(subscription.dueDay))}
-          {current ? ` · ${monthLabel(current.period)}` : ""}
+          {current ? ` · ${monthLabel(current.period, dateLocale)}` : ""}
         </p>
         {view === "paid" && current?.paidAt ? (
           <p className="text-[12px] text-t2 mt-1.5">
             {(t("gym.app.mensalidade.paid_on") || "Paga a {d}").replace(
               "{d}",
-              format(parseISO(current.paidAt), "d 'de' MMMM", { locale: pt }),
+              format(parseISO(current.paidAt), "d 'de' MMMM", { locale: dateLocale }),
             )}
           </p>
         ) : (
@@ -114,7 +117,7 @@ export function MensalidadeCard() {
           </p>
           <ul className="flex flex-col">
             {history.map((p) => (
-              <HistoryRow key={p.period} p={p} />
+              <HistoryRow key={p.period} p={p} locale={dateLocale} />
             ))}
           </ul>
         </>
