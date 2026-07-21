@@ -40,6 +40,7 @@ export default defineConfig({
             handler: "NetworkFirst",
             options: {
               cacheName: "gym-api",
+              networkTimeoutSeconds: 3,
               expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 },
             },
           },

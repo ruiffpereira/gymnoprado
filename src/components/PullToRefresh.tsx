@@ -34,6 +34,21 @@ export function PullToRefresh() {
         startY.current = null;
         return;
       }
+      // Não armar gesto se o toque começou dentro de um elemento com scroll próprio ou modal
+      const target = e.target as Element;
+      let current: Element | null = target;
+      while (current) {
+        const style = window.getComputedStyle(current);
+        if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && current.scrollHeight > current.clientHeight) {
+          startY.current = null;
+          return;
+        }
+        if (current.getAttribute('role') === 'dialog' || current.classList.contains('modal')) {
+          startY.current = null;
+          return;
+        }
+        current = current.parentElement;
+      }
       // mede o header sticky para a bolinha arrancar logo por baixo dele
       const header = document.querySelector("header");
       setHeaderH(header ? header.getBoundingClientRect().height : 0);

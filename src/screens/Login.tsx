@@ -36,6 +36,8 @@ export function Login() {
     }
   };
 
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <div className="relative min-h-[100svh] flex flex-col items-center justify-center px-6 bg-bg overflow-hidden">
       {/* Fades só a partir de baixo, para o topo bater certo com a status bar. */}
@@ -49,15 +51,26 @@ export function Login() {
           <p className="text-t2 text-[15px]">{t("gym.app.login.tagline")}</p>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <Input label={t("gym.app.login.email")} type="email" placeholder={t("gym.app.login.email_ph")} value={email} onChange={(e) => setEmail(e.target.value)} icon={<Mail size={18} />} />
-          <Input label={t("gym.app.login.password")} type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} icon={<Lock size={18} />} onKeyDown={(e) => e.key === "Enter" && submit()} />
+        <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="flex flex-col gap-4">
+          <Input label={t("gym.app.login.email")} type="email" placeholder={t("gym.app.login.email_ph")} value={email} onChange={(e) => setEmail(e.target.value)} icon={<Mail size={18} />} autoComplete="email" />
+          <div className="relative">
+            <Input label={t("gym.app.login.password")} type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} icon={<Lock size={18} />} autoComplete="current-password" />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-9 w-10 h-10 flex items-center justify-center text-t2 hover:text-t1"
+              aria-label={showPassword ? t("gym.app.login.hide_password") || "Ocultar" : t("gym.app.login.show_password") || "Mostrar"}
+            >
+              {showPassword ? "👁️" : "👁️‍🗨️"}
+            </button>
+          </div>
           {error && <p className="text-sm text-red font-medium">{error}</p>}
-          <Button size="lg" fullWidth disabled={loading} onClick={submit}>
+          <Button size="lg" fullWidth disabled={loading} type="submit">
             {loading ? t("gym.app.login.signing_in") : t("gym.app.login.sign_in")}
           </Button>
-          <button onClick={() => navigate("/recuperar")} className="text-sm text-t2 hover:text-brand transition-colors text-center">{t("gym.app.login.forgot")}</button>
-        </div>
+        </form>
+
+        <button onClick={() => navigate("/recuperar")} className="text-sm text-t2 hover:text-brand transition-colors text-center">{t("gym.app.login.forgot")}</button>
 
         <p className="text-center text-[13px] text-t3">
           {t("gym.app.login.no_account")}{" "}

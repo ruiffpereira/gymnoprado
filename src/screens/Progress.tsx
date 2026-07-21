@@ -84,7 +84,7 @@ export function Progress() {
           <h3 className="font-bold text-t1">{t("gym.app.progress.load_chart")}</h3>
           {series.length > 0 && (
             <select value={selected?.exerciseName ?? ""} onChange={(e) => setSelEx(e.target.value)}
-              className="text-[13px] font-semibold bg-bg rounded-lg px-2.5 py-1.5 text-t1 max-w-[55%] truncate outline-none border border-line">
+              className="text-[13px] font-semibold bg-bg rounded-lg px-2.5 py-1.5 text-t1 w-full sm:max-w-xs h-10 outline-none border border-line">
               {series.map((s) => <option key={s.exerciseName} value={s.exerciseName}>{s.exerciseName}</option>)}
             </select>
           )}
@@ -125,7 +125,7 @@ export function Progress() {
         </Card>
 
         <Card className="p-5">
-          <h3 className="font-bold text-t1 mb-4">{t("gym.app.progress.muscle_focus")}</h3>
+          <h3 className="font-bold text-t1 mb-4">{t("gym.app.progress.pr_by_group") || "Recordes por grupo"}</h3>
           {focus.size === 0 ? (
             <p className="text-sm text-t3">{t("gym.app.progress.no_data")}</p>
           ) : (

@@ -15,7 +15,8 @@ export function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
-  const submit = async () => {
+  const submit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       setError(t("gym.app.forgot.err_email"));
       return;
@@ -55,16 +56,16 @@ export function ForgotPassword() {
             <Button size="lg" fullWidth onClick={() => navigate("/login")}>{t("gym.app.auth.back_to_login")}</Button>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
-            <Input label={t("gym.app.login.email")} type="email" placeholder={t("gym.app.login.email_ph")} value={email} onChange={(e) => setEmail(e.target.value)} icon={<Mail size={18} />} onKeyDown={(e) => e.key === "Enter" && submit()} />
+          <form onSubmit={submit} className="flex flex-col gap-4">
+            <Input label={t("gym.app.login.email")} type="email" placeholder={t("gym.app.login.email_ph")} value={email} onChange={(e) => setEmail(e.target.value)} icon={<Mail size={18} />} autoComplete="email" />
             {error && <p className="text-sm text-red font-medium">{error}</p>}
-            <Button size="lg" fullWidth disabled={loading} onClick={submit}>
+            <Button size="lg" fullWidth disabled={loading} type="submit">
               {loading ? t("gym.app.forgot.sending") : t("gym.app.forgot.send_link")}
             </Button>
-            <button onClick={() => navigate("/login")} className="inline-flex items-center justify-center gap-1.5 text-sm text-t2 hover:text-brand transition-colors">
+            <button type="button" onClick={() => navigate("/login")} className="inline-flex items-center justify-center gap-1.5 text-sm text-t2 hover:text-brand transition-colors">
               <ArrowLeft size={15} /> {t("gym.app.auth.back_to_login")}
             </button>
-          </div>
+          </form>
         )}
       </div>
     </div>

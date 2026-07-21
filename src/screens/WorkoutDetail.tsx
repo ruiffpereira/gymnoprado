@@ -67,7 +67,18 @@ export function WorkoutDetail() {
 
   const readOnly = program?.owner === "coach";
   const totalSets = workout.exercises.reduce((a, e) => a + e.sets, 0);
-  const estMin = Math.round(workout.exercises.reduce((a, e) => a + e.sets * (e.rest + 40), 0) / 60);
+  const estMin = Math.round(
+    workout.exercises.reduce((a, e) => {
+      const ex = e as any;
+      if (ex.type === "time" && ex.duration) {
+        return a + ex.sets * (ex.duration + (ex.rest ?? 0));
+      }
+      if (ex.mode === "perSet" && ex.setRows?.length) {
+        return a + ex.setRows.reduce((sum: number, row: any) => sum + (row.rest ?? 0) + 40, 0);
+      }
+      return a + e.sets * (e.rest + 40);
+    }, 0) / 60
+  );
 
   // Arranque efetivo (depois de todos os guards/confirmações).
   const reallyBegin = async () => {

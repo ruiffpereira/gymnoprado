@@ -21,25 +21,31 @@ export function MensalidadeBanner() {
   return (
     <button
       onClick={() => navigate("/perfil")}
-      role="status"
-      aria-live="polite"
-      className="w-full mb-5 rounded-card px-4 py-3 flex items-center gap-3 text-left animate-fadeIn"
-      style={overdue ? { background: "#FEF2F2", boxShadow: "inset 0 0 0 1.5px #FCA5A5" } : { background: "#FFF7ED", boxShadow: "inset 0 0 0 1.5px #FED7AA" }}
+      aria-label={overdue ? t("gym.app.mensalidade.banner_overdue") : t("gym.app.mensalidade.banner_due")}
+      className={`w-full mb-5 rounded-card px-4 py-3 flex items-center gap-3 text-left animate-fadeIn ${
+        overdue
+          ? "bg-red/10 dark:bg-red/20 border border-red/30 dark:border-red/50"
+          : "bg-orange/10 dark:bg-orange/20 border border-orange/30 dark:border-orange/50"
+      }`}
     >
-      <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: overdue ? "#FECACA" : "#FFE4C4" }}>
-        <Wallet size={18} style={{ color: overdue ? "#B91C1C" : "#C2410C" }} />
+      <span className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+        overdue
+          ? "bg-red/20 dark:bg-red/30"
+          : "bg-orange/20 dark:bg-orange/30"
+      }`}>
+        <Wallet size={18} className={overdue ? "text-red" : "text-orange"} />
       </span>
       <div className="flex-1 min-w-0">
-        <p className="text-[13.5px] font-bold" style={{ color: overdue ? "#991B1B" : "#9A3412" }}>
+        <p className={`text-[13.5px] font-bold ${overdue ? "text-red" : "text-orange"}`}>
           {overdue
             ? t("gym.app.mensalidade.banner_overdue") || "Mensalidade em atraso"
             : t("gym.app.mensalidade.banner_due") || "Mensalidade por pagar"}
         </p>
-        <p className="text-[12px] truncate" style={{ color: overdue ? "#B91C1C" : "#C2410C" }}>
+        <p className={`text-[12px] truncate ${overdue ? "text-red" : "text-orange"}`}>
           {eur(current.amount)} · {t("gym.app.mensalidade.cash_hint") || "Pagamento em dinheiro, ao balcão."}
         </p>
       </div>
-      <ChevronRight size={18} className="shrink-0" style={{ color: overdue ? "#B91C1C" : "#C2410C" }} />
+      <ChevronRight size={18} className={`shrink-0 ${overdue ? "text-red" : "text-orange"}`} />
     </button>
   );
 }

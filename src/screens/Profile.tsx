@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { LogOut, Dumbbell, Flame, Folder, CalendarDays, Shield, LifeBuoy, ChevronRight } from "lucide-react";
+import { LogOut, Dumbbell, Flame, Folder, CalendarDays, Shield, ChevronRight } from "lucide-react";
 import { useSummary, usePrograms } from "../api";
 import type { GymProgram } from "../api";
 import { logout } from "../api/session";
@@ -13,7 +13,7 @@ import { InstallRow } from "../components/InstallPrompt";
 import { useCms } from "../context/CmsContext";
 import { useLanguage } from "../context/LanguageContext";
 import { MensalidadeCard } from "../components/MensalidadeCard";
-import { format } from "date-fns";
+import { format, differenceInCalendarMonths } from "date-fns";
 import { pt } from "date-fns/locale";
 
 function Stat({ icon, value, label }: { icon: React.ReactNode; value: string | number; label: string }) {
@@ -28,7 +28,6 @@ function Stat({ icon, value, label }: { icon: React.ReactNode; value: string | n
 
 const SETTINGS: { icon: typeof Shield; label: string; cmsKey: string; to?: string }[] = [
   { icon: Shield, label: "Privacidade", cmsKey: "gym.app.profile.privacy", to: "/privacidade" },
-  { icon: LifeBuoy, label: "Suporte", cmsKey: "gym.app.profile.support" },
 ];
 
 export function Profile() {
@@ -42,7 +41,7 @@ export function Profile() {
   const { languages } = useLanguage();
 
   const memberMonths = profile?.memberSince
-    ? Math.max(1, Math.round((Date.now() - new Date(profile.memberSince).getTime()) / (30 * 24 * 3600 * 1000)))
+    ? Math.max(1, differenceInCalendarMonths(new Date(), new Date(profile.memberSince)))
     : 0;
 
   const doLogout = async () => {

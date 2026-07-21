@@ -6,7 +6,7 @@ const KEY = "cookie-consent";
 /** Textos PT hardcoded — fallback se o CMS não tiver as chaves cookies.*. */
 const PT = {
   title: "Cookies",
-  text: "Usamos cookies essenciais para a app funcionar e, com o teu consentimento, cookies para melhorar a experiência. Escolhe para continuar.",
+  text: "Usamos cookies essenciais para a app funcionar. Utilizamos análise sem cookies (Umami) para compreender como usas a app e melhorar a experiência. Podes escolher aceitar ou rejeitar.",
   accept: "Aceitar",
   reject: "Rejeitar",
 };
@@ -22,10 +22,10 @@ export function CookieConsent() {
   const { t } = useCms();
 
   // CMS (língua atual) com fallback PT — nunca quebra se faltar a chave.
-  const title = t("cookies.title") || PT.title;
-  const text = t("cookies.text") || PT.text;
-  const accept = t("cookies.accept") || PT.accept;
-  const reject = t("cookies.reject") || PT.reject;
+  const title = t("gym.app.cookies.title") || PT.title;
+  const text = t("gym.app.cookies.text") || PT.text;
+  const accept = t("gym.app.cookies.accept") || PT.accept;
+  const reject = t("gym.app.cookies.reject") || PT.reject;
 
   useEffect(() => {
     try {
@@ -68,7 +68,7 @@ export function CookieConsent() {
         <p className="mt-2 text-sm text-zinc-300">
           {text}{" "}
           <a href="/privacidade" className="underline underline-offset-2">
-            {t("cookies.privacy") || "Política de privacidade"}
+            {t("gym.app.cookies.privacy") || "Política de privacidade"}
           </a>.
         </p>
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

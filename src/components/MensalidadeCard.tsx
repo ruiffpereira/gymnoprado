@@ -101,8 +101,7 @@ export function MensalidadeCard() {
 
       {blocked && (
         <div
-          className="rounded-xl px-3.5 py-2.5 mb-3 flex items-center gap-2 text-[12.5px] font-medium"
-          style={{ background: "#FEF2F2", color: "#B91C1C" }}
+          className="rounded-xl px-3.5 py-2.5 mb-3 flex items-center gap-2 text-[12.5px] font-medium bg-red/10 dark:bg-red/20 text-red border border-red/30 dark:border-red/50"
         >
           <Lock size={14} /> {t("gym.app.mensalidade.blocked") || "Mensalidade suspensa. Regulariza para continuar."}
         </div>

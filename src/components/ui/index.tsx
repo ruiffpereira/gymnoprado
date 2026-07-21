@@ -1,4 +1,4 @@
-import { useState, type ReactNode, type ButtonHTMLAttributes, type InputHTMLAttributes } from "react";
+import React, { useState, type ReactNode, type ButtonHTMLAttributes, type InputHTMLAttributes } from "react";
 import { Dumbbell, X } from "lucide-react";
 import { groupColor } from "../../lib/exercises";
 
@@ -121,21 +121,61 @@ export function Modal({ open, onClose, title, subtitle, headerAction, children, 
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const overlayRef = React.useRef<HTMLDivElement>(null);
+  const modalRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+
+    const handleBackdropClick = (e: MouseEvent) => {
+      if (e.target === overlayRef.current) onClose();
+    };
+
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    document.addEventListener('keydown', handleEscape);
+    overlayRef.current?.addEventListener('click', handleBackdropClick);
+
+    // Focus inicial no modal
+    if (modalRef.current) {
+      const closeBtn = modalRef.current.querySelector('button[aria-label*="Close"]') || modalRef.current.querySelector('button:last-of-type');
+      (closeBtn as HTMLButtonElement)?.focus?.();
+    }
+
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener('keydown', handleEscape);
+      overlayRef.current?.removeEventListener('click', handleBackdropClick);
+    };
+  }, [open, onClose]);
+
   if (!open) return null;
   return (
     <div
+      ref={overlayRef}
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm animate-fadeIn"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      role="presentation"
     >
-      <div className="w-full sm:max-w-lg bg-surface rounded-t-[24px] max-h-[90vh] flex flex-col animate-slideUp">
+      <div
+        ref={modalRef}
+        className="w-full sm:max-w-lg bg-surface rounded-t-[24px] max-h-[90vh] flex flex-col animate-slideUp"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+      >
         <div className="flex items-center justify-between gap-2 px-6 pt-5 pb-4 border-b border-line">
           <div className="min-w-0">
-            <span className="block text-[17px] font-bold text-t1 truncate">{title}</span>
+            <span id="modal-title" className="block text-[17px] font-bold text-t1 truncate">{title}</span>
             {subtitle && <span className="block text-[12px] text-t3 mt-0.5">{subtitle}</span>}
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             {headerAction}
-            <button onClick={onClose} className="w-8 h-8 rounded-[10px] bg-bg flex items-center justify-center">
+            <button onClick={onClose} className="w-8 h-8 rounded-[10px] bg-bg flex items-center justify-center" aria-label="Close">
               <X size={16} className="text-t2" />
             </button>
           </div>

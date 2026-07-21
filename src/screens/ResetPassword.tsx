@@ -18,7 +18,8 @@ export function ResetPassword() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const submit = async () => {
+  const submit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (password.length < 8) {
       setError(t("gym.app.register.err_password"));
       return;
@@ -60,15 +61,15 @@ export function ResetPassword() {
             <Button size="lg" fullWidth onClick={() => navigate("/recuperar")}>{t("gym.app.reset.request_new")}</Button>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
-            <Input label={t("gym.app.reset.new_password")} type="password" placeholder={t("gym.app.register.password_ph")} value={password} onChange={(e) => setPassword(e.target.value)} icon={<Lock size={18} />} />
-            <Input label={t("gym.app.reset.confirm_password")} type="password" placeholder={t("gym.app.reset.confirm_ph")} value={confirm} onChange={(e) => setConfirm(e.target.value)} icon={<Lock size={18} />} onKeyDown={(e) => e.key === "Enter" && submit()} />
+          <form onSubmit={submit} className="flex flex-col gap-4">
+            <Input label={t("gym.app.reset.new_password")} type="password" placeholder={t("gym.app.register.password_ph")} value={password} onChange={(e) => setPassword(e.target.value)} icon={<Lock size={18} />} autoComplete="new-password" />
+            <Input label={t("gym.app.reset.confirm_password")} type="password" placeholder={t("gym.app.reset.confirm_ph")} value={confirm} onChange={(e) => setConfirm(e.target.value)} icon={<Lock size={18} />} autoComplete="new-password" />
             {error && <p className="text-sm text-red font-medium">{error}</p>}
-            <Button size="lg" fullWidth disabled={loading} onClick={submit}>
+            <Button size="lg" fullWidth disabled={loading} type="submit">
               {loading ? t("gym.app.common.saving") : t("gym.app.reset.submit")}
             </Button>
-            <button onClick={() => navigate("/login")} className="text-sm text-t2 hover:text-brand transition-colors text-center">{t("gym.app.auth.back_to_login")}</button>
-          </div>
+            <button type="button" onClick={() => navigate("/login")} className="text-sm text-t2 hover:text-brand transition-colors text-center">{t("gym.app.auth.back_to_login")}</button>
+          </form>
         )}
       </div>
     </div>

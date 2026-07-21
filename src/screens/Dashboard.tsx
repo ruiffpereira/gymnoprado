@@ -6,7 +6,7 @@ import { useActiveProgram } from "../hooks/useGym";
 import { useSession } from "../store/useSession";
 import { Card, Button, ProgressRing, Avatar, Spinner } from "../components/ui";
 import { useScreenHeader } from "../store/useHeader";
-import { greeting, relativeDays } from "../lib/format";
+import { greeting, relativeDays, localDateISO } from "../lib/format";
 import { WEEKDAYS_SHORT } from "../lib/exercises";
 import { useCms } from "../context/CmsContext";
 import { MensalidadeBanner } from "../components/MensalidadeBanner";
@@ -33,7 +33,7 @@ export function Dashboard() {
   const weekDates = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart);
     d.setDate(d.getDate() + i);
-    return d.toISOString().slice(0, 10);
+    return localDateISO(d);
   });
   const loggedDays = new Set(logs.map((l) => l.date));
   const weekCount = weekDates.filter((d) => loggedDays.has(d)).length;
@@ -96,7 +96,7 @@ export function Dashboard() {
             {weekDates.map((d, i) => (
               <div key={d} className="flex flex-col items-center gap-1.5">
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${loggedDays.has(d) ? "bg-brand text-white" : "bg-bg text-t3"}`}>
-                  {WEEKDAYS_SHORT[(i + 1) % 7][0]}
+                  {WEEKDAYS_SHORT[(i + 1) % 7]}
                 </div>
               </div>
             ))}

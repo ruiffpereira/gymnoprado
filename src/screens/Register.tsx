@@ -27,7 +27,8 @@ export function Register() {
     return null;
   };
 
-  const submit = async () => {
+  const submit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     const v = validate();
     if (v) { setError(v); return; }
     setLoading(true);
@@ -62,16 +63,16 @@ export function Register() {
           <p className="text-t2 text-[15px]">{t("gym.app.register.tagline")}</p>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <Input label={t("gym.app.register.name")} placeholder={t("gym.app.register.name_ph")} value={form.name} onChange={set("name")} icon={<User size={18} />} />
-          <Input label={t("gym.app.login.email")} type="email" placeholder={t("gym.app.login.email_ph")} value={form.email} onChange={set("email")} icon={<Mail size={18} />} />
-          <Input label={t("gym.app.register.phone")} type="tel" placeholder={t("gym.app.register.phone_ph")} value={form.contact} onChange={set("contact")} icon={<Phone size={18} />} />
-          <Input label={t("gym.app.login.password")} type="password" placeholder={t("gym.app.register.password_ph")} value={form.password} onChange={set("password")} icon={<Lock size={18} />} onKeyDown={(e) => e.key === "Enter" && submit()} />
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          <Input label={t("gym.app.register.name")} placeholder={t("gym.app.register.name_ph")} value={form.name} onChange={set("name")} icon={<User size={18} />} autoComplete="name" />
+          <Input label={t("gym.app.login.email")} type="email" placeholder={t("gym.app.login.email_ph")} value={form.email} onChange={set("email")} icon={<Mail size={18} />} autoComplete="email" />
+          <Input label={t("gym.app.register.phone")} type="tel" placeholder={t("gym.app.register.phone_ph")} value={form.contact} onChange={set("contact")} icon={<Phone size={18} />} autoComplete="tel" />
+          <Input label={t("gym.app.login.password")} type="password" placeholder={t("gym.app.register.password_ph")} value={form.password} onChange={set("password")} icon={<Lock size={18} />} autoComplete="new-password" />
           {error && <p className="text-sm text-red font-medium">{error}</p>}
-          <Button size="lg" fullWidth disabled={loading} onClick={submit}>
+          <Button size="lg" fullWidth disabled={loading} type="submit">
             {loading ? t("gym.app.register.creating") : t("gym.app.register.create")}
           </Button>
-        </div>
+        </form>
 
         <p className="text-center text-[13px] text-t3">
           {t("gym.app.register.have_account")}{" "}

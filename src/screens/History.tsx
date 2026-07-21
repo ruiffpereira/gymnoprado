@@ -10,7 +10,7 @@ import { apiErrorMessage } from "../api/client";
 import { toast } from "../lib/toast";
 import { useScreenHeader } from "../store/useHeader";
 import { useCms } from "../context/CmsContext";
-import { relativeDays } from "../lib/format";
+import { relativeDays, localDateISO } from "../lib/format";
 import { groupColor } from "../lib/exercises";
 import { startOfWeek, format } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -63,9 +63,9 @@ function SessionDetailModal({ logId, onClose }: { logId: string; onClose: () => 
               </div>
               <div className="flex flex-col gap-1">
                 {e.sets.map((s, si) => (
-                  <div key={si} className="flex items-center justify-between text-[13px]">
-                    <span className="text-t3">{t("gym.app.exec.series_label")} {si + 1}</span>
-                    <span className="font-semibold text-t1 tnum">{s.weight ?? 0}kg · {s.reps ?? 0} {t("gym.app.common.reps")}</span>
+                  <div key={si} className={`flex items-center justify-between text-[13px] ${s.done === false ? "opacity-50" : ""}`}>
+                    <span className="text-t3">{t("gym.app.exec.series_label")} {si + 1} {s.done === false && `(${t("gym.app.history.not_done") || "não feita"})`}</span>
+                    <span className="font-semibold text-t1 tnum">{(s as any).duration ? `${(s as any).duration}s` : `${s.weight ?? 0}kg · ${s.reps ?? 0} ${t("gym.app.common.reps")}`}</span>
                   </div>
                 ))}
               </div>
@@ -116,12 +116,12 @@ export function History() {
   const groups = new Map<string, GymLog[]>();
   for (const l of logs) {
     const wk = startOfWeek(new Date(l.date), { weekStartsOn: 1 });
-    const key = wk.toISOString().slice(0, 10);
+    const key = localDateISO(wk);
     const arr = groups.get(key) ?? [];
     arr.push(l);
     groups.set(key, arr);
   }
-  const thisWeekKey = startOfWeek(new Date(), { weekStartsOn: 1 }).toISOString().slice(0, 10);
+  const thisWeekKey = localDateISO(startOfWeek(new Date(), { weekStartsOn: 1 }));
 
   return (
     <div className="animate-fadeIn">

@@ -73,7 +73,7 @@ function WorkoutCard({ workout, readOnly, clientPrograms, onChanged }: {
         </ul>
 
         <div className="flex items-center gap-1.5">
-          <Button size="sm" icon={<Play size={15} fill="currentColor" />} onClick={() => navigate(`/treino/${workout.id}`)}>{t("gym.app.common.start")}</Button>
+          <Button size="sm" icon={<Play size={15} fill="currentColor" />} onClick={() => navigate(`/treino/${workout.id}`)}>{t("gym.app.workouts.view") || t("gym.app.common.start")}</Button>
           <Button size="sm" variant="greenLight" icon={<Copy size={15} />} disabled={clone.isPending} onClick={doClone}>{t("gym.app.workouts.clone")}</Button>
           {!readOnly && (
             <>
@@ -127,15 +127,24 @@ function ProgramAccordion({ program, readOnly, clientPrograms, onChanged }: {
 
   return (
     <div>
-      <button onClick={() => setOpen((o) => !o)} className="w-full flex items-center gap-2 py-2">
-        <ChevronDown size={18} className={`text-t3 transition-transform ${open ? "" : "-rotate-90"}`} />
-        <span className="font-bold text-t1">{program.name}</span>
-        {readOnly && <Lock size={13} className="text-t3" />}
-        <span className="text-xs text-t3">({program.workouts.length})</span>
+      {/* Apagar é um botão IRMÃO do acordeão, nunca interativo aninhado (a11y). */}
+      <div className="w-full flex items-center gap-2">
+        <button onClick={() => setOpen((o) => !o)} className="flex-1 min-w-0 flex items-center gap-2 py-2 text-left">
+          <ChevronDown size={18} className={`text-t3 transition-transform ${open ? "" : "-rotate-90"}`} />
+          <span className="font-bold text-t1">{program.name}</span>
+          {readOnly && <Lock size={13} className="text-t3" />}
+          <span className="text-xs text-t3">({program.workouts.length})</span>
+        </button>
         {!readOnly && (
-          <span onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }} className="ml-auto text-t3 hover:text-red p-1"><Trash2 size={15} /></span>
+          <button
+            onClick={() => setConfirmDelete(true)}
+            aria-label={t("gym.app.workouts.group_delete_title") || "Apagar grupo"}
+            className="shrink-0 text-t3 hover:text-red p-1 hit44"
+          >
+            <Trash2 size={15} />
+          </button>
         )}
-      </button>
+      </div>
 
       {/* Confirmação de apagar grupo (leva os treinos todos) */}
       <Modal open={confirmDelete} onClose={() => setConfirmDelete(false)} title={t("gym.app.workouts.group_delete_title") || "Apagar grupo?"}>
