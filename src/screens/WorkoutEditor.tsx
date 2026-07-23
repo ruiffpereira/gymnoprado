@@ -31,12 +31,12 @@ interface Draft {
   duration?: number | null;
   notes?: string | null;
   mediaUrl?: string | null;
-  // TODO(spec): `mode`/`setRows`/`subGroup`/`media` ainda não existem nos tipos
-  // gerados (drift do swagger, já corrigido na fonte); até lá viajam como `unknown`.
-  mode?: unknown;
-  setRows?: unknown;
-  subGroup?: unknown;
-  media?: unknown;
+  // Round-trip tipado (spec.gym.json atualizado): o editor não edita estes
+  // campos, mas preserva-os intactos no PATCH.
+  mode?: GymExerciseInput["mode"];
+  setRows?: GymExerciseInput["setRows"];
+  subGroup?: string | null;
+  media?: GymExerciseInput["media"];
   /**
    * O utilizador mexeu nos steppers desta linha. Num exercício série-a-série
    * (`mode:"perSet"`), editar os escalares converte-o para uniforme (os
@@ -82,9 +82,8 @@ export function WorkoutEditor() {
         // Round-trip: o PATCH substitui `exercises` por inteiro — preservar
         // tudo o que este editor não edita.
         type: e.type, duration: e.duration ?? null, notes: e.notes ?? null, mediaUrl: e.mediaUrl ?? null,
-        // TODO(spec): `mode`/`setRows`/`subGroup`/`media` fora dos tipos gerados (drift do swagger).
-        mode: (e as any).mode, setRows: (e as any).setRows, subGroup: (e as any).subGroup,
-        media: (e as any).media,
+        mode: e.mode, setRows: e.setRows, subGroup: e.subGroup ?? null,
+        media: e.media,
         // Snapshot dos valores iniciais para detetar mudanças reais.
         _initialSets: e.sets,
         _initialReps: e.reps,
@@ -114,7 +113,6 @@ export function WorkoutEditor() {
       duration: row.duration,
       notes: row.notes,
       mediaUrl: row.mediaUrl,
-      // TODO(spec): `mode`/`setRows`/`subGroup`/`media` ainda fora do GymExerciseInput gerado.
       mode: perSetDropped ? "uniform" : row.mode,
       setRows: perSetDropped ? undefined : row.setRows,
       subGroup: row.subGroup,

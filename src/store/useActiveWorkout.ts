@@ -199,13 +199,8 @@ function buildSets(
   ex: Workout["exercises"][number],
   last?: LastPerformance | null,
 ): SetEntry[] {
-  // TODO(spec): `mode`/`setRows` ainda não existem no spec.gym.json (drift do
-  // swagger — outro agente está a atualizá-lo); até lá lêem-se via cast.
-  const setRows = (ex as any).setRows as
-    | { reps?: number; weight?: number; rest?: number; drop?: boolean; steps?: { reps?: number; weight?: number; rest?: number }[] }[]
-    | null
-    | undefined;
-  if ((ex as any).mode === "perSet" && Array.isArray(setRows) && setRows.length) {
+  const setRows = ex.setRows;
+  if (ex.mode === "perSet" && Array.isArray(setRows) && setRows.length) {
     type Tgt = { reps: number; weight: number; rest: number; dropStep?: number; dropTotal?: number };
     const defRest = ex.rest || 60;
     const targets: Tgt[] = [];
@@ -239,7 +234,8 @@ function buildSets(
         dropTotal: t.dropTotal,
         lastWeight: src ? src.weight : null,
         lastReps: src ? src.reps : null,
-        // TODO(spec): `duration` fora do spec da última sessão.
+        // O GET last-performance ainda não expõe `duration` no swagger — único
+        // cast restante do módulo (follow-up: documentar na API e regenerar).
         lastDuration: src ? ((src as any).duration ?? null) : null,
       };
     });
