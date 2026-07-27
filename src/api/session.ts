@@ -6,12 +6,12 @@ import { postWebsitesCustomersAutenticationForgotPassword } from "../gen/hooks/u
 import { postWebsitesCustomersAutenticationResetPassword } from "../gen/hooks/usePostWebsitesCustomersAutenticationResetPassword";
 import { getWebsitesGymMe } from "../gen/hooks/useGetWebsitesGymMe";
 import { setToken } from "./client";
-
-const USER_ID = import.meta.env.VITE_USER_ID ?? "";
+import { getAppConfig } from "../lib/appConfig";
 
 export async function login(email: string, password: string) {
+  const { userId } = getAppConfig();
   const res = await postWebsitesCustomersAutenticationLogin({
-    userId: USER_ID,
+    userId,
     provider: "credentials",
     email,
     password,
@@ -29,7 +29,8 @@ export interface RegisterData {
 
 /** Regista um novo cliente e autentica-o de seguida (o registo não devolve token). */
 export async function register(data: RegisterData) {
-  await postWebsitesCustomersAutenticationRegister({ userId: USER_ID, ...data });
+  const { userId } = getAppConfig();
+  await postWebsitesCustomersAutenticationRegister({ userId, ...data });
   return login(data.email, data.password);
 }
 
@@ -43,7 +44,8 @@ export async function logout() {
 }
 
 export async function forgotPassword(email: string) {
-  await postWebsitesCustomersAutenticationForgotPassword({ userId: USER_ID, email });
+  const { userId } = getAppConfig();
+  await postWebsitesCustomersAutenticationForgotPassword({ userId, email });
 }
 
 export async function resetPassword(token: string, newPassword: string) {

@@ -4,7 +4,8 @@ import { Lock } from "lucide-react";
 import { resetPassword } from "../api/session";
 import { apiErrorMessage } from "../api/client";
 import { toast } from "../lib/toast";
-import { Logo, Input, Button } from "../components/ui";
+import { Input, Button } from "../components/ui";
+import { BrandHeader } from "../components/BrandHeader";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { useCms } from "../context/CmsContext";
 
@@ -50,7 +51,7 @@ export function ResetPassword() {
 
       <div className="relative w-full max-w-[400px] flex flex-col gap-6 animate-slideUp">
         <div className="flex flex-col items-center gap-3">
-          <Logo size="lg" />
+          <BrandHeader size="lg" />
           <p className="text-t2 text-[15px] text-center">{t("gym.app.reset.tagline")}</p>
         </div>
 

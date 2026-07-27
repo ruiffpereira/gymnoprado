@@ -4,6 +4,7 @@ import { VitePWA } from "vite-plugin-pwa";
 import path from "node:path";
 
 export default defineConfig({
+  base: process.env.VITE_BASE_PATH ?? "/",
   resolve: {
     alias: { "@": path.resolve(__dirname, "src") },
   },
@@ -20,7 +21,8 @@ export default defineConfig({
         background_color: "#0D0F12",
         display: "standalone",
         orientation: "portrait",
-        start_url: "/",
+        scope: process.env.VITE_BASE_PATH ?? "/",
+        start_url: process.env.VITE_BASE_PATH ?? "/",
         icons: [
           // uso geral (transparente)
           { src: "icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
