@@ -136,3 +136,27 @@ O ficheiro [content-import.csv](content-import.csv) tem as chaves + valores (pt/
 ## Backend (referência)
 
 Módulo **Gym** em `../API-FullStack` — ver [API-FullStack/CLAUDE.md](../API-FullStack/CLAUDE.md) → secção *11. Gym*. Modelos: `Program → Workout → WorkoutExercise`, `WorkoutLog → WorkoutLogEntry`, `ExerciseCatalog`. RBAC do backoffice: componente `VIEW_GYM`.
+
+---
+
+## Migração (página de despedida)
+
+Quando a app se muda para um novo endereço (ex.: `gymnasio-x.rufvision.com`), as PWAs instaladas não conseguem mudar por si. Uma página de despedida ajuda o sócio a fazer a transição.
+
+**Env opcional** `VITE_MIGRATED_TO` (build-time):
+- **Ausente ou vazia (padrão):** app funciona normalmente, sem qualquer mudança.
+- **Definida:** a app renderiza `Migrated.tsx` em vez de toda a app. O sócio vê um ecrã que avisa que mudou de morada, que tudo continua seguro, e um botão grande para ir para a nova app.
+
+Implementação:
+- **Componente** `src/screens/Migrated.tsx` — página de despedida com visual da app (Tailwind, tema escuro suportado).
+- **Desvio no arranque** `src/main.tsx` — verifica a env logo após o tema. Se definida, renderiza `Migrated` e salta `loadAppConfig` + providers + router.
+- **Service worker** — a página `Migrated` desregistra qualquer SW existente e limpa as caches ao carregar (para a PWA antiga não ficar presa).
+
+Exemplo de uso:
+```bash
+# Build e deploy da migração:
+VITE_MIGRATED_TO="https://ginasio-x.rufvision.com" pnpm build
+# O resultado é uma app que mostra SÓ a página de despedida.
+```
+
+**Sem a env definida, nada muda** — o build de hoje continua a servir a app normal.
