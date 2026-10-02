@@ -6,7 +6,7 @@ import { queryClient } from "./lib/queryClient";
 import { applyStoredTheme } from "./store/useTheme";
 import { LanguageProvider } from "./context/LanguageContext";
 import { CmsProvider } from "./context/CmsContext";
-import { initPlausible } from "./lib/plausible";
+import { initUmami } from "./lib/umami";
 import { loadAppConfig } from "./lib/appConfig";
 import { Migrated } from "./screens/Migrated";
 import App from "./App";
@@ -30,15 +30,15 @@ const ErrorScreen = ({ message }: { message: string }) => (
 const root = ReactDOM.createRoot(document.getElementById("root")!);
 
 applyStoredTheme();
-initPlausible();
+initUmami();
 
 // Env OPCIONAL: quando definida no build, esta app deixa de arrancar e mostra só
 // a página de despedida (a PWA já instalada no telemóvel de um sócio não migra
 // sozinha — continua a abrir este deploy até alguém lhe dizer para onde ir).
 // Ausente/vazia = arranque normal, sem qualquer diferença. Ver CLAUDE.md.
 //
-// O `applyStoredTheme()`/`initPlausible()` acima correm nos DOIS caminhos de
-// propósito: o tema para a despedida não aparecer sem cores, e o Plausible para
+// O `applyStoredTheme()`/`initUmami()` acima correm nos DOIS caminhos de
+// propósito: o tema para a despedida não aparecer sem cores, e o Umami para
 // se conseguir ver quantos sócios ainda abrem o deploy antigo — é esse número
 // que diz quando é seguro desligá-lo.
 const migratedTo = import.meta.env.VITE_MIGRATED_TO?.trim();
