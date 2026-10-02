@@ -1,0 +1,81 @@
+# Deploy (Coolify) a cada push na main + confirmação de que o build acabou bem.
+#
+# Porque existe: o painel do Coolify vive dentro da WireGuard, por isso o
+# webhook do GitHub nunca lhe chega — sem isto o deploy é sempre manual.
+# Mesmo padrão do CI da API (ver ../CI-SETUP.md na raiz da plataforma).
+#
+# Setup (uma vez, em Settings → Secrets and variables → Actions deste repo):
+#   secrets: WIREGUARD_CONFIG    — config wg-quick de um peer do wg-easy
+#            COOLIFY_DEPLOY_HOOK — URL de deploy desta app no Coolify
+#            COOLIFY_TOKEN       — token da API do Coolify (Bearer)
+#   variable: DEPLOY_ENABLED = true   (enquanto não estiver, o job não corre)
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {} # botão "Run workflow" para um redeploy à mão
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy (Coolify) e confirmação
+    if: vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Entrar na rede WireGuard (o painel do Coolify não é público)
+        env:
+          WG_CONFIG: ${{ secrets.WIREGUARD_CONFIG }}
+        run: |
+          if [ -z "$WG_CONFIG" ]; then
+            echo "::error::Falta o secret WIREGUARD_CONFIG — o runner não alcança o Coolify."
+            exit 1
+          fi
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq wireguard-tools
+          printf '%s\n' "$WG_CONFIG" | sudo tee /etc/wireguard/wg0.conf > /dev/null
+          sudo chmod 600 /etc/wireguard/wg0.conf
+          sudo wg-quick up wg0
+
+          # Esperar pelo handshake: `wg-quick up` devolve 0 mesmo com chaves erradas.
+          for i in $(seq 1 10); do
+            hs=$(sudo wg show wg0 latest-handshakes | awk '{print $2}' | head -1)
+            [ -n "$hs" ] && [ "$hs" != "0" ] && break
+            sleep 3
+          done
+          if [ -z "$hs" ] || [ "$hs" = "0" ]; then
+            echo "::error::Túnel sem handshake ao fim de 30s (AllowedIPs, peer apagado no wg-easy, ou porta UDP)."
+            exit 1
+          fi
+          echo "Handshake OK."
+
+      - name: Disparar deploy e esperar que o build acabe
+        env:
+          HOOK: ${{ secrets.COOLIFY_DEPLOY_HOOK }}
+          TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+        run: |
+          if [ -z "$HOOK" ]; then echo "::error::Falta o secret COOLIFY_DEPLOY_HOOK."; exit 1; fi
+          res=$(curl --fail --silent --show-error "$HOOK" ${TOKEN:+-H "Authorization: Bearer $TOKEN"})
+          echo "$res"
+          uuid=$(printf '%s' "$res" | grep -o '"deployment_uuid":"[^"]*"' | head -1 | cut -d'"' -f4)
+          if [ -z "$uuid" ] || [ -z "$TOKEN" ]; then
+            echo "⚠ Sem deployment_uuid ou sem token — deploy disparado, mas não dá para confirmar o fim."
+            exit 0
+          fi
+
+          # O deploy é assíncrono: perguntar ao Coolify até acabar (máx. ~15 min).
+          base=$(printf '%s' "$HOOK" | sed -E 's#^(https?://[^/]+).*#\1#')
+          for i in $(seq 1 90); do
+            status=$(curl -fsS -H "Authorization: Bearer $TOKEN" "$base/api/v1/deployments/$uuid" \
+              | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
+            echo "[$i] estado=${status:-?}"
+            case "$status" in
+              finished) echo "✔ Deploy concluído."; exit 0 ;;
+              failed|cancelled*) echo "::error::O deploy no Coolify acabou em '$status' — ver o log no painel."; exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "::error::O deploy não acabou em 15 minutos."; exit 1
