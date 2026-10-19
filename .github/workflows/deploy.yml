@@ -2,13 +2,15 @@
 #
 # Porque existe: o painel do Coolify vive dentro da WireGuard, por isso o
 # webhook do GitHub nunca lhe chega — sem isto o deploy é sempre manual.
-# Mesmo padrão do CI da API (ver ../CI-SETUP.md na raiz da plataforma).
+# Mesmo padrão do CI do Backoffice. Passo-a-passo do setup: CI-SETUP.md na raiz
+# da plataforma → "Sites externos".
 #
 # Setup (uma vez, em Settings → Secrets and variables → Actions deste repo):
-#   secrets: WIREGUARD_CONFIG    — config wg-quick de um peer do wg-easy
-#            COOLIFY_DEPLOY_HOOK — URL de deploy desta app no Coolify
-#            COOLIFY_TOKEN       — token da API do Coolify (Bearer)
-#   variable: DEPLOY_ENABLED = true   (enquanto não estiver, o job não corre)
+#   secrets:   WIREGUARD_CONFIG    — wg0.conf do peer dos SITES (não o da API/BO)
+#              COOLIFY_DEPLOY_HOOK — URL de deploy desta app no Coolify
+#              COOLIFY_TOKEN       — token da API do Coolify (Bearer)
+#   variables: DEPLOY_ENABLED = true   (enquanto não estiver, o job não corre)
+#              SITE_URL (opcional)     — https://<domínio>; com ela o job confirma que o site responde
 name: Deploy
 
 on:
@@ -47,35 +49,64 @@ jobs:
             sleep 3
           done
           if [ -z "$hs" ] || [ "$hs" = "0" ]; then
-            echo "::error::Túnel sem handshake ao fim de 30s (AllowedIPs, peer apagado no wg-easy, ou porta UDP)."
+            echo "::error::Túnel sem handshake ao fim de 30s. Causas prováveis: AllowedIPs estreito (tem de ser 0.0.0.0/0), peer apagado no wg-easy, porta UDP, ou outro runner a usar o mesmo peer neste minuto."
+            sudo wg show wg0 | sed 's/(none)//'
             exit 1
           fi
           echo "Handshake OK."
 
-      - name: Disparar deploy e esperar que o build acabe
+      - name: Disparar deploy no Coolify
+        id: trigger
         env:
           HOOK: ${{ secrets.COOLIFY_DEPLOY_HOOK }}
           TOKEN: ${{ secrets.COOLIFY_TOKEN }}
         run: |
           if [ -z "$HOOK" ]; then echo "::error::Falta o secret COOLIFY_DEPLOY_HOOK."; exit 1; fi
-          res=$(curl --fail --silent --show-error "$HOOK" ${TOKEN:+-H "Authorization: Bearer $TOKEN"})
-          echo "$res"
-          uuid=$(printf '%s' "$res" | grep -o '"deployment_uuid":"[^"]*"' | head -1 | cut -d'"' -f4)
-          if [ -z "$uuid" ] || [ -z "$TOKEN" ]; then
-            echo "⚠ Sem deployment_uuid ou sem token — deploy disparado, mas não dá para confirmar o fim."
+          resp=$(curl --fail --silent --show-error "$HOOK" ${TOKEN:+-H "Authorization: Bearer $TOKEN"})
+          echo "$resp"
+          dep=$(printf '%s' "$resp" | grep -o '"deployment_uuid":"[^"]*"' | head -1 | cut -d'"' -f4)
+          echo "deployment_uuid=$dep" >> "$GITHUB_OUTPUT"
+          # A base da API do Coolify é a do próprio hook (http://<ip-interno>:8000).
+          echo "base=$(printf '%s' "$HOOK" | sed -E 's#^(https?://[^/]+).*#\1#')" >> "$GITHUB_OUTPUT"
+
+      # "Deployment queued" não diz se o build passou: acompanha até acabar e, se falhar, mostra o fim do log aqui.
+      - name: Acompanhar o deploy no Coolify (estado; log se falhar)
+        env:
+          BASE: ${{ steps.trigger.outputs.base }}
+          DEP: ${{ steps.trigger.outputs.deployment_uuid }}
+          TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+        run: |
+          if [ -z "$DEP" ] || [ -z "$TOKEN" ]; then
+            echo "::warning::Sem deployment_uuid ou sem COOLIFY_TOKEN — deploy disparado, mas não dá para confirmar o fim."
             exit 0
           fi
-
-          # O deploy é assíncrono: perguntar ao Coolify até acabar (máx. ~15 min).
-          base=$(printf '%s' "$HOOK" | sed -E 's#^(https?://[^/]+).*#\1#')
+          st=""
           for i in $(seq 1 90); do
-            status=$(curl -fsS -H "Authorization: Bearer $TOKEN" "$base/api/v1/deployments/$uuid" \
-              | grep -o '"status":"[^"]*"' | head -1 | cut -d'"' -f4)
-            echo "[$i] estado=${status:-?}"
-            case "$status" in
-              finished) echo "✔ Deploy concluído."; exit 0 ;;
-              failed|cancelled*) echo "::error::O deploy no Coolify acabou em '$status' — ver o log no painel."; exit 1 ;;
+            body=$(curl -sS "$BASE/api/v1/deployments/$DEP" -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" || true)
+            st=$(printf '%s' "$body" | jq -r '.status // empty' 2>/dev/null || true)
+            echo "[$i] estado=${st:-?}"
+            case "$st" in
+              finished) echo "✔ Coolify: deploy terminado."; exit 0 ;;
+              failed|cancelled*|canceled*)
+                echo "::error::Coolify: deploy $st. Fim do log:"
+                printf '%s' "$body" | jq -r '.logs | (try fromjson catch []) | map(select(.hidden != true) | .output) | .[-120:] | .[]' 2>/dev/null || printf '%s\n' "$body" | tail -c 4000
+                exit 1 ;;
             esac
-            sleep 10
+            sleep 15
           done
-          echo "::error::O deploy não acabou em 15 minutos."; exit 1
+          echo "::error::Coolify: o deploy não terminou em ~22 min (estado: ${st:-?})."; exit 1
+
+      # Liveness só: estes sites não publicam o commit. Sem SITE_URL, salta.
+      - name: Confirmar que o site responde
+        env:
+          URL: ${{ vars.SITE_URL }}
+        run: |
+          if [ -z "$URL" ]; then echo "Sem a variable SITE_URL — salto a confirmação."; exit 0; fi
+          URL="${URL%/}"
+          for i in $(seq 1 20); do
+            code=$(curl -s -o /tmp/root -w '%{http_code}' "$URL/?_=$i" || echo 000)
+            echo "[$i] http=$code"
+            if [ "$code" = "200" ] && grep -q 'id="root"' /tmp/root; then echo "✔ $URL responde."; exit 0; fi
+            sleep 6
+          done
+          echo "::error::$URL não respondeu 200 com a app depois do deploy."; exit 1
