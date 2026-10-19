@@ -46,7 +46,7 @@ if (migratedTo) {
   root.render(<Migrated newUrl={migratedTo} />);
 } else {
   // App normal — continuar com o arranque habitual
-  // Carrega a config da app por host — render bloqueante enquanto resolve.
+  // Config embutida no build (appConfig.ts) — spinner até resolver.
   root.render(<Spinner />);
 
   loadAppConfig()
