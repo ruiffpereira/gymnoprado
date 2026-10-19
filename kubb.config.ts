@@ -33,6 +33,11 @@ const CF_BYPASS = process.env.CF_BYPASS_TOKEN ?? dotEnv.CF_BYPASS_TOKEN ?? "";
 // o ficheiro (o suporte a headers custom no input do Kubb é limitado). O token só
 // vai no header — não fica em spec*.json nem no código gerado.
 async function fetchSpec(url: string, outFile: string): Promise<string> {
+  // Modo offline: KUBB_OFFLINE=1 usa o spec.<x>.json local sem ir à API
+  if (process.env.KUBB_OFFLINE === "1") {
+    if (!existsSync(outFile)) throw new Error(`KUBB_OFFLINE=1 mas falta ${outFile}.`);
+    return outFile;
+  }
   const res = await fetch(url, {
     headers: {
       "User-Agent": "kubb-codegen",
