@@ -6,8 +6,6 @@ App **mobile-first (PWA)** de musculação para os clientes de um ginásio. Cons
 - **Stack recomendada:** ver [ARCHITECTURE.md](ARCHITECTURE.md) (React + Vite + TanStack Query + Zustand + vite-plugin-pwa + Dexie offline).
 - **Contrato proposto (histórico):** [API_CONTRACT.md](API_CONTRACT.md) — proposta original. **As rotas reais já implementadas estão abaixo e têm precedência.**
 
-> Estado: **backend Gym completo e testado**. Frontend PWA implementado (ver `src/screens/`).
->
 > **Treino do dia / programa ativo:** o coach marca um **programa ativo** por cliente no backoffice. O Dashboard mostra o programa ativo e o **treino a fazer agora** (`nextWorkoutId`), calculado no servidor pela regra *"treino menos vezes concluído → empate por ordem"* — faltar/saltar treinos é tratado automaticamente. A `weeklyGoal` (nº de dias do programa) alimenta o anel de meta semanal. O cliente pode na mesma escolher outro treino na lista. As datas do programa são só informativas. Manual hook: `useActiveProgram` em [src/hooks/useGym.ts](src/hooks/useGym.ts) (usa o `axiosInstance` partilhado; quando regenerares o Kubb com a API a correr, podes trocar por um hook gerado).
 
 ---
@@ -47,6 +45,7 @@ Todos exigem `Authorization: Bearer <customer token>`.
 | `GET` | `/stats/summary` | `{ totalWorkouts, streak, totalSets, avgPerWeek }` |
 | `GET` | `/stats/weekly` | 8 semanas: `{ weekStart, count }[]` (Progresso → gráfico de barras) |
 | `GET` | `/stats/records` | Recordes pessoais `{ exerciseName, group, weight }[]` (top 6) |
+| `GET` | `/stats/load-series` | Evolução de carga por exercício `{ exerciseName, group, points:[{date,weight}] }[]` (melhor peso por sessão) |
 
 ### Formas de dados (resposta)
 
@@ -89,7 +88,7 @@ Upload via o módulo `uploads/` da API (`POST /api/uploads`, autenticado). Guard
 
 - Spec OpenAPI: a API expõe `/api-docs/websites/gym.json` (definido em `API-FullStack/swagger/websites/gym/swaggerGym.ts`, com glob dos controllers `controllers/websites/gym/**` + paths de auth inline).
 - Config: [kubb.config.ts](kubb.config.ts) lê esse spec (via `VITE_API_BASE_URL`) → gera para `src/gen/` (hooks React Query + types + schemas).
-- Regenerar quando a API muda: **`pnpm kubb`** (precisa da API a correr em `localhost:3001`).
+- Regenerar quando a API muda: **`pnpm kubb`** (busca o spec à API em `VITE_API_BASE_URL`; com `X-CI-Bypass`/`CF_BYPASS_TOKEN` atrás da Cloudflare). **`KUBB_OFFLINE=1 pnpm kubb`** reutiliza os `spec.*.json` que já estão no disco (sem API; falha se faltarem). Os `spec*.json` e `src/gen*` são **gitignored** neste repo — o build re-busca-os à API viva, por isso **ordem de deploy: API primeiro, PWA depois**.
 - Os hooks gerados usam o `axiosInstance` partilhado do Kubb, configurado em [src/api/client.ts](src/api/client.ts) (baseURL + Bearer + refresh automático + CSRF).
 - [src/api/index.ts](src/api/index.ts) é uma **facade** com nomes curtos (`usePrograms`, `createWorkout`, tipos `GymProgram`…) por cima de `src/gen`. Os ecrãs importam daqui.
 - Auth orquestrada em [src/api/session.ts](src/api/session.ts) (login/logout/forgot por cima dos hooks gerados).
@@ -102,13 +101,17 @@ Estrutura: `src/gen/` (gerado) · `src/api/` (cliente + facade + sessão) · `sr
 
 > **Durabilidade do registo de treino (batch P1, 2026-07-21):** o registo do treino nunca se perde. (1) **`clientUuid`** gerado no `start()` (persistido no store, `version:3`) e enviado no `buildLog()` junto com a **`date` local** (`localDateISO`, nunca UTC) — a API dedupa por `(customerId, clientUuid)`, retries são seguros. (2) **Fila offline persistida** ([src/store/usePendingLogs.ts](src/store/usePendingLogs.ts), zustand+persist → `gymnoprado_pending_logs`): um `POST /logs` falhado por causa transitória (sem rede/timeout/5xx) entra na fila e é drenado no arranque, no evento `online` e ao voltar a ficar visível (`usePendingLogsSync` em `App.tsx`); banner discreto no Dashboard (`PendingSyncBanner`, toca para tentar já); ao drenar invalida histórico/stats (`invalidateGym`). 4xx é definitivo — não se re-enfileira no envio inicial. (3) **Descanso nunca engole séries**: navegar pelos dots e "Terminar" durante um descanso fazem `finishRest()` (conclui a série que o descanso ia fechar), nunca `cancelRest()`. (4) **Sessão só morre com 401/403** (`isAuthApiError`): offline/500/timeout no restauro mantêm o token e re-tentam com backoff (`App.tsx`). (5) **Confirmações destrutivas**: "Cancelar treino" é dois toques; apagar treino/grupo na lista tem modal (como o detalhe); `begin()` com outro treino em curso pede confirmação; tocar numa série saltada só seleciona — repor é o botão explícito "Repor esta série". (6) **TTL**: treino ativo reidratado com >6h mostra "Retomar / Descartar" na `ActiveWorkoutBar` em vez de "EM TREINO" eterno; treino com 0 exercícios não arranca. (7) **`WorkoutEditor` faz round-trip** de `type`/`duration`/`notes`/`mediaUrl`/`mode`/`setRows` (o PATCH substitui `exercises` por inteiro); mexer nos steppers de uma linha perSet converte-a para uniforme ao guardar — sem toque, `setRows` segue intacto.
 
-> **Multi-tenant por host (F0+F1 do épico app-cliente-final, 2026-07-23 — brief em `Backoffice/.design/app-cliente-final/`):** o tenant deixou de estar embutido no build. `src/lib/appConfig.ts` resolve a config no arranque via `GET /websites/app/config?host=` (→ `{userId, siteToken, name, logoUrl, modules}`; cache localStorage p/ offline; **fallback dev**: com `VITE_USER_ID` no env não há fetch — dev local igual ao de sempre). O `siteToken` é um token "app-site" ASSINADO (JWT 7d) equivalente a um site token; `session.ts`/`client.ts` leem TUDO da config. Branding pré-login via `BrandHeader` (nome+logo do tenant). Strings de UI: bundles `src/i18n/{pt,en}.json` (gerados do CSV por `scripts/csvToI18n.mjs`) com cascata **CMS do tenant → bundle → fallback PT** no `t()` — a app funciona sem nenhum import de CSV; o CMS por-tenant é só override deliberado + conteúdo do negócio. Base path configurável (`VITE_BASE_PATH`, default `/`; o modelo novo serve em `{sub}/app` via proxy do site-engine com `APP_CLIENT_URL`). ⚠ Builds locais com base `/app/` em Git Bash precisam de `MSYS_NO_PATHCONV=1`. **Ordem de deploy: API primeiro, PWA depois** (o kubb do build busca o spec à API viva). F2 (migração do host antigo do GYMNOPRADO) e F3 (módulo agenda) por fazer.
+> **Config da app (embutida no build):** `src/lib/appConfig.ts` lê `VITE_USER_ID` (o tenant) e `VITE_SITE_TOKEN` do build — **não existe config por host**: o endpoint `GET /websites/app/config` saiu da API com o site-engine (B35) e nenhum código deve voltar a chamá-lo. `session.ts`/`client.ts` leem tudo desta config. Branding pré-login via `BrandHeader`. Strings de UI: bundles `src/i18n/{pt,en}.json` (gerados do CSV por `scripts/csvToI18n.mjs`) com cascata **CMS do tenant → bundle → fallback PT** no `t()` — a app funciona sem nenhum import de CSV; o CMS por-tenant é só override deliberado + conteúdo do negócio. Base path configurável (`VITE_BASE_PATH`, default `/`). ⚠ Builds locais com base `/app/` em Git Bash precisam de `MSYS_NO_PATHCONV=1`.
 >
 > **Interação da execução (P2a, 2026-07-21):** dots de exercício e steppers com alvo de toque ≥44px (`hit44` em `index.css` — pseudo-elemento, visual intacto); **vibração + beep duplo** no fim do descanso e do cronómetro (`src/lib/feedback.ts`, Web Audio lazy no 1.º gesto); steppers com **press-and-hold** (repete a 130ms após 400ms; `clickUnlessHeld` suprime o click sintético do pointerup) e **tocar no valor abre input numérico** (`inputmode` certo); **cronómetro wall-clock** para exercícios de tempo (padrão `endsAt` do descanso — não marca a série sozinho); media do exercício (lazy + fullscreen) e `notes` do coach visíveis; dropset com `rest: 0` mostra o cue "BAIXA O PESO" ~2.5s; exercícios de tempo herdam a duração da última sessão.
 >
 > **Infra/polimento (P2b) + i18n (P3, 2026-07-21):** datas locais no Dashboard/History (fim do desvio UTC); séries não feitas distinguidas no histórico e tempo mostra `Xs`; auth com `<form>` real + `autocomplete` + toggle de password; `Modal` com `role=dialog`/Escape/scroll-lock; zoom desbloqueado; `PullToRefresh` ignora gestos dentro de scrolláveis/dialogs; `NetworkFirst` com `networkTimeoutSeconds:3`; `refetchOnWindowFocus` LIGADO (retomar a app traz programa/stats frescos); push `notificationclick` navega para `data.url`. **i18n:** `greeting`/`relativeDays` recebem `t()` (chaves `gym.app.time.*`/`gym.app.greeting.*`); InstallPrompt/ThemeToggle traduzidos; dias da semana e grupos musculares via CMS (`translateWeekday*`/`translateMuscleGroup` em [src/lib/exercises.ts](src/lib/exercises.ts) — o `GroupChip` traduz o TEXTO, a cor continua pelo token cru); date-fns com locale dinâmico ([src/lib/dateLocale.ts](src/lib/dateLocale.ts), default PT). **Contrato:** `spec.gym.json`/`src/gen` são gitignored e re-buscados no build à API VIVA — ordem de deploy: **API primeiro, PWA depois**; os tipos gerados já cobrem `mode`/`setRows`/`subGroup`/`media` (único cast restante: `duration` do GET last-performance).
 >
 > **Mensalidade do membro (só-leitura)** — secção no **Perfil** (`MensalidadeCard`) + **banner no Dashboard** (`MensalidadeBanner`, só quando há mês por pagar/em atraso). Hook manual [src/hooks/useMensalidade.ts](src/hooks/useMensalidade.ts) → `GET /websites/gym/mensalidade` (subscrição + mês corrente **derivado** + histórico). Estado visível: **paga** (verde) · **por pagar** desde o dia 1 (laranja) · **em atraso** após o `dueDay` da subscrição (vermelho). Pagamento é em **dinheiro ao balcão** — a app nunca regista pagamentos (quem marca é o coach no Backoffice). A derivação de estado é a **mesma fonte de verdade** do backoffice (`API-FullStack/src/utils/mensalidade.ts`). Strings em `gym.app.mensalidade.*` (CMS).
+
+## Envs (todas `VITE_*`, build-time)
+
+`VITE_API_BASE_URL` · `VITE_USER_ID` (tenant do ginásio; sem ela a app recusa arrancar) · `VITE_SITE_TOKEN` (nome novo; o antigo `SITE_TOKEN` não é lido por esta app) · opcionais: `VITE_BASE_PATH` (default `/`) e `VITE_MIGRATED_TO` (ver *Migração*). Valores só no Coolify/`.env` local — nunca commitar um `.env`.
 
 ## Conteúdo / Traduções (CMS)
 
@@ -129,13 +132,13 @@ O ficheiro [content-import.csv](content-import.csv) tem as chaves + valores (pt/
 
 1. Backoffice → **Conteúdos** → tab **Ginásio** → botão **Importar** → escolher o `content-import.csv`.
 2. Importar **na tab Ginásio** é essencial: o importador cria as secções com `context: gym`, por isso o conteúdo fica no separador certo.
-3. Formato do CSV (6 colunas `key,locale,value,type,section,parent`) — ver [Backoffice/CLAUDE.md](../Backoffice/CLAUDE.md) → secção *CMS → Importar conteúdo via CSV*.
+3. Formato do CSV (6 colunas `key,locale,value,type,section,parent`) — ver [Backoffice/REFERENCIA-PAGINAS.md](../Backoffice/REFERENCIA-PAGINAS.md) → *Importar conteúdo via CSV*.
 
 > **Todos os ecrãs** estão convertidos (Dashboard, Workouts, History, Progress, WorkoutDetail, WorkoutExec, WorkoutEditor, Profile, nav, e auth Login/Register/Forgot/Reset). Ao adicionar texto novo, usar `t('gym.app.<área>.<chave>', 'fallback')` e acrescentar a chave (pt/en) ao `content-import.csv`.
 
 ## Backend (referência)
 
-Módulo **Gym** em `../API-FullStack` — ver [API-FullStack/CLAUDE.md](../API-FullStack/CLAUDE.md) → secção *11. Gym*. Modelos: `Program → Workout → WorkoutExercise`, `WorkoutLog → WorkoutLogEntry`, `ExerciseCatalog`. RBAC do backoffice: componente `VIEW_GYM`.
+Módulo **Gym** em `../API-FullStack` — ver [API-FullStack/REFERENCIA-MODULOS.md](../API-FullStack/REFERENCIA-MODULOS.md) → secção *11. Gym*. Modelos: `Program → Workout → WorkoutExercise`, `WorkoutLog → WorkoutLogEntry`, `ExerciseCatalog`. RBAC do backoffice: componente `VIEW_GYM`.
 
 ---
 
