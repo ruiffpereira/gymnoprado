@@ -111,7 +111,7 @@ Estrutura: `src/gen/` (gerado) · `src/api/` (cliente + facade + sessão) · `sr
 
 ## Envs (todas `VITE_*`, build-time)
 
-`VITE_API_BASE_URL` · `VITE_USER_ID` (tenant do ginásio; sem ela a app recusa arrancar) · `VITE_SITE_TOKEN` (nome novo; o antigo `SITE_TOKEN` não é lido por esta app) · opcionais: `VITE_BASE_PATH` (default `/`) e `VITE_MIGRATED_TO` (ver *Migração*). Valores só no Coolify/`.env` local — nunca commitar um `.env`.
+`VITE_API_BASE_URL` · `VITE_USER_ID` (tenant do ginásio; sem ela a app recusa arrancar) · `VITE_SITE_TOKEN` (obrigatório como o `VITE_USER_ID`: `appConfig.ts` falha alto sem ele; a API exige site token válido no login/registo/esqueci dos clientes — 401 `SITE_TOKEN_REQUIRED`, CT-16; o antigo `SITE_TOKEN` não é lido) · opcionais: `VITE_BASE_PATH` (default `/`) e `VITE_MIGRATED_TO` (ver *Migração*). Valores só no Coolify/`.env` local — nunca commitar um `.env`.
 
 ## Conteúdo / Traduções (CMS)
 

@@ -21,9 +21,13 @@ export async function loadAppConfig(): Promise<void> {
   if (!userId) {
     throw new Error("Aplicação sem VITE_USER_ID no build. Contacte o administrador.");
   }
+  const siteToken = import.meta.env.VITE_SITE_TOKEN;
+  if (!siteToken) {
+    throw new Error("Aplicação sem VITE_SITE_TOKEN no build. Contacte o administrador.");
+  }
   appConfig = {
     userId,
-    siteToken: import.meta.env.VITE_SITE_TOKEN ?? "",
+    siteToken,
     name: "GYMNOPRADO",
     logoUrl: null,
     modules: ["gym"],
