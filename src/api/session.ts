@@ -1,16 +1,16 @@
 // Orquestração de autenticação por cima dos hooks gerados pelo Kubb.
-import { postWebsitesCustomersAutenticationLogin } from "../gen/hooks/usePostWebsitesCustomersAutenticationLogin";
-import { postWebsitesCustomersAutenticationRegister } from "../gen/hooks/usePostWebsitesCustomersAutenticationRegister";
-import { postWebsitesCustomersAutenticationLogout } from "../gen/hooks/usePostWebsitesCustomersAutenticationLogout";
-import { postWebsitesCustomersAutenticationForgotPassword } from "../gen/hooks/usePostWebsitesCustomersAutenticationForgotPassword";
-import { postWebsitesCustomersAutenticationResetPassword } from "../gen/hooks/usePostWebsitesCustomersAutenticationResetPassword";
+import { postWebsitesCustomersAuthenticationLogin } from "../gen/hooks/usePostWebsitesCustomersAuthenticationLogin";
+import { postWebsitesCustomersAuthenticationRegister } from "../gen/hooks/usePostWebsitesCustomersAuthenticationRegister";
+import { postWebsitesCustomersAuthenticationLogout } from "../gen/hooks/usePostWebsitesCustomersAuthenticationLogout";
+import { postWebsitesCustomersAuthenticationForgotPassword } from "../gen/hooks/usePostWebsitesCustomersAuthenticationForgotPassword";
+import { postWebsitesCustomersAuthenticationResetPassword } from "../gen/hooks/usePostWebsitesCustomersAuthenticationResetPassword";
 import { getWebsitesGymMe } from "../gen/hooks/useGetWebsitesGymMe";
 import { setToken } from "./client";
 import { getAppConfig } from "../lib/appConfig";
 
 export async function login(email: string, password: string) {
   const { userId } = getAppConfig();
-  const res = await postWebsitesCustomersAutenticationLogin({
+  const res = await postWebsitesCustomersAuthenticationLogin({
     userId,
     provider: "credentials",
     email,
@@ -30,13 +30,13 @@ export interface RegisterData {
 /** Regista um novo cliente e autentica-o de seguida (o registo não devolve token). */
 export async function register(data: RegisterData) {
   const { userId } = getAppConfig();
-  await postWebsitesCustomersAutenticationRegister({ userId, ...data });
+  await postWebsitesCustomersAuthenticationRegister({ userId, ...data });
   return login(data.email, data.password);
 }
 
 export async function logout() {
   try {
-    await postWebsitesCustomersAutenticationLogout();
+    await postWebsitesCustomersAuthenticationLogout();
   } catch {
     // limpamos a sessão de qualquer forma
   }
@@ -45,11 +45,11 @@ export async function logout() {
 
 export async function forgotPassword(email: string) {
   const { userId } = getAppConfig();
-  await postWebsitesCustomersAutenticationForgotPassword({ userId, email });
+  await postWebsitesCustomersAuthenticationForgotPassword({ userId, email });
 }
 
 export async function resetPassword(token: string, newPassword: string) {
-  await postWebsitesCustomersAutenticationResetPassword({ token, newPassword });
+  await postWebsitesCustomersAuthenticationResetPassword({ token, newPassword });
 }
 
 export const fetchProfile = () => getWebsitesGymMe();

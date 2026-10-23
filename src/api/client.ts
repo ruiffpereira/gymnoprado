@@ -2,7 +2,11 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { axiosInstance } from "@kubb/plugin-client/clients/axios";
 import { tryGetAppConfig } from "../lib/appConfig";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3001/api";
+const ENV_BASE_URL: string | undefined = import.meta.env.VITE_API_BASE_URL;
+if (!ENV_BASE_URL) {
+  throw new Error("Aplicação sem VITE_API_BASE_URL no build. Contacte o administrador.");
+}
+const BASE_URL: string = ENV_BASE_URL;
 const TOKEN_KEY = "gymnoprado_token";
 
 // ── Token store (memória + localStorage) ──────────────────────────────────────
@@ -49,7 +53,7 @@ async function refreshAccessToken(): Promise<string | null> {
   const csrf = await getCsrfToken();
   try {
     const res = await axios.post(
-      `${BASE_URL}/websites/customers/autentication/refresh`,
+      `${BASE_URL}/websites/customers/authentication/refresh`,
       {},
       { withCredentials: true, headers: csrf ? { "x-csrf-token": csrf } : {} },
     );
@@ -68,7 +72,7 @@ axiosInstance.interceptors.response.use(
   async (error: AxiosError) => {
     const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
     const status = error.response?.status;
-    const isAuthCall = original?.url?.includes("/autentication/");
+    const isAuthCall = original?.url?.includes("/authentication/");
 
     if (status === 401 && original && !original._retry && !isAuthCall && accessToken) {
       original._retry = true;
