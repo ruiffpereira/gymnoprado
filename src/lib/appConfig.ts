@@ -1,10 +1,9 @@
 /**
- * Configuração da app — embutida no build (`VITE_USER_ID` + `VITE_SITE_TOKEN`).
+ * Configuração da app — embutida no build (`VITE_SITE_TOKEN`; o tenant vem do site token — B59 F2 tirou o `VITE_USER_ID`).
  * O endpoint `/websites/app/config` saiu da API com o site-engine (B35); não há config por host.
  */
 
 export interface AppConfig {
-  userId: string;
   siteToken: string;
   name: string;
   logoUrl: string | null;
@@ -17,16 +16,11 @@ let appConfig: AppConfig | null = null;
 export async function loadAppConfig(): Promise<void> {
   if (appConfig) return;
 
-  const userId = import.meta.env.VITE_USER_ID;
-  if (!userId) {
-    throw new Error("Aplicação sem VITE_USER_ID no build. Contacte o administrador.");
-  }
   const siteToken = import.meta.env.VITE_SITE_TOKEN;
   if (!siteToken) {
     throw new Error("Aplicação sem VITE_SITE_TOKEN no build. Contacte o administrador.");
   }
   appConfig = {
-    userId,
     siteToken,
     name: "GYMNOPRADO",
     logoUrl: null,

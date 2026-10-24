@@ -14,13 +14,6 @@ export { useGetWebsitesGymLogsId as useLogDetail } from "../gen/hooks/useGetWebs
 
 // ── Funções imperativas (para mutations) ───────────────────────────────────────
 export { getWebsitesGymMe } from "../gen/hooks/useGetWebsitesGymMe";
-export { postWebsitesGymPrograms as createProgram } from "../gen/hooks/usePostWebsitesGymPrograms";
-export { patchWebsitesGymProgramsId as updateProgram } from "../gen/hooks/usePatchWebsitesGymProgramsId";
-export { deleteWebsitesGymProgramsId as deleteProgram } from "../gen/hooks/useDeleteWebsitesGymProgramsId";
-export { postWebsitesGymProgramsProgramidWorkouts as createWorkout } from "../gen/hooks/usePostWebsitesGymProgramsProgramidWorkouts";
-export { patchWebsitesGymWorkoutsId as updateWorkout } from "../gen/hooks/usePatchWebsitesGymWorkoutsId";
-export { deleteWebsitesGymWorkoutsId as deleteWorkout } from "../gen/hooks/useDeleteWebsitesGymWorkoutsId";
-export { postWebsitesGymWorkoutsIdClone as cloneWorkout } from "../gen/hooks/usePostWebsitesGymWorkoutsIdClone";
 export { postWebsitesGymLogs as createLog } from "../gen/hooks/usePostWebsitesGymLogs";
 export { getWebsitesGymWorkoutsIdLast as getLastPerformance } from "../gen/hooks/useGetWebsitesGymWorkoutsIdLast";
 export { deleteWebsitesGymLogsId as deleteLog } from "../gen/hooks/useDeleteWebsitesGymLogsId";
@@ -35,8 +28,6 @@ export type { GymProfile } from "../gen/types/GymProfile";
 export type { GymSummary } from "../gen/types/GymSummary";
 export type { GymWeeklyPoint } from "../gen/types/GymWeeklyPoint";
 export type { GymRecord } from "../gen/types/GymRecord";
-export type { GymWorkoutInput } from "../gen/types/GymWorkoutInput";
-export type { GymExerciseInput } from "../gen/types/GymExerciseInput";
 export type { GetWebsitesGymWorkoutsIdLast200 as GymLastPerformance } from "../gen/types/GetWebsitesGymWorkoutsIdLast";
 export type { GetWebsitesGymStatsLoadSeries200 as GymLoadSeries } from "../gen/types/GetWebsitesGymStatsLoadSeries";
 export type { GetWebsitesGymLogsId200 as GymLogDetail } from "../gen/types/GetWebsitesGymLogsId";

@@ -46,14 +46,20 @@ export interface MensalidadeResponse {
 
 export const mensalidadeQueryKey = ["websites-gym-mensalidade"] as const;
 
+export const mensalidadeQuery = {
+  queryKey: mensalidadeQueryKey,
+  queryFn: async () => {
+    const res = await axiosInstance.get<MensalidadeResponse>("/websites/gym/mensalidade");
+    return res.data;
+  },
+  staleTime: 60_000,
+};
+
 export function useMensalidade() {
   return useQuery({
-    queryKey: mensalidadeQueryKey,
-    queryFn: async () => {
-      const res = await axiosInstance.get<MensalidadeResponse>("/websites/gym/mensalidade");
-      return res.data;
-    },
-    staleTime: 60_000,
+    ...mensalidadeQuery,
+    // GY-26: bloqueado → volta a perguntar para a app abrir sozinha quando o dono regularizar.
+    refetchInterval: (q) => (q.state.data?.blocked ? 30_000 : false),
   });
 }
 

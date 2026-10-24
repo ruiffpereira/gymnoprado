@@ -2,7 +2,7 @@
 #
 # Porque existe: o painel do Coolify vive dentro da WireGuard, por isso o
 # webhook do GitHub nunca lhe chega — sem isto o deploy é sempre manual.
-# Mesmo padrão do CI do Backoffice. Passo-a-passo do setup: CI-SETUP.md na raiz
+# Mesmo padrão do CI do Backoffice. Passo-a-passo do setup: docs/3 - Infra/3.2 - ci.md na raiz
 # da plataforma → "Sites externos".
 #
 # Setup (uma vez, em Settings → Secrets and variables → Actions deste repo):

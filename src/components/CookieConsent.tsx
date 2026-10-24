@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useCms } from "../context/CmsContext";
-
-const KEY = "cookie-consent";
+import { CONSENT_KEY as KEY, initUmami } from "../lib/umami";
 
 /** Textos PT hardcoded — fallback se o CMS não tiver as chaves cookies.*. */
 const PT = {
@@ -15,7 +14,7 @@ const PT = {
  * Consentimento de cookies (RGPD) — overlay BLOQUEANTE: aparece por cima de tudo
  * e impede o uso da página até o utilizador escolher. Guarda a escolha em
  * localStorage. Nota: por exigência do RGPD, "Rejeitar" também deixa entrar
- * (não é um cookie wall só-aceitar).
+ * (não é um cookie wall só-aceitar). Só "Aceitar" arranca a análise (Umami).
  */
 export function CookieConsent() {
   const [show, setShow] = useState(false);
@@ -51,6 +50,7 @@ export function CookieConsent() {
     } catch {
       /* ignore */
     }
+    if (v === "accepted") void initUmami();
     setShow(false);
   };
 

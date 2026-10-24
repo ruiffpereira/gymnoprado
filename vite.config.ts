@@ -8,7 +8,7 @@ const requireBuildEnv = (): Plugin => ({
   name: "require-build-env",
   configResolved(config) {
     if (config.command !== "build") return;
-    for (const k of ["VITE_API_BASE_URL", "VITE_USER_ID", "VITE_SITE_TOKEN"]) {
+    for (const k of ["VITE_API_BASE_URL", "VITE_SITE_TOKEN"]) {
       if (!config.env[k]) throw new Error(`Env em falta no build: ${k}`);
     }
   },

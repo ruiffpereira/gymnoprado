@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { Check, ChevronRight, ChevronDown, Trophy, Timer, Minus, Plus, Dumbbell, ArrowDown, RotateCcw } from "lucide-react";
 import { useActiveWorkout } from "../store/useActiveWorkout";
 import { usePendingLogs } from "../store/usePendingLogs";
+import { useSession } from "../store/useSession";
 import { useCreateLog } from "../hooks/useGym";
 import { Button, Modal } from "../components/ui";
 import { formatClock } from "../lib/format";
 import { groupColor } from "../lib/exercises";
-import { apiErrorMessage, isTransientApiError } from "../api/client";
+import { apiErrorMessage, isMembershipBlockedError, isSessionPendingError, isTransientApiError } from "../api/client";
 import { toast } from "../lib/toast";
 import { useCms } from "../context/CmsContext";
 import { useStatusBarColor } from "../hooks/useStatusBarColor";
@@ -363,14 +364,19 @@ export function WorkoutExec() {
         navigate("/", { replace: true });
       },
       onError: (e) => {
-        if (isTransientApiError(e)) {
-          // Sem rede / timeout / 5xx: o treino vai para a fila offline
-          // persistida (reenvio automático, dedupe por clientUuid) — o
-          // utilizador segue em frente, nunca fica bloqueado nem perde a sessão.
+        if (isSessionPendingError(e)) {
+          // Sem rede / timeout / 5xx, ou 401 (sessão por renovar): o treino vai para a fila
+          // persistida (reenvio automático, dedupe por clientUuid) — um registo nunca se perde.
+          // Com 401 pede-se a renovação (modo offline → `useOfflineRecovery`); a fila só drena com sessão válida.
           usePendingLogs.getState().enqueue(log);
+          if (!isTransientApiError(e) && !isMembershipBlockedError(e) && useSession.getState().status === "authed") {
+            useSession.getState().setOffline(true);
+          }
+          // Mensalidade bloqueada (GY-26/SP-10): o treino fica guardado e segue quando o acesso voltar — não é falta de rede.
           toast.success(
-            t("gym.app.exec.saved_offline") ||
-              "Sem rede — treino guardado no telemóvel. Será enviado automaticamente.",
+            isMembershipBlockedError(e)
+              ? t("gym.app.exec.saved_blocked") || "Treino guardado no telemóvel — será enviado quando o teu acesso voltar."
+              : t("gym.app.exec.saved_offline") || "Sem rede — treino guardado no telemóvel. Será enviado automaticamente.",
           );
           wk.clear();
           navigate("/", { replace: true });

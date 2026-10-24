@@ -18,11 +18,16 @@ import { useCms } from "../context/CmsContext";
 export function usePendingLogsSync() {
   const status = useSession((s) => s.status);
   const profile = useSession((s) => s.profile);
+  const offline = useSession((s) => s.offline);
+  const blocked = useSession((s) => s.membershipBlocked);
   const items = usePendingLogs((s) => s.items);
   const { t } = useCms();
 
   useEffect(() => {
-    if (status !== "authed") return;
+    // Em modo offline (aberta sem rede) ainda não há token: drenar daria 401 e gastaria tentativas.
+    // Quando a sessão é renovada, `offline` passa a false e este efeito corre outra vez.
+    // Bloqueado (GY-26): a fila fica guardada; volta a drenar quando o bloqueio sai (blocked passa a false).
+    if (status !== "authed" || offline || blocked) return;
     let disposed = false;
 
     const run = async () => {
@@ -52,5 +57,5 @@ export function usePendingLogsSync() {
     // `t` fora das deps de propósito: mudar de língua não deve re-armar os listeners.
     // `items` e `profile` em deps para recalcular o remaining na hora.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, profile?.id, items]);
+  }, [status, offline, blocked, profile?.id, items]);
 }

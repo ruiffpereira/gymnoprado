@@ -119,7 +119,8 @@ function DefaultPolicy({ negocio }: { negocio: string }) {
         <p>
           Usamos apenas cookies <b>essenciais</b>. Para estatísticas usamos uma
           ferramenta <b>sem cookies e anónima</b> (Umami, auto-hospedado),
-          que <b>não</b> rastreia entre sites nem cria perfis individuais.
+          que <b>não</b> rastreia entre sites nem cria perfis individuais, e só
+          arranca se <b>aceitares</b> a análise no aviso de cookies.
         </p>
       </Section>
 

@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, Dumbbell, Clock, BarChart3, User } from "lucide-react";
+import { Home, Dumbbell, Clock, BarChart3, User, WifiOff } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect } from "react";
 import { Logo, Avatar } from "./ui";
@@ -8,6 +8,10 @@ import { ScreenHeader } from "./ScreenHeader";
 import { ActiveWorkoutBar } from "./ActiveWorkoutBar";
 import { useSession } from "../store/useSession";
 import { useCms } from "../context/CmsContext";
+import { useMensalidade, mensalidadeQuery } from "../hooks/useMensalidade";
+import { queryClient } from "../lib/queryClient";
+import { MensalidadeCard } from "./MensalidadeCard";
+import { Lock } from "lucide-react";
 
 // Rotas com o header verde partilhado (as 5 tabs). Os ecrãs de detalhe/editor
 // trazem o seu próprio header e não entram aqui.
@@ -79,8 +83,76 @@ function BottomNav() {
   );
 }
 
+/** Aviso discreto quando a app abriu sem rede e mostra os dados guardados (ver `useOfflineRecovery`). */
+function OfflineNotice() {
+  const offline = useSession((s) => s.offline);
+  const { t } = useCms();
+  if (!offline) return null;
+  return (
+    <div role="status" className="flex items-center justify-center gap-2 bg-surface border-b border-line px-4 py-1.5 text-[12px] font-medium text-t2">
+      <WifiOff size={14} />
+      {t("gym.app.offline.notice")}
+    </div>
+  );
+}
+
+/** GY-26: mensalidade bloqueada → a API fecha a app (403 MEMBERSHIP_BLOCKED); só se mostra o aviso e o cartão da mensalidade. */
+function BlockedNotice() {
+  const { t } = useCms();
+  return (
+    <div className="p-5 max-w-md mx-auto pt-12">
+      <div className="rounded-card px-4 py-4 mb-5 bg-red/10 dark:bg-red/20 text-red border border-red/30 dark:border-red/50">
+        <p className="flex items-center gap-2 text-[15px] font-bold mb-1"><Lock size={18} /> {t("gym.app.mensalidade.blocked_title") || "Acesso suspenso"}</p>
+        <p className="text-[13px]">{t("gym.app.mensalidade.blocked_hint") || "A tua mensalidade está bloqueada. Fala com o teu treinador para regularizar e voltares a usar a app."}</p>
+      </div>
+      <MensalidadeCard />
+    </div>
+  );
+}
+
+/**
+ * GY-26: a API respondeu 403 MEMBERSHIP_BLOCKED. Enquanto assim estiver, pergunta de 30 em 30 s e ao voltar
+ * a ficar visível a `GET /mensalidade` (rota isenta); `blocked: false` → sai do bloqueio, sem sair da conta,
+ * e a fila de registos volta a drenar (ver `usePendingLogsSync`).
+ */
+function useBlockRecovery(sessionBlocked: boolean) {
+  useEffect(() => {
+    if (!sessionBlocked) return;
+    let busy = false;
+    const check = async () => {
+      if (busy) return;
+      busy = true;
+      try {
+        const data = await queryClient.fetchQuery({ ...mensalidadeQuery, staleTime: 0 });
+        if (data.blocked === false) {
+          useSession.getState().setMembershipBlocked(false);
+          void queryClient.invalidateQueries();
+        }
+      } catch {
+        /* sem rede ou erro transitório: continua bloqueado até à próxima verificação */
+      } finally {
+        busy = false;
+      }
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void check();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    const id = window.setInterval(() => void check(), 30_000);
+    void check();
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.clearInterval(id);
+    };
+  }, [sessionBlocked]);
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
+  const { data: mensalidade } = useMensalidade();
+  const sessionBlocked = useSession((s) => s.membershipBlocked);
+  const blocked = sessionBlocked || mensalidade?.blocked === true;
+  useBlockRecovery(sessionBlocked);
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [pathname]);
@@ -89,8 +161,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-[100dvh] bg-bg">
       <SideNav />
       <main className="flex-1 min-w-0 pb-20 lg:pb-0">
-        {TAB_PATHS.has(pathname) && <ScreenHeader />}
-        {children}
+        <OfflineNotice />
+        {blocked ? (
+          <BlockedNotice />
+        ) : (
+          <>
+            {TAB_PATHS.has(pathname) && <ScreenHeader />}
+            {children}
+          </>
+        )}
       </main>
       <PullToRefresh />
       <ActiveWorkoutBar />

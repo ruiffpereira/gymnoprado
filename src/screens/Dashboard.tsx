@@ -25,7 +25,8 @@ export function Dashboard() {
   // Treino a fazer agora (regra do servidor); fallback ao 1.º do programa ativo.
   const today =
     program?.workouts.find((w) => w.id === active?.nextWorkoutId) ?? program?.workouts[0];
-  const weeklyGoal = active && active.weeklyGoal > 0 ? active.weeklyGoal : 5;
+  // Meta vem da API (nº de dias do programa); 0 = sem meta — nunca um número inventado aqui.
+  const weeklyGoal = active?.weeklyGoal ?? 0;
 
   // Pontos da semana (dias com treino)
   const weekStart = new Date();
@@ -109,7 +110,7 @@ export function Dashboard() {
 
         {/* Progresso */}
         <Card className="p-5 flex items-center gap-4">
-          <ProgressRing value={weekCount} max={weeklyGoal} size={84} label={`${weekCount}/${weeklyGoal}`} sublabel={t("gym.app.dashboard.goal_label")} />
+          <ProgressRing value={weeklyGoal > 0 ? weekCount : 0} max={weeklyGoal > 0 ? weeklyGoal : 1} size={84} label={weeklyGoal > 0 ? `${weekCount}/${weeklyGoal}` : `${weekCount}`} sublabel={weeklyGoal > 0 ? t("gym.app.dashboard.goal_label") : t("gym.app.dashboard.no_goal")} />
           <div>
             <p className="text-sm font-bold text-t1">{t("gym.app.dashboard.weekly_goal")}</p>
             <p className="text-xs text-t2 mt-0.5">{summary?.totalSets ?? 0} {t("gym.app.dashboard.total_sets")}</p>

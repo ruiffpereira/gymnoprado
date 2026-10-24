@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { PostWebsitesGymLogsMutationRequest as LogInput } from "../gen/types/PostWebsitesGymLogs";
 import { createLog } from "../api";
-import { isTransientApiError } from "../api/client";
+import { isAuthApiError, isMembershipBlockedError, isTransientApiError } from "../api/client";
 import { uuid } from "../lib/format";
 import { queryClient } from "../lib/queryClient";
 import { invalidateGym } from "../hooks/useGym";
@@ -95,6 +95,8 @@ export async function drainPendingLogs(): Promise<number> {
 
   const currentUserId = useSession.getState().profile?.id;
   if (!currentUserId) return 0;
+  // GY-26: bloqueado → a fila fica guardada, sem pedidos nem tentativas gastas.
+  if (useSession.getState().membershipBlocked) return 0;
 
   draining = true;
   let sent = 0;
@@ -114,6 +116,17 @@ export async function drainPendingLogs(): Promise<number> {
         sent++;
       } catch (e) {
         if (isTransientApiError(e)) break; // continua offline — parar já
+        if (isMembershipBlockedError(e)) {
+          // GY-26: mensalidade bloqueada — não é erro de sessão nem falha do registo: fica na fila,
+          // sem gastar tentativas nem renovar; volta a drenar quando o bloqueio sair.
+          useSession.getState().setMembershipBlocked(true);
+          break;
+        }
+        if (isAuthApiError(e)) {
+          // 401/403: sessão por renovar — o registo fica na fila; pede-se a renovação e pára-se.
+          if (useSession.getState().status === "authed") useSession.getState().setOffline(true);
+          break;
+        }
 
         // Falha definitiva (4xx): incrementa failCount. Com >= 3 entra em erro.
         usePendingLogs.getState().incrementFailCount(item.clientUuid);
